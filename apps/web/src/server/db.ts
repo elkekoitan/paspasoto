@@ -101,6 +101,8 @@ export type Order = {
   items: OrderItem[]
   subtotal: number
   shipping: number
+  /** Atölye indirim (admin'in elden verdiği) */
+  discount?: number
   total: number
   paidAmount: number
   paymentMethod: PaymentMethod

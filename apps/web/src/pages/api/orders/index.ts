@@ -36,6 +36,7 @@ export const POST: APIRoute = async ({ cookies, request }) => {
     items: body.items ?? [],
     subtotal: body.subtotal ?? 0,
     shipping: body.shipping ?? 0,
+    discount: body.discount ?? 0,
     total: body.total ?? 0,
     paidAmount: body.paidAmount ?? 0,
     paymentMethod: body.paymentMethod ?? 'elden-nakit',

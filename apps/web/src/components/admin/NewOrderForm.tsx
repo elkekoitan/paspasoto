@@ -72,6 +72,11 @@ export default function NewOrderForm() {
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState('')
 
+  // Atölye fiyatlama — admin manuel override edebilir, indirim verebilir
+  const [unitPriceOverride, setUnitPriceOverride] = useState<number | null>(null)
+  const [discount, setDiscount] = useState(0)
+  const [priceNote, setPriceNote] = useState('')
+
   const brand = BRANDS.find((b) => b.slug === brandSlug)!
   const models = useMemo(() => VEHICLE_MODELS.filter((m) => m.brandSlug === brandSlug), [brandSlug])
   const model = models.find((m) => m.slug === modelSlug) ?? models[0]
@@ -83,15 +88,19 @@ export default function NewOrderForm() {
     ? LOGO_ACCESSORIES.find((l) => l.brandSlug === brandSlug) ?? null
     : null
 
-  const unitPrice = useMemo(() => {
-    let total = product.basePrice
-    total += heelPad.pricePremium
-    if (heelPassenger) total += 100
-    if (logoAccessory) total += logoAccessory.price * product.parts
-    return total
+  // Hesaplanan (rehber) birim fiyat
+  const computedUnitPrice = useMemo(() => {
+    let v = product.basePrice
+    v += heelPad.pricePremium
+    if (heelPassenger) v += 100
+    if (logoAccessory) v += logoAccessory.price * product.parts
+    return v
   }, [product, heelPad, heelPassenger, logoAccessory])
 
-  const total = unitPrice * qty
+  // Manuel override varsa onu kullan, yoksa hesaplananı
+  const unitPrice = unitPriceOverride ?? computedUnitPrice
+  const subtotal = unitPrice * qty
+  const total = Math.max(0, subtotal - discount)
 
   async function submit(e: Event) {
     e.preventDefault()
@@ -126,12 +135,16 @@ export default function NewOrderForm() {
         qty,
         unitPrice,
       }
+      const finalInternalNote = [internalNote, priceNote && `[Fiyat notu] ${priceNote}`]
+        .filter(Boolean)
+        .join('\n') || undefined
       const body = {
         customer: { fullName, phone, email },
         shippingAddress: { fullName, phone, city, district, addressLine },
         items: [item],
-        subtotal: total,
+        subtotal,
         shipping: 0,
+        discount,
         total,
         paidAmount,
         paymentMethod,
@@ -148,7 +161,7 @@ export default function NewOrderForm() {
             : undefined,
         productionStatus: paymentStatus === 'tamamlandi' ? 'payment_confirmed' : 'received',
         customerNote: customerNote || undefined,
-        internalNote: internalNote || undefined,
+        internalNote: finalInternalNote,
       }
       const res = await fetch('/api/orders', {
         method: 'POST',
@@ -250,6 +263,56 @@ export default function NewOrderForm() {
           </div>
         </Section>
 
+        <Section title="Atölye Fiyatlama">
+          <div class="grid sm:grid-cols-3 gap-3">
+            <Field label="Hesaplanan Birim (rehber)">
+              <input
+                type="text"
+                value={formatTRY(computedUnitPrice)}
+                disabled
+                class={`${inp} opacity-60 cursor-not-allowed`}
+              />
+            </Field>
+            <Field label="Verilen Birim Fiyat (₺)">
+              <input
+                type="number"
+                min="0"
+                placeholder={String(computedUnitPrice)}
+                value={unitPriceOverride ?? ''}
+                onInput={(e) => {
+                  const v = (e.target as HTMLInputElement).value
+                  setUnitPriceOverride(v === '' ? null : parseFloat(v) || 0)
+                }}
+                class={inp}
+              />
+            </Field>
+            <Field label="İndirim (₺)">
+              <input
+                type="number"
+                min="0"
+                value={discount}
+                onInput={(e) => setDiscount(parseFloat((e.target as HTMLInputElement).value) || 0)}
+                class={inp}
+              />
+            </Field>
+            <Field label="Fiyat Notu (atölye içi — niye bu fiyat verildi?)" class="sm:col-span-3">
+              <input
+                type="text"
+                value={priceNote}
+                onInput={(e) => setPriceNote((e.target as HTMLInputElement).value)}
+                placeholder="Eski müşteri 200₺ indirim · Tanıdık aracılığıyla geldi · Bu sezon kampanya..."
+                class={inp}
+              />
+            </Field>
+          </div>
+          <div class="mt-3 grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
+            <Stat label="Birim" value={formatTRY(unitPrice)} />
+            <Stat label="Adet" value={`× ${qty}`} />
+            <Stat label="İndirim" value={discount > 0 ? `−${formatTRY(discount)}` : '—'} accent={discount > 0 ? 'warn' : 'mute'} />
+            <Stat label="Toplam Tahsil Edilecek" value={formatTRY(total)} accent="primary" />
+          </div>
+        </Section>
+
         <Section title="Ödeme & Notlar">
           <div class="grid sm:grid-cols-2 gap-3">
             <Field label="Ödeme Yöntemi">
@@ -341,16 +404,43 @@ export default function NewOrderForm() {
           <div class="mt-4 pt-4 border-t border-[var(--color-border)]/60 space-y-2 text-sm">
             <div class="flex justify-between">
               <span class="text-[var(--color-text-muted)]">Birim</span>
-              <span class="tabular-nums">{formatTRY(unitPrice)}</span>
+              <span class="tabular-nums">
+                {formatTRY(unitPrice)}
+                {unitPriceOverride !== null && unitPriceOverride !== computedUnitPrice && (
+                  <span class="ml-1.5 text-[10px] text-[var(--color-text-muted)] line-through">{formatTRY(computedUnitPrice)}</span>
+                )}
+              </span>
             </div>
             <div class="flex justify-between">
               <span class="text-[var(--color-text-muted)]">Adet</span>
-              <span class="tabular-nums">{qty}</span>
+              <span class="tabular-nums">× {qty}</span>
             </div>
+            <div class="flex justify-between">
+              <span class="text-[var(--color-text-muted)]">Ara Toplam</span>
+              <span class="tabular-nums">{formatTRY(subtotal)}</span>
+            </div>
+            {discount > 0 && (
+              <div class="flex justify-between text-[var(--color-warning)]">
+                <span>İndirim</span>
+                <span class="tabular-nums">−{formatTRY(discount)}</span>
+              </div>
+            )}
             <div class="flex justify-between pt-2 border-t border-[var(--color-border)]/60 text-base font-semibold">
-              <span>Toplam</span>
+              <span>Tahsil Edilecek</span>
               <span class="text-[var(--color-primary)] tabular-nums">{formatTRY(total)}</span>
             </div>
+            {paymentStatus === 'kismi' && paidAmount > 0 && (
+              <div class="flex justify-between text-xs">
+                <span class="text-[var(--color-text-muted)]">Şimdi tahsil</span>
+                <span class="text-[var(--color-success)] tabular-nums">{formatTRY(paidAmount)}</span>
+              </div>
+            )}
+            {paymentStatus !== 'tamamlandi' && (
+              <div class="flex justify-between text-xs">
+                <span class="text-[var(--color-text-muted)]">Bakiye</span>
+                <span class="tabular-nums text-[var(--color-warning)]">{formatTRY(Math.max(0, total - paidAmount))}</span>
+              </div>
+            )}
           </div>
 
           {error && <p class="mt-3 text-xs text-[var(--color-danger)]">{error}</p>}
@@ -361,8 +451,11 @@ export default function NewOrderForm() {
             disabled={submitting}
             class="mt-5 w-full px-5 py-3 rounded-xl text-sm font-semibold bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] text-[var(--color-bg)] transition-all disabled:opacity-50"
           >
-            {submitting ? 'Kaydediliyor...' : 'Siparişi Oluştur'}
+            {submitting ? 'Kaydediliyor...' : 'Teklif & Siparişi Oluştur'}
           </button>
+          <p class="mt-2 text-[10px] text-[var(--color-text-muted)] text-center leading-snug">
+            Sipariş kaydedildikten sonra detay sayfasından müşteriye <span class="text-[var(--color-text-soft)]">WhatsApp ile takip linki</span> gönderebilirsiniz.
+          </p>
         </div>
       </aside>
     </form>
@@ -402,6 +495,31 @@ function Row({ label, value }: { label: string; value: string }) {
     <div class="flex justify-between gap-2">
       <dt class="text-[var(--color-text-muted)]">{label}</dt>
       <dd class="text-right text-[var(--color-text)]">{value}</dd>
+    </div>
+  )
+}
+
+function Stat({
+  label,
+  value,
+  accent = 'default',
+}: {
+  label: string
+  value: string
+  accent?: 'default' | 'primary' | 'warn' | 'mute'
+}) {
+  const valColor =
+    accent === 'primary'
+      ? 'text-[var(--color-primary)] font-bold text-base'
+      : accent === 'warn'
+      ? 'text-[var(--color-warning)] font-semibold'
+      : accent === 'mute'
+      ? 'text-[var(--color-text-muted)]'
+      : 'text-[var(--color-text)] font-semibold'
+  return (
+    <div class="px-3 py-2 rounded-lg bg-[var(--color-surface-2)]/60 border border-[var(--color-border)]/40">
+      <div class="text-[10px] uppercase tracking-wider text-[var(--color-text-muted)] font-semibold">{label}</div>
+      <div class={`mt-0.5 tabular-nums ${valColor}`}>{value}</div>
     </div>
   )
 }

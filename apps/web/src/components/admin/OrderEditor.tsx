@@ -275,6 +275,18 @@ export default function OrderEditor({ initial }: { initial: Order }) {
         <div class="rounded-2xl bg-[var(--color-surface)] border border-[var(--color-border)]/60 p-5">
           <h3 class="font-display text-base font-semibold mb-3">Tutar</h3>
           <dl class="space-y-2 text-sm">
+            {(order.subtotal ?? order.total) !== order.total && (
+              <div class="flex justify-between">
+                <dt class="text-[var(--color-text-muted)]">Ara Toplam</dt>
+                <dd class="tabular-nums">{formatTRY(order.subtotal ?? order.total)}</dd>
+              </div>
+            )}
+            {order.discount && order.discount > 0 ? (
+              <div class="flex justify-between text-[var(--color-warning)]">
+                <dt>İndirim</dt>
+                <dd class="tabular-nums">−{formatTRY(order.discount)}</dd>
+              </div>
+            ) : null}
             <div class="flex justify-between">
               <dt class="text-[var(--color-text-muted)]">Toplam</dt>
               <dd class="tabular-nums font-semibold">{formatTRY(order.total)}</dd>
