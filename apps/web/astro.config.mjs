@@ -90,6 +90,9 @@ export default defineConfig({
   output: 'server',
   adapter: node({ mode: 'standalone' }),
   integrations,
+  // Coolify reverse proxy (Caddy) Origin header'ı düşürebiliyor — admin form POST'larını
+  // bu yüzden checkOrigin'i kapattık. Admin'i ayrıca cookie session ile koruyoruz.
+  security: { checkOrigin: false },
   vite: {
     plugins: [tailwindcss()],
     ssr: { noExternal: ['lucide-preact'] },
