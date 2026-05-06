@@ -1,0 +1,33 @@
+---
+import Base from '@layouts/Base.astro'
+
+const FAQ = [
+  { q: 'Paspas aracımın orijinal ölçüsüne tam oturur mu?', a: 'Evet. Her marka/model için ayrı kalıbımız var; lazer ölçülü kesim ile orijinal halıya tam oturur.' },
+  { q: 'Üretim ve teslimat ne kadar sürer?', a: 'Sipariş onayından sonra üretim 5-7 iş günü, kargo 1-2 iş günü sürer. Tüm süreci sipariş takip sayfasından canlı izleyebilirsiniz.' },
+  { q: 'Ödeme nasıl yapılır?', a: 'Şu anda banka havalesi/EFT ve kapıda ödeme seçenekleri sunuyoruz. Kredi kartı entegrasyonu yakında eklenecek.' },
+  { q: 'Marka amblemi nasıl monte ediliyor?', a: 'Metal/plastik amblem plakası paspasın üst kısmına klips veya yapıştırıcı ile sabitlenir. Çıkmaz, eskimez.' },
+  { q: 'Topukluk nedir, fayda sağlar mı?', a: 'Sürücü topuk bölgesindeki aşınmayı önler ve premium görünüm katar. 8 farklı doku/renk seçeneğimiz var.' },
+  { q: 'Paspasın bakımı nasıl yapılır?', a: 'Hortumla yıkayıp gölgede kurutmanız yeterli. Sert deterjan/aşındırıcı kimyasal kullanmayın.' },
+  { q: 'Garanti var mı?', a: '2 yıl üretim hatalarına karşı garantilidir. Aşınma ve doğal eskime garanti kapsamı dışındadır.' },
+  { q: 'İade/değişim mümkün mü?', a: 'Standart kombinasyonlarda 14 gün cayma hakkı vardır. Kişiselleştirilmiş kombinasyonlarda (renk + amblem) iade yapılamaz; üretim hatası halinde değişim yapılır.' },
+]
+---
+
+<Base title="Sıkça Sorulanlar" description="PaspasOto.com hakkında en çok sorulan sorular ve cevapları.">
+  <section class="container-page py-16 md:py-24 max-w-3xl">
+    <p class="text-sm text-[var(--color-primary)] font-medium uppercase tracking-wider">Yardım Merkezi</p>
+    <h1 class="mt-2 font-display text-4xl md:text-5xl font-semibold tracking-tight">Sıkça Sorulanlar</h1>
+
+    <div class="mt-10 flex flex-col gap-2.5">
+      {FAQ.map((item, i) => (
+        <details class="group rounded-xl bg-[var(--color-surface)] border border-[var(--color-border)]/60" open={i === 0}>
+          <summary class="cursor-pointer list-none p-5 flex items-center justify-between gap-4 font-medium">
+            <span>{item.q}</span>
+            <span class="size-7 grid place-items-center rounded-full bg-[var(--color-surface-2)] group-open:rotate-45 transition-transform">+</span>
+          </summary>
+          <div class="px-5 pb-5 text-sm text-[var(--color-text-soft)] leading-relaxed">{item.a}</div>
+        </details>
+      ))}
+    </div>
+  </section>
+</Base>

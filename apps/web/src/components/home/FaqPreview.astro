@@ -1,0 +1,66 @@
+---
+const FAQ = [
+  {
+    q: 'Paspas aracımın orijinal ölçüsüne tam oturur mu?',
+    a: 'Evet. Her marka/model için ayrı kalıbımız var; lazer ölçülü kesim ile orijinal halıya tam oturur. Standart bagaj havuzu seçeneklerimiz de mevcut.',
+  },
+  {
+    q: 'Üretim ve teslimat ne kadar sürer?',
+    a: 'Sipariş onayından sonra üretim 5-7 iş günü, kargo 1-2 iş günü sürer. Tüm süreci sipariş takip sayfasından canlı izleyebilirsiniz.',
+  },
+  {
+    q: 'Ödeme nasıl yapılır?',
+    a: 'Şu anda banka havalesi/EFT ve kapıda ödeme seçenekleri sunuyoruz. Kredi kartı entegrasyonu yakında eklenecek.',
+  },
+  {
+    q: 'Paspas üzerine marka ambleminin yerleştirilmesi nasıl yapılır?',
+    a: 'Marka amblemi metal/plastik plaka olarak paspasın üst kısmına klips veya yapıştırıcı ile sabitlenir. Çıkmaz, eskimez.',
+  },
+  {
+    q: 'Garanti var mı?',
+    a: '2 yıl üretim hatalarına karşı garantilidir. Aşınma ve doğal eskime garanti kapsamı dışındadır.',
+  },
+]
+---
+
+<section class="container-page py-20 md:py-28">
+  <div class="grid md:grid-cols-2 gap-10 lg:gap-16 items-start">
+    <div>
+      <p class="text-sm text-[var(--color-primary)] font-medium uppercase tracking-wider">
+        Sıkça Sorulanlar
+      </p>
+      <h2 class="mt-2 font-display text-3xl md:text-4xl font-semibold tracking-tight">
+        Aklındaki sorulara cevaplar
+      </h2>
+      <p class="mt-4 text-[var(--color-text-soft)]">
+        Listedeki cevap yetmiyorsa WhatsApp'tan bize ulaş, ekibimiz dakikalar içinde döner.
+      </p>
+      <a
+        href="/sss"
+        class="mt-6 inline-flex items-center gap-1.5 text-sm font-medium text-[var(--color-primary)] hover:text-[var(--color-primary-hover)]"
+      >
+        Tüm soruları gör →
+      </a>
+    </div>
+
+    <div class="flex flex-col gap-2.5">
+      {
+        FAQ.map((item, i) => (
+          <details class="group rounded-xl bg-[var(--color-surface)] border border-[var(--color-border)]/60 hover:border-[var(--color-text-muted)] transition-colors" open={i === 0}>
+            <summary class="cursor-pointer list-none p-5 flex items-center justify-between gap-4 font-medium text-[var(--color-text)]">
+              <span>{item.q}</span>
+              <span class="size-7 grid place-items-center rounded-full bg-[var(--color-surface-2)] group-open:rotate-45 transition-transform" aria-hidden="true">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+                  <path d="M12 5v14M5 12h14" />
+                </svg>
+              </span>
+            </summary>
+            <div class="px-5 pb-5 text-sm text-[var(--color-text-soft)] leading-relaxed">
+              {item.a}
+            </div>
+          </details>
+        ))
+      }
+    </div>
+  </div>
+</section>

@@ -1,0 +1,94 @@
+---
+import '../styles/globals.css'
+import Header from '@components/layout/Header.astro'
+import Footer from '@components/layout/Footer.astro'
+
+interface Props {
+  title?: string
+  description?: string
+  ogImage?: string
+  noindex?: boolean
+  canonical?: string
+}
+
+const SITE_NAME = 'PaspasOto'
+const DEFAULT_TITLE = 'PaspasOto — Aracına Özel 3D Havuzlu Oto Paspas'
+const DEFAULT_DESCRIPTION =
+  'Aracına özel kalıplanmış 3D havuzlu oto paspas. 10 paspas rengi, 18 kenarlık rengi, marka logo aksesuarı ve premium topukluk seçenekleri. Konya atölyemizden kapına.'
+const SITE_URL = import.meta.env.PUBLIC_SITE_URL ?? 'http://localhost:4321'
+
+const {
+  title = DEFAULT_TITLE,
+  description = DEFAULT_DESCRIPTION,
+  ogImage = '/assets/og-default.jpg',
+  noindex = false,
+  canonical,
+} = Astro.props
+
+const pageTitle = title === DEFAULT_TITLE ? title : `${title} · ${SITE_NAME}`
+const canonicalUrl = canonical ?? new URL(Astro.url.pathname, SITE_URL).toString()
+const ogImageUrl = new URL(ogImage, SITE_URL).toString()
+---
+
+<!doctype html>
+<html lang="tr" dir="ltr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="theme-color" content="#0B0B0F" />
+    <meta name="color-scheme" content="dark" />
+
+    <title>{pageTitle}</title>
+    <meta name="description" content={description} />
+    <link rel="canonical" href={canonicalUrl} />
+    {noindex && <meta name="robots" content="noindex,nofollow" />}
+
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content={SITE_NAME} />
+    <meta property="og:title" content={pageTitle} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={canonicalUrl} />
+    <meta property="og:image" content={ogImageUrl} />
+    <meta property="og:locale" content="tr_TR" />
+
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content={pageTitle} />
+    <meta name="twitter:description" content={description} />
+    <meta name="twitter:image" content={ogImageUrl} />
+
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="apple-touch-icon" href="/icons/icon-192.png" />
+    <link rel="manifest" href="/manifest.webmanifest" />
+
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+
+    <slot name="head" />
+  </head>
+  <body class="grain">
+    <a
+      href="#main"
+      class="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded-md focus:bg-[var(--color-primary)] focus:px-4 focus:py-2 focus:text-[var(--color-bg)]"
+    >
+      İçeriğe geç
+    </a>
+    <Header />
+    <main id="main">
+      <slot />
+    </main>
+    <Footer />
+
+    <script>
+      // PWA install prompt deferral
+      let deferredPrompt: any = null
+      window.addEventListener('beforeinstallprompt', (e) => {
+        e.preventDefault()
+        deferredPrompt = e
+        ;(window as any).__pwaInstall = () => deferredPrompt?.prompt()
+      })
+    </script>
+  </body>
+</html>

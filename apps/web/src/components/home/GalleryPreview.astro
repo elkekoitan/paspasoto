@@ -1,0 +1,50 @@
+---
+// Yer tutucu — Strapi'de Gallery content type'ı eklenince gerçek müşteri fotoğrafları gelecek.
+// V1 lansmanında ilk 6-8 müşteri kombinasyonu burada Instagram-style grid olarak gösterilecek.
+const PLACEHOLDERS = Array.from({ length: 6 }, (_, i) => i)
+---
+
+<section class="container-page py-20 md:py-28">
+  <div class="flex items-end justify-between flex-wrap gap-4 mb-10 md:mb-14">
+    <div>
+      <p class="text-sm text-[var(--color-primary)] font-medium uppercase tracking-wider">
+        Müşteri Galerisi
+      </p>
+      <h2 class="mt-2 font-display text-3xl md:text-4xl font-semibold tracking-tight">
+        Atölyemizden çıkan kombinler
+      </h2>
+    </div>
+    <a
+      href="/galeri"
+      class="text-sm font-medium text-[var(--color-text-soft)] hover:text-[var(--color-primary)] transition-colors"
+    >
+      Tümünü gör →
+    </a>
+  </div>
+
+  <div class="grid grid-cols-2 md:grid-cols-3 gap-3 md:gap-4">
+    {
+      PLACEHOLDERS.map((i) => (
+        <div
+          class="aspect-square rounded-2xl bg-[var(--color-surface)] border border-[var(--color-border)]/40 relative overflow-hidden group cursor-pointer"
+        >
+          {/* İlk 3 örnek için raw-mats-stack kullanıyoruz; canlı sürümde gerçek müşteri fotoğrafı. */}
+          {i < 3 && (
+            <img
+              src="/assets/raw-mats-stack.jpeg"
+              alt=""
+              loading="lazy"
+              class="absolute inset-0 w-full h-full object-cover opacity-50 group-hover:opacity-70 group-hover:scale-105 transition-all duration-500"
+              style={`object-position: ${30 + i * 20}% center;`}
+            />
+          )}
+          <div class="absolute inset-0 bg-gradient-to-t from-[var(--color-bg)]/95 via-transparent to-transparent" />
+          <div class="absolute bottom-3 left-3 right-3 text-xs">
+            <div class="text-[var(--color-text)] font-medium">BMW 3 Serisi · F30</div>
+            <div class="text-[var(--color-text-muted)]">Siyah · Kırmızı kenarlık · Karbon topukluk</div>
+          </div>
+        </div>
+      ))
+    }
+  </div>
+</section>

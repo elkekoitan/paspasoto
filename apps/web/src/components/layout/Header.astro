@@ -1,0 +1,142 @@
+---
+const NAV = [
+  { href: '/konfigurator', label: 'Konfigüratör' },
+  { href: '/markalar', label: 'Markalar' },
+  { href: '/galeri', label: 'Galeri' },
+  { href: '/hakkimizda', label: 'Hakkımızda' },
+  { href: '/iletisim', label: 'İletişim' },
+]
+const path = Astro.url.pathname
+---
+
+<header
+  class="sticky top-0 z-40 border-b border-[var(--color-border)]/60 bg-[var(--color-bg)]/85 backdrop-blur-md"
+>
+  <div class="container-page flex h-16 items-center justify-between gap-4">
+    <a href="/" class="flex items-center gap-2.5 group" aria-label="PaspasOto anasayfa">
+      <span
+        class="grid size-9 place-items-center rounded-lg bg-[var(--color-primary)] text-[var(--color-bg)] font-bold text-lg group-hover:scale-105 transition-transform"
+        aria-hidden="true"
+      >
+        P
+      </span>
+      <span class="text-lg font-semibold tracking-tight">PaspasOto</span>
+    </a>
+
+    <nav class="hidden md:flex items-center gap-1" aria-label="Ana navigasyon">
+      {
+        NAV.map((item) => {
+          const active = path === item.href || path.startsWith(item.href + '/')
+          return (
+            <a
+              href={item.href}
+              class:list={[
+                'px-3.5 py-2 rounded-lg text-sm font-medium transition-colors',
+                active
+                  ? 'text-[var(--color-text)] bg-[var(--color-surface-2)]'
+                  : 'text-[var(--color-text-soft)] hover:text-[var(--color-text)] hover:bg-[var(--color-surface)]',
+              ]}
+            >
+              {item.label}
+            </a>
+          )
+        })
+      }
+    </nav>
+
+    <div class="flex items-center gap-2">
+      <a
+        href="/siparis-takip"
+        class="hidden sm:inline-flex items-center gap-2 px-3.5 py-2 rounded-lg text-sm font-medium text-[var(--color-text-soft)] hover:text-[var(--color-text)] transition-colors"
+      >
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          width="18"
+          height="18"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          aria-hidden="true"
+          ><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"
+          ></path><path d="m3.3 7 8.7 5 8.7-5"></path><path d="M12 22V12"></path></svg
+        >
+        Sipariş Takip
+      </a>
+      <a
+        href="/konfigurator"
+        class="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-semibold bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] text-[var(--color-bg)] transition-colors"
+      >
+        Konfigüratör
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          width="16"
+          height="16"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2.5"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          aria-hidden="true"
+        >
+          <path d="M5 12h14"></path><path d="m12 5 7 7-7 7"></path>
+        </svg>
+      </a>
+      <button
+        type="button"
+        class="md:hidden grid size-10 place-items-center rounded-lg hover:bg-[var(--color-surface)]"
+        aria-label="Menüyü aç"
+        data-mobile-menu-toggle
+      >
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          width="22"
+          height="22"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          ><line x1="4" x2="20" y1="12" y2="12"></line><line x1="4" x2="20" y1="6" y2="6"></line>
+          <line x1="4" x2="20" y1="18" y2="18"></line></svg
+        >
+      </button>
+    </div>
+  </div>
+
+  <div
+    id="mobile-menu"
+    class="md:hidden hidden border-t border-[var(--color-border)]/60 bg-[var(--color-bg)]"
+  >
+    <nav class="container-page py-3 flex flex-col gap-1" aria-label="Mobil navigasyon">
+      {
+        NAV.map((item) => (
+          <a
+            href={item.href}
+            class="px-3 py-2.5 rounded-lg text-sm font-medium text-[var(--color-text-soft)] hover:text-[var(--color-text)] hover:bg-[var(--color-surface)]"
+          >
+            {item.label}
+          </a>
+        ))
+      }
+      <a
+        href="/siparis-takip"
+        class="px-3 py-2.5 rounded-lg text-sm font-medium text-[var(--color-text-soft)] hover:text-[var(--color-text)] hover:bg-[var(--color-surface)]"
+      >
+        Sipariş Takip
+      </a>
+    </nav>
+  </div>
+</header>
+
+<script>
+  const toggle = document.querySelector('[data-mobile-menu-toggle]')
+  const menu = document.getElementById('mobile-menu')
+  toggle?.addEventListener('click', () => {
+    menu?.classList.toggle('hidden')
+  })
+</script>

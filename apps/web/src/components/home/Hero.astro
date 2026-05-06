@@ -1,0 +1,104 @@
+---
+// Hero — koyu zemin, üst üste paspas görseli, premium otomotiv hissi.
+// Mevcut "raw-mats-stack.jpeg" görseli kullanılır; canlı projede yüksek-çözünürlüklü çekim ile değiştirilecek.
+---
+
+<section class="relative overflow-hidden">
+  <!-- Arkaplan tabakaları -->
+  <div class="absolute inset-0 -z-10">
+    <div
+      class="absolute inset-0 bg-[var(--color-bg)] gradient-radial"
+      aria-hidden="true"
+    >
+    </div>
+    <img
+      src="/assets/raw-mats-stack.jpeg"
+      alt=""
+      aria-hidden="true"
+      class="absolute right-[-10%] top-[10%] w-[60%] max-w-[720px] -rotate-6 opacity-30 blur-[1px]
+             md:opacity-45 md:blur-0 md:right-[-4%] md:top-[6%] mask-fade"
+      style="mask-image: radial-gradient(ellipse at center, rgba(0,0,0,1) 40%, rgba(0,0,0,0) 75%); -webkit-mask-image: radial-gradient(ellipse at center, rgba(0,0,0,1) 40%, rgba(0,0,0,0) 75%);"
+      loading="eager"
+      fetchpriority="high"
+      decoding="async"
+    />
+    <div
+      class="absolute inset-0 bg-gradient-to-r from-[var(--color-bg)] via-[var(--color-bg)]/85 to-transparent"
+      aria-hidden="true"
+    >
+    </div>
+  </div>
+
+  <div class="container-page relative pt-16 pb-24 md:pt-28 md:pb-36">
+    <div class="max-w-2xl">
+      <span
+        class="inline-flex items-center gap-2 rounded-full border border-[var(--color-border)] bg-[var(--color-surface)]/70 backdrop-blur px-3 py-1.5 text-xs font-medium text-[var(--color-text-soft)]"
+      >
+        <span class="size-1.5 rounded-full bg-[var(--color-primary)] animate-pulse"></span>
+        Konya'dan kapına · 3000+ araç modeli uyumu
+      </span>
+
+      <h1
+        class="mt-6 font-display text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-semibold leading-[1.05] tracking-tight"
+      >
+        Aracına özel,
+        <br class="hidden sm:inline" />
+        <span class="text-gradient-amber">atölyemizden</span> kapına.
+      </h1>
+
+      <p class="mt-6 text-lg md:text-xl text-[var(--color-text-soft)] max-w-xl leading-relaxed">
+        Lazer ölçülü kalıplar, 10 paspas + 18 kenarlık rengi, premium topukluk ve marka ambleminle
+        senin için özel kişiselleştirilen 3D havuzlu paspaslar.
+      </p>
+
+      <div class="mt-10 flex flex-wrap items-center gap-3">
+        <a
+          href="/konfigurator"
+          class="inline-flex items-center gap-2 px-6 py-3.5 rounded-xl text-base font-semibold bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] text-[var(--color-bg)] transition-all hover:shadow-[var(--shadow-glow)]"
+        >
+          Konfigüratörü Başlat
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="20"
+            height="20"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2.5"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            aria-hidden="true"
+          >
+            <path d="M5 12h14"></path><path d="m12 5 7 7-7 7"></path>
+          </svg>
+        </a>
+        <a
+          href="/galeri"
+          class="inline-flex items-center gap-2 px-5 py-3.5 rounded-xl text-base font-medium border border-[var(--color-border)] hover:border-[var(--color-text-muted)] hover:bg-[var(--color-surface)] transition-colors"
+        >
+          Müşteri Kombinleri
+        </a>
+      </div>
+
+      <!-- Sosyal kanıt mini şerit -->
+      <div class="mt-14 flex flex-wrap gap-x-10 gap-y-4 text-sm">
+        <div>
+          <div class="font-display text-2xl font-semibold text-[var(--color-text)]">3000+</div>
+          <div class="text-[var(--color-text-muted)]">Araç modeli</div>
+        </div>
+        <div>
+          <div class="font-display text-2xl font-semibold text-[var(--color-text)]">7 gün</div>
+          <div class="text-[var(--color-text-muted)]">Üretim süresi</div>
+        </div>
+        <div>
+          <div class="font-display text-2xl font-semibold text-[var(--color-text)]">2 yıl</div>
+          <div class="text-[var(--color-text-muted)]">Üretim garantisi</div>
+        </div>
+        <div>
+          <div class="font-display text-2xl font-semibold text-[var(--color-text)]">%100</div>
+          <div class="text-[var(--color-text-muted)]">Araca özel kalıp</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>

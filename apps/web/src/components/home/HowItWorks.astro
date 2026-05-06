@@ -1,0 +1,59 @@
+---
+const STEPS = [
+  {
+    num: '01',
+    title: 'Konfigüre Et',
+    desc: 'Aracını seç, paspas + kenarlık + topukluk + amblem kombinasyonunu canlı önizleme ile oluştur.',
+  },
+  {
+    num: '02',
+    title: 'Sipariş Ver',
+    desc: 'Adres ve iletişim bilgilerini gir, banka havalesi veya kapıda ödeme seç.',
+  },
+  {
+    num: '03',
+    title: 'Üretelim',
+    desc: 'Konya atölyemizde lazer ölçülü kalıpla kesim, dikim ve kalite kontrol — ortalama 5-7 iş günü.',
+  },
+  {
+    num: '04',
+    title: 'Teslim Al',
+    desc: 'Kargo takip numarası anında elinde. Şeffaf timeline ile her aşamayı izle.',
+  },
+]
+---
+
+<section class="container-page py-20 md:py-28">
+  <div class="text-center max-w-2xl mx-auto mb-14">
+    <p class="text-sm text-[var(--color-primary)] font-medium uppercase tracking-wider">
+      Süreç
+    </p>
+    <h2 class="mt-2 font-display text-3xl md:text-4xl font-semibold tracking-tight">
+      Konfigürasyondan kapına 4 adım
+    </h2>
+  </div>
+
+  <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
+    {
+      STEPS.map((s, i) => (
+        <div class="relative p-6 rounded-2xl bg-[var(--color-surface)] border border-[var(--color-border)]/60 hover:border-[var(--color-primary)]/40 transition-colors">
+          <div class="font-display text-5xl font-bold text-[var(--color-primary)]/30 leading-none">
+            {s.num}
+          </div>
+          <h3 class="mt-4 font-display text-xl font-semibold">{s.title}</h3>
+          <p class="mt-2 text-sm text-[var(--color-text-soft)] leading-relaxed">{s.desc}</p>
+          {i < STEPS.length - 1 && (
+            <div
+              class="hidden lg:block absolute top-1/2 -right-3 size-6 -translate-y-1/2 text-[var(--color-border)]"
+              aria-hidden="true"
+            >
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+                <path d="M5 12h14m-7-7 7 7-7 7" />
+              </svg>
+            </div>
+          )}
+        </div>
+      ))
+    }
+  </div>
+</section>

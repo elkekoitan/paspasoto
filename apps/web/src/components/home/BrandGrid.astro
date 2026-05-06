@@ -1,0 +1,41 @@
+---
+import { POPULAR_BRANDS } from '@lib/catalog'
+---
+
+<section class="container-page py-20 md:py-28">
+  <div class="flex items-end justify-between flex-wrap gap-4 mb-10 md:mb-14">
+    <div>
+      <p class="text-sm text-[var(--color-primary)] font-medium uppercase tracking-wider">
+        Marka Uyumu
+      </p>
+      <h2 class="mt-2 font-display text-3xl md:text-4xl font-semibold tracking-tight">
+        Aracını seç, paspasını kalıplayalım
+      </h2>
+      <p class="mt-3 text-[var(--color-text-soft)] max-w-xl">
+        Audi'den Dacia'ya, BMW'den Toyota'ya — 30+ marka, 3000+ model için lazer ölçülü kalıp.
+      </p>
+    </div>
+    <a
+      href="/markalar"
+      class="text-sm font-medium text-[var(--color-text-soft)] hover:text-[var(--color-primary)] transition-colors"
+    >
+      Tümünü gör →
+    </a>
+  </div>
+
+  <div class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-3">
+    {
+      POPULAR_BRANDS.map((brand) => (
+        <a
+          href={`/konfigurator?brand=${brand.slug}`}
+          class="group relative aspect-square flex items-center justify-center rounded-xl border border-[var(--color-border)]/60 bg-[var(--color-surface)] hover:bg-[var(--color-surface-2)] hover:border-[var(--color-primary)]/40 transition-all hover:-translate-y-0.5"
+        >
+          <span class="font-display text-base md:text-lg font-semibold text-[var(--color-text-soft)] group-hover:text-[var(--color-text)] tracking-wide">
+            {brand.name}
+          </span>
+          <span class="absolute bottom-2 right-2 size-1.5 rounded-full bg-[var(--color-primary)] opacity-0 group-hover:opacity-100 transition-opacity" />
+        </a>
+      ))
+    }
+  </div>
+</section>

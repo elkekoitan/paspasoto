@@ -1,0 +1,31 @@
+---
+import Base from '@layouts/Base.astro'
+---
+
+<Base title="Müşteri Galerisi" description="PaspasOto müşterilerinin paylaştığı kombinler.">
+  <section class="container-page py-16 md:py-24">
+    <p class="text-sm text-[var(--color-primary)] font-medium uppercase tracking-wider">Galeri</p>
+    <h1 class="mt-2 font-display text-4xl md:text-5xl font-semibold tracking-tight">Atölyemizden çıkanlar</h1>
+    <p class="mt-3 text-[var(--color-text-soft)] max-w-xl">
+      Müşterilerimizin Instagram'da paylaştığı kombinler. Sen de fotoğrafını <a href="https://instagram.com/paspasoto" class="text-[var(--color-primary)] hover:underline">@paspasoto</a> etiketleyerek paylaş, galeriye ekleyelim.
+    </p>
+
+    <div class="mt-10 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-4">
+      {Array.from({ length: 12 }).map((_, i) => (
+        <div class="aspect-square rounded-xl bg-[var(--color-surface)] border border-[var(--color-border)]/40 relative overflow-hidden group cursor-pointer">
+          <img
+            src="/assets/raw-mats-stack.jpeg"
+            alt=""
+            loading="lazy"
+            class="absolute inset-0 w-full h-full object-cover opacity-50 group-hover:opacity-80 group-hover:scale-105 transition-all duration-500"
+            style={`object-position: ${(i * 17) % 100}% center;`}
+          />
+          <div class="absolute inset-0 bg-gradient-to-t from-[var(--color-bg)]/95 via-transparent to-transparent" />
+          <div class="absolute bottom-2 left-2 right-2 text-xs">
+            <div class="text-[var(--color-text)] font-medium">Müşteri kombini #{i + 1}</div>
+          </div>
+        </div>
+      ))}
+    </div>
+  </section>
+</Base>

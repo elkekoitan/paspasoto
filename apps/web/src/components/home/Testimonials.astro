@@ -1,0 +1,58 @@
+---
+const REVIEWS = [
+  {
+    name: 'Mehmet Y.',
+    car: 'BMW 3 Serisi F30',
+    rating: 5,
+    text: 'Ölçü mükemmel oturdu, kırmızı kenarlık + karbon topukluk kombinasyonu efsane görünüyor. Üretim süreci de Whatsapp\'tan adım adım bilgi verildi.',
+  },
+  {
+    name: 'Ayşe K.',
+    car: 'Dacia Duster',
+    rating: 5,
+    text: 'Çocuklarla aile aracında önceki halı paspasları temizlemek kabustu. Bu havuzlu paspaslar bir hortumla siliniyor, üstelik bej + krem kombi de çok şık.',
+  },
+  {
+    name: 'Kaan S.',
+    car: 'Audi A4 B9',
+    rating: 5,
+    text: 'Sipariş takip linki her aşamada güncellendi. "Şu an aracımın paspası kesiliyor" hissi gerçekten farklı bir deneyim. 4 günde elimde.',
+  },
+]
+
+function star(filled: boolean) {
+  return filled ? '★' : '☆'
+}
+---
+
+<section class="border-y border-[var(--color-border)]/50 bg-[var(--color-surface)]/40">
+  <div class="container-page py-20 md:py-24">
+    <div class="text-center max-w-2xl mx-auto mb-12">
+      <p class="text-sm text-[var(--color-primary)] font-medium uppercase tracking-wider">
+        Yorumlar
+      </p>
+      <h2 class="mt-2 font-display text-3xl md:text-4xl font-semibold tracking-tight">
+        2.000+ memnun sürücü
+      </h2>
+    </div>
+
+    <div class="grid md:grid-cols-3 gap-5">
+      {
+        REVIEWS.map((r) => (
+          <article class="p-6 rounded-2xl bg-[var(--color-surface)] border border-[var(--color-border)]/60">
+            <div class="flex items-center gap-2 text-[var(--color-primary)] text-lg" aria-label={`${r.rating} yıldız`}>
+              {Array.from({ length: 5 }).map((_, i) => (
+                <span aria-hidden="true">{star(i < r.rating)}</span>
+              ))}
+            </div>
+            <p class="mt-4 text-sm leading-relaxed text-[var(--color-text-soft)]">"{r.text}"</p>
+            <div class="mt-5 pt-4 border-t border-[var(--color-border)]/40">
+              <div class="text-sm font-semibold">{r.name}</div>
+              <div class="text-xs text-[var(--color-text-muted)]">{r.car}</div>
+            </div>
+          </article>
+        ))
+      }
+    </div>
+  </div>
+</section>

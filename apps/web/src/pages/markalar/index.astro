@@ -1,0 +1,27 @@
+---
+import Base from '@layouts/Base.astro'
+import { BRANDS } from '@lib/catalog'
+---
+
+<Base title="Tüm Markalar" description="3000+ araç modeline özel kalıbımız var. Markanı seç, paspasını tasarla.">
+  <section class="container-page py-16 md:py-24">
+    <p class="text-sm text-[var(--color-primary)] font-medium uppercase tracking-wider">Markalar</p>
+    <h1 class="mt-2 font-display text-4xl md:text-5xl font-semibold tracking-tight">Markanı seç</h1>
+    <p class="mt-3 text-[var(--color-text-soft)]">
+      30+ marka, 3000+ model. Listede yoksa <a href="https://wa.me/905550000000" class="text-[var(--color-primary)] hover:underline">WhatsApp</a>'tan iletin.
+    </p>
+
+    <div class="mt-10 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
+      {BRANDS.map((b) => (
+        <a
+          href={`/konfigurator?brand=${b.slug}`}
+          class="group aspect-[4/3] flex items-center justify-center rounded-xl border border-[var(--color-border)]/60 bg-[var(--color-surface)] hover:bg-[var(--color-surface-2)] hover:border-[var(--color-primary)]/40 transition-all hover:-translate-y-0.5"
+        >
+          <span class="font-display text-base md:text-lg font-semibold text-[var(--color-text-soft)] group-hover:text-[var(--color-text)] tracking-wide">
+            {b.name}
+          </span>
+        </a>
+      ))}
+    </div>
+  </section>
+</Base>

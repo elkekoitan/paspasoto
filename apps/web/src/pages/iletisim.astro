@@ -1,0 +1,54 @@
+---
+import Base from '@layouts/Base.astro'
+---
+
+<Base title="İletişim" description="Konya atölyemize ulaşın — telefon, WhatsApp, e-posta.">
+  <section class="container-page py-16 md:py-24">
+    <div class="grid md:grid-cols-2 gap-12 max-w-5xl">
+      <div>
+        <p class="text-sm text-[var(--color-primary)] font-medium uppercase tracking-wider">İletişim</p>
+        <h1 class="mt-2 font-display text-4xl md:text-5xl font-semibold tracking-tight">Bize ulaşın</h1>
+        <p class="mt-4 text-[var(--color-text-soft)]">
+          Sorularınız için her gün 09:00 - 19:00 arası ulaşabilirsiniz.
+        </p>
+
+        <ul class="mt-8 space-y-4 text-sm">
+          <li class="flex items-center gap-3">
+            <span class="size-9 grid place-items-center rounded-lg bg-[var(--color-surface-2)]">📞</span>
+            <a href="tel:+905550000000" class="hover:text-[var(--color-primary)]">+90 555 000 00 00</a>
+          </li>
+          <li class="flex items-center gap-3">
+            <span class="size-9 grid place-items-center rounded-lg bg-[var(--color-surface-2)]">💬</span>
+            <a href="https://wa.me/905550000000" class="hover:text-[var(--color-primary)]" target="_blank" rel="noopener">WhatsApp</a>
+          </li>
+          <li class="flex items-center gap-3">
+            <span class="size-9 grid place-items-center rounded-lg bg-[var(--color-surface-2)]">✉</span>
+            <a href="mailto:destek@paspasoto.com" class="hover:text-[var(--color-primary)]">destek@paspasoto.com</a>
+          </li>
+          <li class="flex items-center gap-3">
+            <span class="size-9 grid place-items-center rounded-lg bg-[var(--color-surface-2)]">📍</span>
+            <span class="text-[var(--color-text-soft)]">Konya, Türkiye</span>
+          </li>
+        </ul>
+      </div>
+
+      <form class="p-6 rounded-2xl bg-[var(--color-surface)] border border-[var(--color-border)]/60 space-y-4">
+        <div>
+          <label for="name" class="block text-sm font-medium mb-1.5">Ad Soyad</label>
+          <input id="name" name="name" type="text" required class="w-full px-4 py-2.5 rounded-lg bg-[var(--color-surface-2)] border border-[var(--color-border)] focus:border-[var(--color-primary)] outline-none text-sm" />
+        </div>
+        <div>
+          <label for="email" class="block text-sm font-medium mb-1.5">E-posta</label>
+          <input id="email" name="email" type="email" required class="w-full px-4 py-2.5 rounded-lg bg-[var(--color-surface-2)] border border-[var(--color-border)] focus:border-[var(--color-primary)] outline-none text-sm" />
+        </div>
+        <div>
+          <label for="message" class="block text-sm font-medium mb-1.5">Mesajınız</label>
+          <textarea id="message" name="message" rows="4" required class="w-full px-4 py-2.5 rounded-lg bg-[var(--color-surface-2)] border border-[var(--color-border)] focus:border-[var(--color-primary)] outline-none text-sm resize-none"></textarea>
+        </div>
+        <button type="submit" class="w-full px-5 py-3 rounded-lg text-sm font-semibold bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] text-[var(--color-bg)] transition-colors">
+          Gönder
+        </button>
+      </form>
+    </div>
+  </section>
+</Base>

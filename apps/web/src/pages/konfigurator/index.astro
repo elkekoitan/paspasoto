@@ -1,0 +1,22 @@
+---
+import Base from '@layouts/Base.astro'
+import Configurator from '@components/configurator/Configurator.tsx'
+---
+
+<Base
+  title="Konfigüratör — Aracına özel paspas tasarla"
+  description="Marka, model, paspas rengi, kenarlık, topukluk ve amblem seç. 7 adımda tasarla, canlı önizle, sipariş ver."
+>
+  <section class="container-page pt-8 pb-20">
+    <div class="mb-6">
+      <h1 class="font-display text-3xl md:text-4xl font-semibold tracking-tight">
+        Paspasını <span class="text-gradient-amber">tasarla</span>
+      </h1>
+      <p class="mt-2 text-[var(--color-text-soft)]">
+        7 adım, canlı önizleme. Aracına özel kalıbı sen kombinle.
+      </p>
+    </div>
+
+    <Configurator client:load />
+  </section>
+</Base>
