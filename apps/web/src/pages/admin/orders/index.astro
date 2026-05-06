@@ -1,0 +1,119 @@
+---
+export const prerender = false
+import AdminLayout from '@layouts/AdminLayout.astro'
+import { getSession } from '../../../server/auth'
+import { listOrders, PRODUCTION_TIMELINE } from '../../../server/db'
+import { formatTRY, formatDateTime } from '@lib/format'
+
+if (!getSession(Astro.cookies)) return Astro.redirect('/admin/login')
+
+const filter = Astro.url.searchParams.get('filter') ?? 'all'
+const all = listOrders()
+const filtered =
+  filter === 'production'
+    ? all.filter((o) => ['received', 'payment_confirmed', 'production_started', 'production_cutting', 'production_sewing', 'quality_check'].includes(o.productionStatus))
+    : filter === 'shipped'
+    ? all.filter((o) => o.productionStatus === 'shipped')
+    : filter === 'delivered'
+    ? all.filter((o) => o.productionStatus === 'delivered')
+    : filter === 'unpaid'
+    ? all.filter((o) => o.paymentStatus !== 'tamamlandi' && o.productionStatus !== 'cancelled')
+    : all
+
+const FILTERS = [
+  { k: 'all', l: 'Tümü', n: all.length },
+  { k: 'production', l: 'Üretimde', n: all.filter((o) => ['received', 'payment_confirmed', 'production_started', 'production_cutting', 'production_sewing', 'quality_check'].includes(o.productionStatus)).length },
+  { k: 'shipped', l: 'Kargoda', n: all.filter((o) => o.productionStatus === 'shipped').length },
+  { k: 'delivered', l: 'Teslim Edildi', n: all.filter((o) => o.productionStatus === 'delivered').length },
+  { k: 'unpaid', l: 'Ödeme Bekliyor', n: all.filter((o) => o.paymentStatus !== 'tamamlandi').length },
+]
+
+const statusLabel = (s: string) => PRODUCTION_TIMELINE.find((t) => t.status === s)?.label ?? s
+---
+
+<AdminLayout title="Siparişler" current="orders">
+  <div class="p-6 md:p-10 max-w-7xl mx-auto">
+    <header class="flex items-end justify-between gap-4 mb-6 flex-wrap">
+      <div>
+        <p class="text-xs uppercase tracking-[0.2em] text-[var(--color-primary)] font-semibold">Siparişler</p>
+        <h1 class="mt-2 font-display text-3xl font-semibold">Tüm Siparişler</h1>
+      </div>
+      <a
+        href="/admin/orders/new"
+        class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] text-[var(--color-bg)]"
+      >
+        + Yeni Sipariş
+      </a>
+    </header>
+
+    <div class="flex flex-wrap gap-2 mb-6">
+      {
+        FILTERS.map((f) => (
+          <a
+            href={f.k === 'all' ? '/admin/orders' : `/admin/orders?filter=${f.k}`}
+            class={[
+              'inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium border transition-colors',
+              filter === f.k
+                ? 'border-[var(--color-primary)] bg-[var(--color-primary-soft)] text-[var(--color-primary)]'
+                : 'border-[var(--color-border)] text-[var(--color-text-soft)] hover:text-[var(--color-text)]',
+            ].join(' ')}
+          >
+            {f.l}
+            <span class="text-[10px] opacity-60">({f.n})</span>
+          </a>
+        ))
+      }
+    </div>
+
+    <div class="rounded-2xl bg-[var(--color-surface)] border border-[var(--color-border)]/60 overflow-hidden">
+      {
+        filtered.length === 0 ? (
+          <div class="p-12 text-center text-[var(--color-text-muted)]">Bu filtrede sipariş yok.</div>
+        ) : (
+          <div class="overflow-x-auto">
+            <table class="w-full text-sm">
+              <thead class="text-[10px] uppercase tracking-wider text-[var(--color-text-muted)] border-b border-[var(--color-border)]/40">
+                <tr>
+                  <th class="px-5 py-3 text-left font-semibold">Sipariş No</th>
+                  <th class="px-5 py-3 text-left font-semibold">Müşteri / Telefon</th>
+                  <th class="px-5 py-3 text-left font-semibold">Araç</th>
+                  <th class="px-5 py-3 text-left font-semibold">Tarih</th>
+                  <th class="px-5 py-3 text-left font-semibold">Durum</th>
+                  <th class="px-5 py-3 text-right font-semibold">Toplam</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filtered.map((o) => (
+                  <tr class="border-b border-[var(--color-border)]/30 hover:bg-[var(--color-surface-2)]/40">
+                    <td class="px-5 py-3">
+                      <a href={`/admin/orders/${o.orderNo}`} class="font-mono text-xs text-[var(--color-primary)] hover:underline">
+                        {o.orderNo}
+                      </a>
+                    </td>
+                    <td class="px-5 py-3">
+                      <div class="font-medium">{o.customer.fullName}</div>
+                      <div class="text-[10px] text-[var(--color-text-muted)]">{o.customer.phone}</div>
+                    </td>
+                    <td class="px-5 py-3 text-xs">
+                      {o.items[0] ? `${o.items[0].brandName} ${o.items[0].modelName}` : '—'}
+                    </td>
+                    <td class="px-5 py-3 text-xs text-[var(--color-text-muted)] whitespace-nowrap">
+                      {formatDateTime(o.createdAt)}
+                    </td>
+                    <td class="px-5 py-3 text-xs">
+                      <div>{statusLabel(o.productionStatus)}</div>
+                      <div class="text-[10px] text-[var(--color-text-muted)]">
+                        {o.paymentStatus === 'tamamlandi' ? '✓ Ödeme tamam' : o.paymentStatus === 'kismi' ? `Kısmi ${formatTRY(o.paidAmount)}` : 'Ödeme bekleniyor'}
+                      </div>
+                    </td>
+                    <td class="px-5 py-3 text-right font-semibold tabular-nums">{formatTRY(o.total)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )
+      }
+    </div>
+  </div>
+</AdminLayout>

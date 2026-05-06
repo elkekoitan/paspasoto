@@ -16,7 +16,6 @@ import {
   type Product,
 } from '../../lib/catalog'
 import { formatTRY } from '../../lib/format'
-import { addToCart } from '../../stores/cart'
 
 type StepKey = 'brand' | 'model' | 'product' | 'mat' | 'border' | 'heel' | 'logo' | 'summary'
 const STEPS: { key: StepKey; label: string }[] = [
@@ -95,32 +94,23 @@ export default function Configurator() {
       alert('Lütfen tüm adımları tamamlayın.')
       return
     }
-    addToCart({
-      brandSlug: brand.slug,
-      brandName: brand.name,
-      modelSlug: model.slug,
-      modelName: model.name,
-      modelChassis: model.chassisCode,
-      productSlug: product.slug,
-      productName: product.name,
-      productParts: product.parts,
-      matSlug: matColor.slug,
-      matName: matColor.name,
-      matSwatchUrl: matColor.swatchUrl,
-      borderSlug: borderColor.slug,
-      borderName: borderColor.name,
-      borderSwatchUrl: borderColor.swatchUrl,
-      heelSlug: heelPad.slug,
-      heelName: heelPad.name,
-      heelSwatchUrl: heelPad.swatchUrl,
-      heelPadPassenger,
-      logoBrandSlug: logoAccessory?.brandSlug ?? null,
-      logoQty: logoAccessory && logoAccessory.brandSlug ? product.parts : 0,
-      unitPrice: totalPrice,
-      qty: 1,
-    })
+    // WhatsApp'tan teklif al — konfigürasyon detayı mesaja otomatik doldurulur
+    const lines = [
+      `Merhaba, aracıma özel paspas teklifi almak istiyorum:`,
+      ``,
+      `🚗 Araç: ${brand.name} ${model.name} ${model.chassisCode} (${model.yearStart}-${model.yearEnd})`,
+      `📦 Set: ${product.name} (${product.parts} parça)`,
+      `🎨 Paspas zemini: ${matColor.name}`,
+      `✨ Kenarlık: ${borderColor.name}`,
+      `👟 Topukluk: ${heelPad.name}${heelPadPassenger ? ' (sürücü+yolcu)' : ''}`,
+      `🏷 Amblem: ${logoAccessory && logoAccessory.brandSlug ? `${brand.name} × ${product.parts}` : 'Yok'}`,
+      ``,
+      `Tahmini fiyat: ${formatTRY(totalPrice)}`,
+    ]
+    const message = encodeURIComponent(lines.join('\n'))
+    const url = `https://wa.me/905550000000?text=${message}`
     if (typeof window !== 'undefined') {
-      window.location.href = '/sepet'
+      window.open(url, '_blank', 'noopener,noreferrer')
     }
   }
 
@@ -810,7 +800,7 @@ function SummaryStep({
           onClick={onAddToCart}
           class="px-6 py-3.5 rounded-xl text-sm font-semibold bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] text-[var(--color-bg)] transition-all hover:shadow-[var(--shadow-glow)] whitespace-nowrap"
         >
-          Paspasınızı Sipariş Verin
+          WhatsApp'tan Teklif Al
         </button>
       </div>
 
@@ -1097,7 +1087,7 @@ function Preview({
             onClick={onAddToCart}
             class="px-5 py-3 rounded-xl text-sm font-semibold bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] text-[var(--color-bg)] transition-all hover:shadow-[var(--shadow-glow)] whitespace-nowrap"
           >
-            Paspasınızı Sipariş Verin
+            WhatsApp'tan Teklif Al
           </button>
         </div>
       </div>

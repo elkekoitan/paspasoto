@@ -1,0 +1,70 @@
+---
+export const prerender = false
+import '../../styles/globals.css'
+
+const error = Astro.url.searchParams.get('error')
+---
+
+<!doctype html>
+<html lang="tr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="robots" content="noindex,nofollow" />
+    <title>Yönetim Girişi · PaspasOto</title>
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+  </head>
+  <body class="grain">
+    <div class="min-h-screen grid place-items-center p-6">
+      <div class="w-full max-w-sm">
+        <div class="text-center mb-10">
+          <img src="/logo.svg" alt="PaspasOto" class="size-20 mx-auto" />
+          <h1 class="mt-6 font-display text-2xl font-semibold">PaspasOto Yönetim</h1>
+          <p class="mt-2 text-sm text-[var(--color-text-muted)]">Atölye sipariş takip paneli</p>
+        </div>
+
+        <form
+          method="POST"
+          action="/api/auth/login"
+          class="rounded-2xl bg-[var(--color-surface)] border border-[var(--color-border)]/60 p-6 space-y-4"
+        >
+          <div>
+            <label for="password" class="block text-sm font-medium mb-1.5">Yönetici Şifresi</label>
+            <input
+              id="password"
+              name="password"
+              type="password"
+              required
+              autofocus
+              class="w-full px-4 py-3 rounded-lg bg-[var(--color-surface-2)] border border-[var(--color-border)] focus:border-[var(--color-primary)] outline-none text-sm"
+            />
+          </div>
+
+          {
+            error && (
+              <p class="text-sm text-[var(--color-danger)] text-center">
+                Hatalı şifre. Tekrar deneyin.
+              </p>
+            )
+          }
+
+          <button
+            type="submit"
+            class="w-full px-5 py-3 rounded-lg text-sm font-semibold bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] text-[var(--color-bg)] transition-all hover:shadow-[var(--shadow-glow)]"
+          >
+            Giriş Yap
+          </button>
+        </form>
+
+        <p class="mt-6 text-center text-xs text-[var(--color-text-muted)]">
+          <a href="/" class="hover:text-[var(--color-text)]">← Anasayfaya dön</a>
+        </p>
+      </div>
+    </div>
+  </body>
+</html>

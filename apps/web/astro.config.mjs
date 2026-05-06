@@ -1,6 +1,7 @@
 import { defineConfig } from 'astro/config'
 import preact from '@astrojs/preact'
 import sitemap from '@astrojs/sitemap'
+import node from '@astrojs/node'
 import AstroPWA from '@vite-pwa/astro'
 import tailwindcss from '@tailwindcss/vite'
 
@@ -86,7 +87,8 @@ if (!PWA_DISABLED) {
 
 export default defineConfig({
   site: SITE_URL,
-  output: 'static',
+  output: 'server',
+  adapter: node({ mode: 'standalone' }),
   integrations,
   vite: {
     plugins: [tailwindcss()],

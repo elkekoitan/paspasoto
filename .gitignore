@@ -66,3 +66,6 @@ temp/
 apps/web/public/sw.js
 apps/web/public/workbox-*.js
 apps/web/public/registerSW.js
+
+# Local JSON DB (production: volume mount /data)
+apps/web/.data/

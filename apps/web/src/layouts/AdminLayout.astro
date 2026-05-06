@@ -1,0 +1,94 @@
+---
+import '../styles/globals.css'
+
+interface Props {
+  title?: string
+  current?: 'dashboard' | 'orders' | 'new'
+}
+const { title = 'Yönetim', current = 'dashboard' } = Astro.props
+
+const NAV = [
+  { key: 'dashboard', href: '/admin', label: 'Gösterge', icon: 'M3 12l9-9 9 9M5 10v10h4v-6h6v6h4V10' },
+  { key: 'orders', href: '/admin/orders', label: 'Siparişler', icon: 'M9 11l3 3 8-8M3 12a9 9 0 1 0 18 0 9 9 0 0 0-18 0z' },
+  { key: 'new', href: '/admin/orders/new', label: 'Yeni Sipariş', icon: 'M12 5v14M5 12h14' },
+]
+---
+
+<!doctype html>
+<html lang="tr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#0B0B0F" />
+    <meta name="robots" content="noindex,nofollow" />
+    <title>{title} · PaspasOto Yönetim</title>
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+  </head>
+  <body class="min-h-screen">
+    <div class="flex min-h-screen">
+      <aside class="w-64 shrink-0 border-r border-[var(--color-border)]/60 bg-[var(--color-surface)] flex flex-col">
+        <a href="/admin" class="flex items-center gap-3 p-5 border-b border-[var(--color-border)]/60">
+          <img src="/logo.svg" alt="" class="size-9" />
+          <div>
+            <div class="font-display font-semibold text-sm">PaspasOto</div>
+            <div class="text-[10px] uppercase tracking-[0.2em] text-[var(--color-text-muted)]">Yönetim</div>
+          </div>
+        </a>
+
+        <nav class="flex-1 p-3">
+          <ul class="space-y-1">
+            {
+              NAV.map((n) => (
+                <li>
+                  <a
+                    href={n.href}
+                    class={[
+                      'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors',
+                      current === n.key
+                        ? 'bg-[var(--color-primary-soft)] text-[var(--color-primary)]'
+                        : 'text-[var(--color-text-soft)] hover:text-[var(--color-text)] hover:bg-[var(--color-surface-2)]',
+                    ].join(' ')}
+                  >
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d={n.icon} />
+                    </svg>
+                    {n.label}
+                  </a>
+                </li>
+              ))
+            }
+          </ul>
+        </nav>
+
+        <div class="p-3 border-t border-[var(--color-border)]/60">
+          <form method="POST" action="/api/auth/logout">
+            <button
+              type="submit"
+              class="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-[var(--color-text-muted)] hover:text-[var(--color-danger)] hover:bg-[var(--color-surface-2)] transition-colors"
+            >
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9" />
+              </svg>
+              Çıkış
+            </button>
+          </form>
+          <a
+            href="/"
+            class="mt-1 flex items-center gap-3 px-3 py-2.5 rounded-lg text-xs text-[var(--color-text-muted)] hover:text-[var(--color-text)]"
+          >
+            ← Müşteri sitesine dön
+          </a>
+        </div>
+      </aside>
+
+      <main class="flex-1 min-w-0">
+        <slot />
+      </main>
+    </div>
+  </body>
+</html>

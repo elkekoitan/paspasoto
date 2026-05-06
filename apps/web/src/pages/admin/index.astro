@@ -1,0 +1,158 @@
+---
+export const prerender = false
+import AdminLayout from '@layouts/AdminLayout.astro'
+import { getSession } from '../../server/auth'
+import { listOrders, PRODUCTION_TIMELINE, type OrderStatus } from '../../server/db'
+import { formatTRY, formatDateTime } from '@lib/format'
+
+if (!getSession(Astro.cookies)) return Astro.redirect('/admin/login')
+
+const orders = listOrders()
+const totalRevenue = orders.reduce((s, o) => s + o.total, 0)
+const paidRevenue = orders.reduce((s, o) => s + o.paidAmount, 0)
+const inProductionCount = orders.filter(
+  (o) => !['delivered', 'cancelled', 'shipped'].includes(o.productionStatus),
+).length
+const awaitingPaymentCount = orders.filter(
+  (o) => o.paymentStatus !== 'tamamlandi' && o.productionStatus !== 'cancelled',
+).length
+
+const statusLabel = (s: OrderStatus) =>
+  PRODUCTION_TIMELINE.find((t) => t.status === s)?.label ?? s
+
+const STATUS_CHIP: Record<string, string> = {
+  received: 'bg-blue-500/15 text-blue-400 border-blue-500/30',
+  payment_confirmed: 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30',
+  production_started: 'bg-amber-500/15 text-amber-400 border-amber-500/30',
+  production_cutting: 'bg-amber-500/15 text-amber-400 border-amber-500/30',
+  production_sewing: 'bg-amber-500/15 text-amber-400 border-amber-500/30',
+  quality_check: 'bg-violet-500/15 text-violet-400 border-violet-500/30',
+  shipped: 'bg-cyan-500/15 text-cyan-400 border-cyan-500/30',
+  delivered: 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30',
+  cancelled: 'bg-red-500/15 text-red-400 border-red-500/30',
+}
+
+const PAYMENT_CHIP: Record<string, string> = {
+  bekliyor: 'bg-amber-500/15 text-amber-400 border-amber-500/30',
+  kismi: 'bg-blue-500/15 text-blue-400 border-blue-500/30',
+  tamamlandi: 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30',
+  iade: 'bg-red-500/15 text-red-400 border-red-500/30',
+}
+
+const stats = [
+  { label: 'Toplam Sipariş', value: String(orders.length), accent: 'primary' },
+  { label: 'Üretimde', value: String(inProductionCount), accent: 'warning' },
+  { label: 'Ödeme Bekliyor', value: String(awaitingPaymentCount), accent: 'info' },
+  { label: 'Ciro', value: formatTRY(totalRevenue), sub: `Tahsil: ${formatTRY(paidRevenue)}`, accent: 'success' },
+]
+---
+
+<AdminLayout title="Gösterge" current="dashboard">
+  <div class="p-6 md:p-10 max-w-7xl mx-auto">
+    <header class="flex items-end justify-between gap-4 mb-8 flex-wrap">
+      <div>
+        <p class="text-xs uppercase tracking-[0.2em] text-[var(--color-primary)] font-semibold">
+          Atölye Yönetim
+        </p>
+        <h1 class="mt-2 font-display text-3xl font-semibold">Gösterge Paneli</h1>
+      </div>
+      <a
+        href="/admin/orders/new"
+        class="inline-flex items-center gap-2 px-5 py-3 rounded-xl text-sm font-semibold bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] text-[var(--color-bg)] transition-all"
+      >
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+          <path d="M12 5v14M5 12h14"></path>
+        </svg>
+        Yeni Sipariş Ekle
+      </a>
+    </header>
+
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-10">
+      {
+        stats.map((s) => (
+          <div class="p-5 rounded-2xl bg-[var(--color-surface)] border border-[var(--color-border)]/60">
+            <div class="text-[10px] uppercase tracking-[0.2em] text-[var(--color-text-muted)] font-semibold">
+              {s.label}
+            </div>
+            <div class="mt-2 font-display text-2xl md:text-3xl font-semibold tabular-nums">{s.value}</div>
+            {s.sub && <div class="mt-1 text-xs text-[var(--color-text-muted)]">{s.sub}</div>}
+          </div>
+        ))
+      }
+    </div>
+
+    <div class="rounded-2xl bg-[var(--color-surface)] border border-[var(--color-border)]/60 overflow-hidden">
+      <div class="flex items-center justify-between p-5 border-b border-[var(--color-border)]/60">
+        <h2 class="font-display text-lg font-semibold">Son Siparişler</h2>
+        <a href="/admin/orders" class="text-xs text-[var(--color-text-muted)] hover:text-[var(--color-primary)]">
+          Tümünü gör →
+        </a>
+      </div>
+      {
+        orders.length === 0 ? (
+          <div class="p-12 text-center">
+            <p class="text-[var(--color-text-muted)] mb-4">Henüz sipariş yok.</p>
+            <a href="/admin/orders/new" class="text-[var(--color-primary)] hover:underline text-sm">
+              İlk siparişi ekleyin →
+            </a>
+          </div>
+        ) : (
+          <div class="overflow-x-auto">
+            <table class="w-full text-sm">
+              <thead class="text-[10px] uppercase tracking-wider text-[var(--color-text-muted)] font-semibold border-b border-[var(--color-border)]/40">
+                <tr>
+                  <th class="px-5 py-3 text-left">Sipariş No</th>
+                  <th class="px-5 py-3 text-left">Müşteri</th>
+                  <th class="px-5 py-3 text-left">Araç</th>
+                  <th class="px-5 py-3 text-left">Tarih</th>
+                  <th class="px-5 py-3 text-left">Üretim</th>
+                  <th class="px-5 py-3 text-left">Ödeme</th>
+                  <th class="px-5 py-3 text-right">Toplam</th>
+                </tr>
+              </thead>
+              <tbody>
+                {orders.slice(0, 10).map((o) => (
+                  <tr class="border-b border-[var(--color-border)]/30 hover:bg-[var(--color-surface-2)]/40 transition-colors">
+                    <td class="px-5 py-3">
+                      <a href={`/admin/orders/${o.orderNo}`} class="font-mono text-xs text-[var(--color-primary)] hover:underline">
+                        {o.orderNo}
+                      </a>
+                    </td>
+                    <td class="px-5 py-3">
+                      <div class="font-medium">{o.customer.fullName}</div>
+                      <div class="text-[10px] text-[var(--color-text-muted)]">{o.customer.phone}</div>
+                    </td>
+                    <td class="px-5 py-3">
+                      {o.items[0] ? (
+                        <>
+                          <div class="font-medium text-xs">
+                            {o.items[0].brandName} {o.items[0].modelName}
+                          </div>
+                          <div class="text-[10px] text-[var(--color-text-muted)]">{o.items[0].productName}</div>
+                        </>
+                      ) : '—'}
+                    </td>
+                    <td class="px-5 py-3 text-xs text-[var(--color-text-muted)] whitespace-nowrap">
+                      {formatDateTime(o.createdAt)}
+                    </td>
+                    <td class="px-5 py-3">
+                      <span class={`px-2 py-0.5 rounded-full text-[10px] font-semibold border ${STATUS_CHIP[o.productionStatus] ?? ''}`}>
+                        {statusLabel(o.productionStatus)}
+                      </span>
+                    </td>
+                    <td class="px-5 py-3">
+                      <span class={`px-2 py-0.5 rounded-full text-[10px] font-semibold border ${PAYMENT_CHIP[o.paymentStatus] ?? ''}`}>
+                        {o.paymentStatus === 'bekliyor' ? 'Bekliyor' : o.paymentStatus === 'kismi' ? 'Kısmi' : o.paymentStatus === 'tamamlandi' ? 'Tamamlandı' : 'İade'}
+                      </span>
+                    </td>
+                    <td class="px-5 py-3 text-right font-semibold tabular-nums">{formatTRY(o.total)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )
+      }
+    </div>
+  </div>
+</AdminLayout>

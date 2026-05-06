@@ -1,0 +1,26 @@
+---
+export const prerender = false
+import AdminLayout from '@layouts/AdminLayout.astro'
+import { getSession } from '../../../server/auth'
+import { getByOrderNo } from '../../../server/db'
+import OrderEditor from '@components/admin/OrderEditor.tsx'
+
+if (!getSession(Astro.cookies)) return Astro.redirect('/admin/login')
+
+const orderNo = Astro.params.orderNo!
+const order = getByOrderNo(orderNo)
+if (!order) return new Response('Sipariş bulunamadı', { status: 404 })
+---
+
+<AdminLayout title={`Sipariş ${orderNo}`} current="orders">
+  <div class="p-6 md:p-10 max-w-7xl mx-auto">
+    <a href="/admin/orders" class="text-xs text-[var(--color-text-muted)] hover:text-[var(--color-primary)]">← Tüm Siparişler</a>
+    <header class="mt-3 mb-8">
+      <p class="text-xs uppercase tracking-[0.2em] text-[var(--color-primary)] font-semibold">Sipariş Detayı</p>
+      <h1 class="mt-2 font-display text-3xl font-semibold">
+        {order.customer.fullName} · {order.items[0]?.brandName} {order.items[0]?.modelName}
+      </h1>
+    </header>
+    <OrderEditor initial={order} client:load />
+  </div>
+</AdminLayout>
