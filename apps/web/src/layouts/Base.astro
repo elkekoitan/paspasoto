@@ -105,6 +105,15 @@ const ogImageUrl = new URL(ogImage, SITE_URL).toString()
     )}
 
     <script>
+      // Service Worker kaydı — PWA için şart (HTTPS gerektirir)
+      if ('serviceWorker' in navigator && location.protocol === 'https:') {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker
+            .register('/sw.js', { scope: '/' })
+            .catch((err) => console.warn('SW kayıt hatası:', err))
+        })
+      }
+
       // PWA install prompt deferral
       let deferredPrompt: any = null
       window.addEventListener('beforeinstallprompt', (e) => {
