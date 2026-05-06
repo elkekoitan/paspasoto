@@ -2,111 +2,163 @@
 import { MAT_COLORS, BORDER_COLORS, HEEL_PADS } from '@lib/catalog'
 ---
 
-<section class="relative overflow-hidden py-20 md:py-28 bg-[var(--color-surface)]/40 border-y border-[var(--color-border)]/50">
-  <div class="absolute inset-0 -z-10 gradient-radial opacity-50" aria-hidden="true"></div>
+<section
+  class="relative overflow-hidden py-24 md:py-32 bg-[var(--color-surface)]/30 border-y border-[var(--color-border)]/40"
+  data-reveal
+>
+  {/* Arkaplan efekti */}
+  <div
+    class="absolute inset-0 -z-10 opacity-50"
+    style="background:
+      radial-gradient(ellipse 50% 40% at 25% 30%, rgba(212,146,58,0.08), transparent 60%),
+      radial-gradient(ellipse 50% 40% at 75% 70%, rgba(59,130,246,0.06), transparent 60%);"
+    aria-hidden="true"
+  >
+  </div>
 
   <div class="container-page">
-    <div class="text-center max-w-2xl mx-auto mb-14">
-      <p class="text-sm text-[var(--color-primary)] font-medium uppercase tracking-wider">
+    <div class="text-center max-w-3xl mx-auto mb-16 md:mb-20">
+      <p class="text-sm text-[var(--color-primary)] font-medium uppercase tracking-[0.2em]">
         Sınırsız kombinasyon
       </p>
-      <h2 class="mt-2 font-display text-3xl md:text-4xl font-semibold tracking-tight">
-        10 paspas · 18 kenarlık · 8 topukluk
+      <h2 class="mt-3 font-display text-4xl md:text-6xl font-semibold tracking-tight leading-[1.05]">
+        <span class="tabular-nums">10</span> paspas <span class="text-[var(--color-text-muted)]">·</span>
+        <span class="tabular-nums">15</span> kenarlık <span class="text-[var(--color-text-muted)]">·</span>
+        <span class="tabular-nums">8</span> topukluk
       </h2>
-      <p class="mt-3 text-[var(--color-text-soft)]">
-        Aracının ruhunu yansıtan kombinasyonu seç. Konfigüratörde canlı önizleme ile.
+      <p class="mt-5 text-lg text-[var(--color-text-soft)]">
+        Her kombinasyon, atölyemizden çıkmadan önce gözden geçirilir.
       </p>
     </div>
 
-    <!-- Paspas zemin renkleri -->
-    <div class="mb-10">
-      <h3 class="text-xs uppercase tracking-wider text-[var(--color-text-muted)] mb-4 font-semibold">
-        Paspas Zemin Rengi · 10 seçenek
-      </h3>
-      <div class="grid grid-cols-5 sm:grid-cols-10 gap-2.5">
+    {/* Paspas zemin renkleri */}
+    <div class="mb-16">
+      <div class="flex items-baseline justify-between mb-6 flex-wrap gap-2">
+        <h3 class="font-display text-xl font-semibold flex items-center gap-3">
+          <span class="size-1.5 rounded-full bg-[var(--color-primary)]"></span>
+          Paspas Zemin Rengi
+        </h3>
+        <span class="text-xs text-[var(--color-text-muted)] font-medium">10 seçenek</span>
+      </div>
+      <div class="grid grid-cols-2 sm:grid-cols-5 gap-3 md:gap-4">
         {
           MAT_COLORS.map((c) => (
-            <div class="group">
-              <div
-                class="aspect-square rounded-lg ring-1 ring-[var(--color-border)] hover:ring-[var(--color-primary)] transition-all hover:scale-[1.04] cursor-pointer relative overflow-hidden"
-                style={`background: ${c.hex};`}
-                title={c.name}
-              >
-                <div class="absolute inset-0 bg-[radial-gradient(circle_at_30%_30%,rgba(255,255,255,0.08),transparent_60%)]" />
+            <button
+              type="button"
+              class="group relative flex flex-col gap-2 rounded-2xl bg-[var(--color-surface)] border border-[var(--color-border)]/40 p-2.5 hover:border-[var(--color-primary)]/40 hover:bg-[var(--color-surface-2)] transition-all hover:-translate-y-1"
+              aria-label={c.name}
+            >
+              <div class="aspect-[4/3] rounded-xl overflow-hidden ring-1 ring-[var(--color-border)] group-hover:ring-[var(--color-primary)]/40 transition-all">
+                <img
+                  src={c.swatchUrl}
+                  alt={`${c.name} dokulu paspas`}
+                  loading="lazy"
+                  decoding="async"
+                  class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
+                />
               </div>
-              <div class="mt-1.5 text-[10px] sm:text-xs text-center text-[var(--color-text-muted)] group-hover:text-[var(--color-text)] truncate">
-                {c.name}
+              <div class="flex items-center justify-between px-1">
+                <span class="text-xs font-medium text-[var(--color-text)]">{c.name}</span>
+                <span
+                  class="size-3 rounded-full ring-1 ring-[var(--color-border)]"
+                  style={`background: ${c.hex};`}
+                  aria-hidden="true"
+                />
               </div>
-            </div>
+            </button>
           ))
         }
       </div>
     </div>
 
-    <!-- Kenarlık renkleri -->
-    <div class="mb-10">
-      <h3 class="text-xs uppercase tracking-wider text-[var(--color-text-muted)] mb-4 font-semibold">
-        Kenarlık Rengi · 18 seçenek
-      </h3>
-      <div class="grid grid-cols-6 sm:grid-cols-9 lg:grid-cols-18 gap-2">
+    {/* Kenarlık renkleri */}
+    <div class="mb-16">
+      <div class="flex items-baseline justify-between mb-6 flex-wrap gap-2">
+        <h3 class="font-display text-xl font-semibold flex items-center gap-3">
+          <span class="size-1.5 rounded-full bg-[var(--color-primary)]"></span>
+          Kenarlık Rengi
+        </h3>
+        <span class="text-xs text-[var(--color-text-muted)] font-medium">15 seçenek</span>
+      </div>
+      <div class="grid grid-cols-3 sm:grid-cols-5 lg:grid-cols-5 gap-2.5 md:gap-3">
         {
           BORDER_COLORS.map((c) => (
-            <div class="group">
-              <div
-                class="aspect-square rounded-md ring-1 ring-[var(--color-border)] hover:ring-[var(--color-primary)] transition-all hover:scale-105 cursor-pointer relative overflow-hidden"
-                style={`background: ${c.hex};`}
-                title={c.name}
-              />
-              <div class="mt-1 text-[10px] text-center text-[var(--color-text-muted)] truncate">
-                {c.name}
+            <button
+              type="button"
+              class="group relative flex flex-col gap-1.5 rounded-xl bg-[var(--color-surface)] border border-[var(--color-border)]/40 p-2 hover:border-[var(--color-primary)]/40 transition-all hover:-translate-y-0.5"
+              aria-label={c.name}
+            >
+              <div class="aspect-[5/3] rounded-lg overflow-hidden ring-1 ring-[var(--color-border)] group-hover:ring-[var(--color-primary)]/40 transition-all">
+                <img
+                  src={c.swatchUrl}
+                  alt={`${c.name} kenarlık dokusu`}
+                  loading="lazy"
+                  decoding="async"
+                  class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
+                />
               </div>
-            </div>
+              <span class="text-[11px] font-medium text-[var(--color-text-soft)] group-hover:text-[var(--color-text)] truncate text-center transition-colors">
+                {c.name}
+              </span>
+            </button>
           ))
         }
       </div>
     </div>
 
-    <!-- Topukluk -->
+    {/* Topukluk */}
     <div>
-      <h3 class="text-xs uppercase tracking-wider text-[var(--color-text-muted)] mb-4 font-semibold">
-        Topukluk Doku · 8 seçenek
-      </h3>
-      <div class="grid grid-cols-4 sm:grid-cols-8 gap-2.5">
+      <div class="flex items-baseline justify-between mb-6 flex-wrap gap-2">
+        <h3 class="font-display text-xl font-semibold flex items-center gap-3">
+          <span class="size-1.5 rounded-full bg-[var(--color-primary)]"></span>
+          Topukluk Doku
+          <span class="text-xs text-[var(--color-text-muted)] font-normal ml-2">aşınmayı önler</span>
+        </h3>
+        <span class="text-xs text-[var(--color-text-muted)] font-medium">8 seçenek</span>
+      </div>
+      <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 md:gap-4">
         {
           HEEL_PADS.map((h) => (
-            <div class="group">
-              <div
-                class="aspect-[4/3] rounded-lg ring-1 ring-[var(--color-border)] hover:ring-[var(--color-primary)] transition-all hover:scale-[1.04] cursor-pointer relative overflow-hidden"
-                style={`background: ${h.textureHex};`}
-                title={h.name}
-              >
-                {/* Doku simülasyonu — gerçek görsel Strapi'den swatch ile değişecek */}
-                <div
-                  class="absolute inset-0 opacity-50"
-                  style="background-image: radial-gradient(circle at 25% 25%, rgba(255,255,255,0.18) 1px, transparent 2px), radial-gradient(circle at 75% 75%, rgba(255,255,255,0.12) 1px, transparent 2px); background-size: 8px 8px, 12px 12px;"
+            <button
+              type="button"
+              class="group relative flex flex-col gap-2 rounded-2xl bg-[var(--color-surface)] border border-[var(--color-border)]/40 p-2.5 hover:border-[var(--color-primary)]/40 transition-all hover:-translate-y-1"
+              aria-label={h.name}
+            >
+              <div class="aspect-[5/3] rounded-xl overflow-hidden ring-1 ring-[var(--color-border)] group-hover:ring-[var(--color-primary)]/40 transition-all relative">
+                <img
+                  src={h.swatchUrl}
+                  alt={`${h.name} topukluk dokusu`}
+                  loading="lazy"
+                  decoding="async"
+                  class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
                 />
                 {h.isStandard && (
-                  <span class="absolute top-1 right-1 px-1.5 py-0.5 text-[9px] rounded-full bg-[var(--color-success)]/20 text-[var(--color-success)] font-medium">
+                  <span class="absolute top-2 right-2 px-2 py-0.5 text-[9px] rounded-full bg-[var(--color-success)]/90 text-white font-semibold uppercase tracking-wider">
                     Standart
                   </span>
                 )}
+                {!h.isStandard && h.pricePremium > 0 && (
+                  <span class="absolute top-2 right-2 px-2 py-0.5 text-[9px] rounded-full bg-[var(--color-bg)]/80 backdrop-blur text-[var(--color-primary)] font-semibold">
+                    +{h.pricePremium} ₺
+                  </span>
+                )}
               </div>
-              <div class="mt-1.5 text-[10px] sm:text-xs text-center text-[var(--color-text-muted)] group-hover:text-[var(--color-text)] truncate">
+              <span class="text-xs font-medium text-[var(--color-text-soft)] group-hover:text-[var(--color-text)] text-center transition-colors px-1">
                 {h.name}
-              </div>
-            </div>
+              </span>
+            </button>
           ))
         }
       </div>
     </div>
 
-    <div class="mt-12 text-center">
+    <div class="mt-16 text-center">
       <a
         href="/konfigurator"
-        class="inline-flex items-center gap-2 px-5 py-3 rounded-lg text-sm font-semibold border border-[var(--color-primary)] text-[var(--color-primary)] hover:bg-[var(--color-primary)] hover:text-[var(--color-bg)] transition-colors"
+        class="group inline-flex items-center gap-2 px-6 py-3.5 rounded-2xl text-sm font-semibold border-2 border-[var(--color-primary)]/40 text-[var(--color-primary)] hover:bg-[var(--color-primary)] hover:text-[var(--color-bg)] hover:border-[var(--color-primary)] transition-colors"
       >
         Kombinasyon yapmaya başla
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="group-hover:translate-x-1 transition-transform">
           <path d="M5 12h14"></path><path d="m12 5 7 7-7 7"></path>
         </svg>
       </a>

@@ -1,0 +1,51 @@
+---
+/**
+ * BrandLogo — simple-icons paketinden marka logosu render eder.
+ * Marka simple-icons'ta yoksa minimal "P" rozetine fallback yapar.
+ */
+import * as si from 'simple-icons'
+
+interface Props {
+  iconSlug?: string
+  name: string
+  size?: number
+  monochrome?: boolean
+  class?: string
+}
+
+const { iconSlug, name, size = 40, monochrome = true, class: className } = Astro.props
+
+// simple-icons export'ları "siBmw", "siAudi" formatında.
+// Slug'ı PascalCase'e çevir.
+function siKey(slug: string): keyof typeof si {
+  return ('si' + slug.charAt(0).toUpperCase() + slug.slice(1)) as keyof typeof si
+}
+
+const icon = iconSlug ? (si[siKey(iconSlug)] as { path: string; hex: string; title: string } | undefined) : undefined
+const fillColor = monochrome ? 'currentColor' : (icon?.hex ? `#${icon.hex}` : 'currentColor')
+---
+
+{
+  icon ? (
+    <svg
+      role="img"
+      aria-label={name}
+      viewBox="0 0 24 24"
+      width={size}
+      height={size}
+      class={className}
+      fill={fillColor}
+    >
+      <title>{name}</title>
+      <path d={icon.path} />
+    </svg>
+  ) : (
+    <span
+      class={`grid place-items-center font-display font-bold text-xs ${className ?? ''}`}
+      aria-label={name}
+      style={`width: ${size}px; height: ${size}px;`}
+    >
+      {name.slice(0, 3).toUpperCase()}
+    </span>
+  )
+}

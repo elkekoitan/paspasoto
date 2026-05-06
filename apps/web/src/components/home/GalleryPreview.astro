@@ -1,50 +1,103 @@
 ---
-// Yer tutucu — Strapi'de Gallery content type'ı eklenince gerçek müşteri fotoğrafları gelecek.
-// V1 lansmanında ilk 6-8 müşteri kombinasyonu burada Instagram-style grid olarak gösterilecek.
-const PLACEHOLDERS = Array.from({ length: 6 }, (_, i) => i)
+import { MAT_COLORS, BORDER_COLORS, BRANDS, VEHICLE_MODELS } from '@lib/catalog'
+
+// Her kare farklı (matColor + borderColor + brand) varyasyonu
+const COMBOS = [
+  { matIdx: 0, borderIdx: 6, brandIdx: 1, modelIdx: 0, ratio: 'aspect-[4/5]' }, // BMW siyah+kırmızı
+  { matIdx: 6, borderIdx: 2, brandIdx: 0, modelIdx: 4, ratio: 'aspect-square' }, // Audi kahve+krem
+  { matIdx: 1, borderIdx: 13, brandIdx: 3, modelIdx: 5, ratio: 'aspect-[4/5]' }, // VW gri+siyah
+  { matIdx: 8, borderIdx: 0, brandIdx: 12, modelIdx: 12, ratio: 'aspect-square' }, // Dacia bej+kahve
+  { matIdx: 3, borderIdx: 9, brandIdx: 4, modelIdx: 8, ratio: 'aspect-[4/5]' }, // Skoda mavi+lacivert
+  { matIdx: 5, borderIdx: 14, brandIdx: 7, modelIdx: 15, ratio: 'aspect-square' }, // Peugeot kırmızı+bordo
+]
 ---
 
-<section class="container-page py-20 md:py-28">
-  <div class="flex items-end justify-between flex-wrap gap-4 mb-10 md:mb-14">
+<section class="container-page py-24 md:py-32" data-reveal>
+  <div class="flex items-end justify-between flex-wrap gap-4 mb-12 md:mb-16">
     <div>
-      <p class="text-sm text-[var(--color-primary)] font-medium uppercase tracking-wider">
+      <p class="text-sm text-[var(--color-primary)] font-medium uppercase tracking-[0.2em]">
         Müşteri Galerisi
       </p>
-      <h2 class="mt-2 font-display text-3xl md:text-4xl font-semibold tracking-tight">
-        Atölyemizden çıkan kombinler
+      <h2 class="mt-3 font-display text-3xl md:text-5xl font-semibold tracking-tight max-w-2xl leading-[1.1]">
+        Atölyemizden çıkanlar.
       </h2>
+      <p class="mt-3 text-[var(--color-text-soft)] max-w-md">
+        Müşterilerimizin paylaştığı kombinler. Sen de fotoğrafını gönder, galeride yerini al.
+      </p>
     </div>
     <a
       href="/galeri"
-      class="text-sm font-medium text-[var(--color-text-soft)] hover:text-[var(--color-primary)] transition-colors"
+      class="text-sm font-medium text-[var(--color-text-soft)] hover:text-[var(--color-primary)] transition-colors flex items-center gap-1.5 group"
     >
-      Tümünü gör →
+      Tümünü gör
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="group-hover:translate-x-0.5 transition-transform">
+        <path d="m9 18 6-6-6-6"></path>
+      </svg>
     </a>
   </div>
 
   <div class="grid grid-cols-2 md:grid-cols-3 gap-3 md:gap-4">
     {
-      PLACEHOLDERS.map((i) => (
-        <div
-          class="aspect-square rounded-2xl bg-[var(--color-surface)] border border-[var(--color-border)]/40 relative overflow-hidden group cursor-pointer"
-        >
-          {/* İlk 3 örnek için raw-mats-stack kullanıyoruz; canlı sürümde gerçek müşteri fotoğrafı. */}
-          {i < 3 && (
-            <img
-              src="/assets/raw-mats-stack.jpeg"
-              alt=""
-              loading="lazy"
-              class="absolute inset-0 w-full h-full object-cover opacity-50 group-hover:opacity-70 group-hover:scale-105 transition-all duration-500"
-              style={`object-position: ${30 + i * 20}% center;`}
+      COMBOS.map((c, i) => {
+        const mat = MAT_COLORS[c.matIdx]
+        const border = BORDER_COLORS[c.borderIdx]
+        const brand = BRANDS[c.brandIdx]
+        const model = VEHICLE_MODELS[c.modelIdx]
+        return (
+          <a
+            href="/galeri"
+            class={`group relative ${c.ratio} rounded-2xl overflow-hidden bg-[var(--color-surface)] border border-[var(--color-border)]/40 hover:border-[var(--color-primary)]/40 transition-all hover:-translate-y-1 hover:shadow-2xl`}
+            style={`animation-delay: ${i * 80}ms;`}
+          >
+            {/* Sahne */}
+            <div
+              class="absolute inset-0"
+              style={`background: radial-gradient(ellipse 70% 50% at 50% 30%, ${mat.hex}aa, #0B0B0F 90%);`}
             />
-          )}
-          <div class="absolute inset-0 bg-gradient-to-t from-[var(--color-bg)]/95 via-transparent to-transparent" />
-          <div class="absolute bottom-3 left-3 right-3 text-xs">
-            <div class="text-[var(--color-text)] font-medium">BMW 3 Serisi · F30</div>
-            <div class="text-[var(--color-text-muted)]">Siyah · Kırmızı kenarlık · Karbon topukluk</div>
-          </div>
-        </div>
-      ))
+            {/* Paspas mockup */}
+            <div class="absolute inset-0 grid place-items-center" style="perspective:1000px;">
+              <div
+                class="relative w-[78%] aspect-[7/5] rounded-[28px] overflow-hidden ring-1 ring-white/5 shadow-2xl shadow-black/50"
+                style="transform: rotateX(38deg) rotateZ(-2deg);"
+              >
+                <img
+                  src={border.swatchUrl}
+                  alt=""
+                  class="absolute inset-0 size-full object-cover opacity-90"
+                  loading="lazy"
+                />
+                <div
+                  class="absolute inset-[6%] rounded-[18px] overflow-hidden"
+                >
+                  <img src={mat.swatchUrl} alt="" class="size-full object-cover" loading="lazy" />
+                  <div class="absolute inset-0 bg-gradient-to-br from-white/8 via-transparent to-black/15" />
+                </div>
+                {/* Mini amblem */}
+                <div class="absolute top-[12%] left-1/2 -translate-x-1/2 px-2.5 py-0.5 rounded bg-black/80 backdrop-blur text-[8px] font-display font-bold tracking-[0.2em] text-white">
+                  {brand.name.toUpperCase()}
+                </div>
+              </div>
+            </div>
+            {/* Üst gradient */}
+            <div class="absolute inset-0 bg-gradient-to-t from-[var(--color-bg)]/95 via-transparent to-transparent" />
+            {/* Bilgi */}
+            <div class="absolute bottom-3 left-3 right-3 text-xs">
+              <div class="text-[var(--color-text)] font-semibold">
+                {brand.name} {model.name} · {model.chassisCode}
+              </div>
+              <div class="mt-0.5 text-[var(--color-text-muted)]">
+                {mat.name} · {border.name} kenarlık
+              </div>
+            </div>
+            {/* Hover etiket */}
+            <div class="absolute top-3 right-3 size-8 grid place-items-center rounded-full bg-[var(--color-primary)] text-[var(--color-bg)] opacity-0 group-hover:opacity-100 transition-opacity">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M5 12h14m-7-7 7 7-7 7" />
+              </svg>
+            </div>
+          </a>
+        )
+      })
     }
   </div>
 </section>
