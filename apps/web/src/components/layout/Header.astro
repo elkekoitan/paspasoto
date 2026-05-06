@@ -13,7 +13,7 @@ const path = Astro.url.pathname
   class="sticky top-0 z-40 border-b border-[var(--color-border)]/60 bg-[var(--color-bg)]/85 backdrop-blur-md"
 >
   <div class="container-page flex h-16 items-center justify-between gap-4">
-    <a href="/" class="flex items-center gap-2.5 group" aria-label="PaspasOto anasayfa">
+    <a href="/" class="flex items-center gap-2.5 group" aria-label="Carmat anasayfa">
       <img
         src="/logo.svg"
         alt=""
@@ -21,7 +21,7 @@ const path = Astro.url.pathname
         height="40"
         class="size-10 group-hover:scale-105 transition-transform"
       />
-      <span class="text-lg font-semibold tracking-tight">PaspasOto</span>
+      <span class="text-lg font-semibold tracking-tight">Carmat</span>
     </a>
 
     <nav class="hidden md:flex items-center gap-1" aria-label="Ana navigasyon">
@@ -53,12 +53,10 @@ const path = Astro.url.pathname
         Sipariş Takip
       </a>
       <a
-        href="https://wa.me/905545417561"
-        target="_blank"
-        rel="noopener"
+        href="/konfigurator"
         class="hidden sm:inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-semibold bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] text-[var(--color-bg)] transition-all hover:shadow-[var(--shadow-glow)]"
       >
-        WhatsApp'tan Teklif Al
+        Teklif İste
       </a>
       <button
         type="button"

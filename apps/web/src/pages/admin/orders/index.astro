@@ -17,7 +17,8 @@ const toStr = params.get('to') ?? ''
 const q = params.get('q') ?? ''
 const sort = params.get('sort') ?? 'date-desc'
 
-const all = listOrders()
+// Sadece kesin siparişler — ön talepler "Talepler" sekmesinde
+const all = listOrders().filter((o) => (o.kind ?? 'order') === 'order')
 
 // 1) Filtre chip mantığı (önceki davranış korunuyor)
 let filtered = all

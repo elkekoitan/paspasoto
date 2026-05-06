@@ -23,6 +23,7 @@ export const POST: APIRoute = async ({ request }) => {
   const order: Order = {
     orderNo: generateOrderNo(),
     accessToken: generateToken(),
+    kind: 'quote',
     customer: {
       fullName: String(body.customer.fullName).slice(0, 100),
       phone: String(body.customer.phone).slice(0, 30),

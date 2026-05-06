@@ -119,9 +119,20 @@ export type OrderEvent = {
   by?: string
 }
 
+/**
+ * Order kayıtları iki tipte:
+ *  - 'order': Atölye (admin) tarafından açılmış kesin sipariş
+ *  - 'quote': Müşteri konfigüratör/site üzerinden ön talep (atölye onayı bekliyor)
+ *
+ * Quote → Order dönüşümü admin onayıyla yapılır (kind alanını 'order' yapar).
+ */
+export type OrderKind = 'order' | 'quote'
+
 export type Order = {
   orderNo: string
   accessToken: string
+  /** Default 'order' (geriye dönük uyumluluk için undefined da 'order' kabul edilir) */
+  kind?: OrderKind
   customer: { fullName: string; phone: string; email?: string }
   shippingAddress: {
     fullName: string

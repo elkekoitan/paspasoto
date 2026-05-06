@@ -97,32 +97,11 @@ export default function Configurator() {
   const [quoteResult, setQuoteResult] = useState<{ orderNo: string; accessToken: string } | null>(null)
   const [showContactForm, setShowContactForm] = useState(false)
 
-  function buildWhatsAppUrl(orderNo?: string) {
-    if (!brand || !model || !product || !matColor || !borderColor || !heelPad) return ''
-    const lines = [
-      `Merhaba, aracıma özel paspas teklifi almak istiyorum:`,
-      ``,
-      `🚗 Araç: ${brand.name} ${model.name} ${model.chassisCode} (${model.yearStart}-${model.yearEnd})`,
-      `📦 Set: ${product.name} (${product.parts} parça)`,
-      `🎨 Paspas zemini: ${matColor.name}`,
-      `✨ Kenarlık: ${borderColor.name}`,
-      `👟 Topukluk: ${heelPad.name}${heelPadPassenger ? ' (sürücü+yolcu)' : ''}`,
-      `🏷 Amblem: ${logoAccessory && logoAccessory.brandSlug ? `${brand.name} × ${product.parts}` : 'Yok'}`,
-      ``,
-      `Tahmini fiyat: ${formatTRY(totalPrice)}`,
-    ]
-    if (orderNo) {
-      lines.push('', `📋 Ön talep no: ${orderNo}`)
-    }
-    return `https://wa.me/905545417561?text=${encodeURIComponent(lines.join('\n'))}`
-  }
-
   function handleAddToCart() {
     if (!brand || !model || !product || !matColor || !borderColor || !heelPad) {
       alert('Lütfen tüm adımları tamamlayın.')
       return
     }
-    // Müşteri henüz ad/telefon vermediyse mini form aç
     setShowContactForm(true)
   }
 
@@ -160,20 +139,11 @@ export default function Configurator() {
       if (res.ok) {
         const data = await res.json()
         setQuoteResult(data)
-        // WhatsApp'ı orderNo ile aç
-        if (typeof window !== 'undefined') {
-          window.open(buildWhatsAppUrl(data.orderNo), '_blank', 'noopener,noreferrer')
-        }
       } else {
-        // DB başarısız olsa bile WA'yı aç — müşteri kaybolmasın
-        if (typeof window !== 'undefined') {
-          window.open(buildWhatsAppUrl(), '_blank', 'noopener,noreferrer')
-        }
+        alert('Talebiniz iletilemedi. Lütfen tekrar deneyin veya WhatsApp\'tan bize ulaşın.')
       }
     } catch {
-      if (typeof window !== 'undefined') {
-        window.open(buildWhatsAppUrl(), '_blank', 'noopener,noreferrer')
-      }
+      alert('Bağlantı hatası. Lütfen tekrar deneyin.')
     } finally {
       setSubmittingQuote(false)
     }
@@ -329,15 +299,15 @@ export default function Configurator() {
         />
       </aside>
 
-      {/* Müşteri ad/telefon mini form modal — Teklif Al butonuna basınca açılır */}
+      {/* Müşteri ad/telefon mini form — Teklif Al butonuna basınca açılır */}
       {showContactForm && (
         <div class="fixed inset-0 z-50 grid place-items-center p-4 bg-black/70 backdrop-blur-sm" onClick={(e) => { if (e.target === e.currentTarget) setShowContactForm(false) }}>
           <div class="w-full max-w-md rounded-2xl bg-[var(--color-surface)] border border-[var(--color-border)]/60 shadow-2xl overflow-hidden">
             <div class="p-5 border-b border-[var(--color-border)]/60 flex items-start justify-between gap-3">
               <div>
-                <h3 class="font-display text-lg font-semibold">WhatsApp'tan Teklif Al</h3>
+                <h3 class="font-display text-lg font-semibold">Teklif İste</h3>
                 <p class="mt-1 text-xs text-[var(--color-text-muted)] leading-snug">
-                  Bilgileriniz atölyemize ön talep olarak iletilir, WhatsApp uygulaması açılır ve mesajınız hazır olarak gelir.
+                  Konfigürasyonunuz atölyemize iletilir. Fiyat onaylanınca size WhatsApp'tan teklifi gönderir, sipariş onayınızla üretime başlarız.
                 </p>
               </div>
               <button type="button" onClick={() => setShowContactForm(false)} class="size-7 grid place-items-center rounded-lg hover:bg-[var(--color-surface-2)]">
@@ -345,27 +315,30 @@ export default function Configurator() {
               </button>
             </div>
             {quoteResult ? (
-              <div class="p-5 space-y-3 text-sm">
-                <div class="size-12 rounded-full bg-emerald-500/15 grid place-items-center mx-auto">
-                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5" /></svg>
+              <div class="p-6 space-y-4 text-center">
+                <div class="size-16 rounded-full bg-emerald-500/15 grid place-items-center mx-auto">
+                  <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5" /></svg>
                 </div>
-                <div class="text-center">
-                  <div class="font-semibold">Ön talep oluşturuldu!</div>
-                  <p class="mt-1 text-xs text-[var(--color-text-muted)]">
-                    Sipariş No: <span class="font-mono text-[var(--color-text)]">{quoteResult.orderNo}</span>
+                <div>
+                  <div class="font-display text-lg font-semibold">Talebiniz alındı!</div>
+                  <p class="mt-1.5 text-sm text-[var(--color-text-soft)] leading-relaxed">
+                    Atölye ekibimiz konfigürasyonunuzu inceleyip <span class="text-[var(--color-primary)] font-semibold">WhatsApp'tan tarafınıza teklifi iletecek</span>.
                   </p>
-                  <p class="mt-2 text-xs text-[var(--color-text-soft)]">
-                    WhatsApp uygulaması açılmadıysa <a class="text-emerald-400 underline-offset-2 hover:underline" href={buildWhatsAppUrl(quoteResult.orderNo)} target="_blank" rel="noopener">tıklayın</a>.
+                  <p class="mt-3 text-xs text-[var(--color-text-muted)]">
+                    Talep No: <span class="font-mono text-[var(--color-text)] font-semibold">{quoteResult.orderNo}</span>
+                  </p>
+                  <p class="mt-1 text-[10px] text-[var(--color-text-muted)]">
+                    Bu numarayla <a href="/siparis-takip" class="text-[var(--color-primary)] hover:underline">sipariş takip</a> sayfasından ilerlemeyi izleyebilirsiniz.
                   </p>
                 </div>
-                <button onClick={() => { setShowContactForm(false); setQuoteResult(null); setContactName(''); setContactPhone('') }} class="w-full mt-3 px-4 py-2.5 rounded-lg text-sm font-medium border border-[var(--color-border)] hover:bg-[var(--color-surface-2)]">
-                  Kapat
+                <button onClick={() => { setShowContactForm(false); setQuoteResult(null); setContactName(''); setContactPhone('') }} class="w-full px-4 py-2.5 rounded-lg text-sm font-semibold bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] text-[var(--color-bg)]">
+                  Tamam
                 </button>
               </div>
             ) : (
               <form onSubmit={submitQuote} class="p-5 space-y-3">
                 <div>
-                  <label class="block text-xs font-medium text-[var(--color-text-soft)] mb-1">Ad Soyad</label>
+                  <label class="block text-xs font-medium text-[var(--color-text-soft)] mb-1">Ad Soyad <span class="text-[var(--color-danger)]">*</span></label>
                   <input
                     type="text"
                     value={contactName}
@@ -376,7 +349,7 @@ export default function Configurator() {
                   />
                 </div>
                 <div>
-                  <label class="block text-xs font-medium text-[var(--color-text-soft)] mb-1">Telefon (WhatsApp)</label>
+                  <label class="block text-xs font-medium text-[var(--color-text-soft)] mb-1">Telefon (WhatsApp olan) <span class="text-[var(--color-danger)]">*</span></label>
                   <input
                     type="tel"
                     value={contactPhone}
@@ -385,17 +358,18 @@ export default function Configurator() {
                     placeholder="0532 123 45 67"
                     class="w-full px-3 py-2.5 rounded-lg bg-[var(--color-surface-2)] border border-[var(--color-border)] focus:border-[var(--color-primary)] outline-none text-sm font-mono"
                   />
+                  <p class="mt-1 text-[10px] text-[var(--color-text-muted)]">Atölyemiz size bu numaradan WhatsApp ile teklif gönderecek.</p>
                 </div>
                 <button
                   type="submit"
                   disabled={submittingQuote}
-                  class="w-full mt-2 inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl text-sm font-semibold bg-gradient-to-br from-emerald-500 to-emerald-600 hover:from-emerald-400 text-white transition-all disabled:opacity-60"
+                  class="w-full mt-2 px-4 py-3 rounded-xl text-sm font-semibold bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] text-[var(--color-bg)] transition-all disabled:opacity-60"
                 >
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946C.16 5.335 5.495 0 12.05 0c3.181 0 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414 0 6.557-5.336 11.892-11.893 11.892-1.99 0-3.951-.5-5.688-1.448L.057 24zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.742-.981z"/></svg>
-                  {submittingQuote ? 'Gönderiliyor...' : 'Teklifi Gönder & WhatsApp Aç'}
+                  {submittingQuote ? 'Gönderiliyor...' : 'Teklif İste'}
                 </button>
                 <p class="text-[10px] text-[var(--color-text-muted)] text-center leading-snug">
-                  Bu form ön taleptir — kesin sipariş atölyemizden sonra oluşturulur. Bilgileriniz sadece sipariş takibi için kullanılır.
+                  Talebinizi gönderince atölyeye iletilir, fiyat onayı sonrası size WhatsApp'tan ulaşılır.<br/>
+                  Bilgileriniz sadece sipariş takibi için kullanılır.
                 </p>
               </form>
             )}
@@ -947,7 +921,7 @@ function SummaryStep({
           onClick={onAddToCart}
           class="px-6 py-3.5 rounded-xl text-sm font-semibold bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] text-[var(--color-bg)] transition-all hover:shadow-[var(--shadow-glow)] whitespace-nowrap"
         >
-          WhatsApp'tan Teklif Al
+          Teklif İste
         </button>
       </div>
 
@@ -1288,7 +1262,7 @@ function Preview({
             onClick={onAddToCart}
             class="px-5 py-3 rounded-xl text-sm font-semibold bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] text-[var(--color-bg)] transition-all hover:shadow-[var(--shadow-glow)] whitespace-nowrap"
           >
-            WhatsApp'tan Teklif Al
+            Teklif İste
           </button>
         </div>
       </div>

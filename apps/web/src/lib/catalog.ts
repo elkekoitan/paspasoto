@@ -1,5 +1,5 @@
 /**
- * PaspasOto katalog verisi (V1, statik).
+ * Carmat katalog verisi (V1, statik).
  * - 40 marka (popüler/global), her birinin iconSlug + brand color hex'i
  * - ~85 model (popüler şasiler, yıl aralıkları)
  * - 10 mat rengi · 15 kenarlık · 8 topukluk · brand bazlı amblem · 3 set

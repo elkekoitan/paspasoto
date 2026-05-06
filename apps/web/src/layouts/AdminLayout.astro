@@ -3,15 +3,21 @@ import '../styles/globals.css'
 
 interface Props {
   title?: string
-  current?: 'dashboard' | 'orders' | 'new'
+  current?: 'dashboard' | 'orders' | 'new' | 'quotes'
 }
 const { title = 'Yönetim', current = 'dashboard' } = Astro.props
 
 const NAV = [
   { key: 'dashboard', href: '/admin', label: 'Gösterge', icon: 'M3 12l9-9 9 9M5 10v10h4v-6h6v6h4V10' },
+  { key: 'quotes', href: '/admin/talepler', label: 'Talepler', icon: 'M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z', badge: 'quotes' as const },
   { key: 'orders', href: '/admin/orders', label: 'Siparişler', icon: 'M9 11l3 3 8-8M3 12a9 9 0 1 0 18 0 9 9 0 0 0-18 0z' },
   { key: 'new', href: '/admin/orders/new', label: 'Yeni Sipariş', icon: 'M12 5v14M5 12h14' },
 ]
+
+// Talepler badge — bekleyen ön talep sayısı
+import { listOrders } from '../server/db'
+const allOrders = listOrders()
+const pendingQuotes = allOrders.filter((o) => o.kind === 'quote' && o.productionStatus === 'received').length
 ---
 
 <!doctype html>
@@ -21,7 +27,7 @@ const NAV = [
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <meta name="theme-color" content="#0B0B0F" />
     <meta name="robots" content="noindex,nofollow" />
-    <title>{title} · PaspasOto Yönetim</title>
+    <title>{title} · Carmat Yönetim</title>
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="apple-touch-icon" href="/icons/icon-192.png" />
     <link rel="manifest" href="/admin-manifest.webmanifest" />
@@ -46,7 +52,7 @@ const NAV = [
       </button>
       <a href="/admin" class="flex items-center gap-2">
         <img src="/logo.svg" alt="" class="size-7" />
-        <div class="font-display font-semibold text-sm">PaspasOto Yönetim</div>
+        <div class="font-display font-semibold text-sm">Carmat Yönetim</div>
       </a>
       <a href="/admin/orders/new" class="size-9 grid place-items-center rounded-lg bg-[var(--color-primary)] text-[var(--color-bg)]" aria-label="Yeni sipariş">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
@@ -66,7 +72,7 @@ const NAV = [
           <a href="/admin" class="flex items-center gap-3">
             <img src="/logo.svg" alt="" class="size-9" />
             <div>
-              <div class="font-display font-semibold text-sm">PaspasOto</div>
+              <div class="font-display font-semibold text-sm">Carmat</div>
               <div class="text-[10px] uppercase tracking-[0.2em] text-[var(--color-text-muted)]">Yönetim</div>
             </div>
           </a>
@@ -104,7 +110,10 @@ const NAV = [
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                       <path d={n.icon} />
                     </svg>
-                    {n.label}
+                    <span class="flex-1">{n.label}</span>
+                    {n.badge === 'quotes' && pendingQuotes > 0 && (
+                      <span class="px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-500 text-black">{pendingQuotes}</span>
+                    )}
                   </a>
                 </li>
               ))
@@ -191,12 +200,86 @@ const NAV = [
         installBtn?.classList.remove('hidden')
       })
       installBtn?.addEventListener('click', async () => {
-        if (!deferred) return
+        if (!deferred) {
+          alert('Tarayıcı menüsünden (⋮) "Uygulamayı yükle" / "Ana Ekrana Ekle" seçin.')
+          return
+        }
         deferred.prompt()
         await deferred.userChoice
         deferred = null
         installBtn.classList.add('hidden')
       })
+
+      // === Bildirim sistemi (admin tarafı) ===
+      // 30 saniyede bir polling ile yeni talep/sipariş kontrol et,
+      // yenisi varsa Notification API + ses + sayfa tepesinde toast
+      type Snapshot = { quotes: number; lastQuoteOrder?: string; lastQuoteCustomer?: string }
+      const STORAGE_KEY = 'admin-last-snapshot'
+      const audioCtx: AudioContext | null = null
+
+      function playBeep() {
+        try {
+          // basit "ding" tonu — webaudio
+          const ctx = new (window.AudioContext || (window as any).webkitAudioContext)()
+          const osc = ctx.createOscillator()
+          const gain = ctx.createGain()
+          osc.frequency.value = 880
+          gain.gain.value = 0.15
+          osc.connect(gain).connect(ctx.destination)
+          osc.start()
+          gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.6)
+          osc.stop(ctx.currentTime + 0.6)
+        } catch {}
+      }
+
+      async function notify(title: string, body: string, url: string) {
+        playBeep()
+        if ('Notification' in window) {
+          if (Notification.permission === 'default') {
+            await Notification.requestPermission()
+          }
+          if (Notification.permission === 'granted') {
+            const n = new Notification(title, { body, icon: '/icons/icon-192.png', tag: 'carmat-admin' })
+            n.onclick = () => { window.focus(); window.location.href = url }
+          }
+        }
+        // Sayfa içi toast
+        const t = document.createElement('a')
+        t.href = url
+        t.className = 'fixed top-4 right-4 z-[60] px-4 py-3 rounded-xl bg-amber-500 text-black font-semibold text-sm shadow-2xl ring-2 ring-amber-300 cursor-pointer animate-pulse max-w-xs'
+        t.innerHTML = `<div class="flex items-center gap-2"><span>🔔</span><div><div>${title}</div><div class="text-[10px] font-medium opacity-80">${body}</div></div></div>`
+        document.body.appendChild(t)
+        setTimeout(() => t.remove(), 8000)
+      }
+
+      async function pollQuotes() {
+        try {
+          const res = await fetch('/api/orders/quotes-summary', { credentials: 'same-origin' })
+          if (!res.ok) return
+          const snapshot: Snapshot = await res.json()
+          const prevRaw = localStorage.getItem(STORAGE_KEY)
+          const prev: Snapshot | null = prevRaw ? JSON.parse(prevRaw) : null
+          if (prev && snapshot.lastQuoteOrder && prev.lastQuoteOrder !== snapshot.lastQuoteOrder) {
+            // Yeni talep geldi
+            notify(
+              'Yeni Teklif Talebi 🎉',
+              `${snapshot.lastQuoteCustomer ?? ''} — ${snapshot.lastQuoteOrder}`,
+              '/admin/talepler',
+            )
+          }
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(snapshot))
+        } catch {}
+      }
+
+      // İlk açılışta permission iste (kullanıcı admin'e girdiyse)
+      if ('Notification' in window && Notification.permission === 'default') {
+        // 3sn sonra iste — sayfa yüklenir yüklenmez UX'i bozmasın
+        setTimeout(() => Notification.requestPermission().catch(() => {}), 3000)
+      }
+
+      // İlk poll + 30sn periyot
+      pollQuotes()
+      setInterval(pollQuotes, 30000)
     </script>
   </body>
 </html>
