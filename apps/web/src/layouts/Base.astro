@@ -1,6 +1,7 @@
 ---
 import '../styles/globals.css'
 import Header from '@components/layout/Header.astro'
+import BrandStrip from '@components/layout/BrandStrip.astro'
 import Footer from '@components/layout/Footer.astro'
 
 interface Props {
@@ -76,6 +77,7 @@ const ogImageUrl = new URL(ogImage, SITE_URL).toString()
       İçeriğe geç
     </a>
     <Header />
+    <BrandStrip />
     <main id="main">
       <slot />
     </main>

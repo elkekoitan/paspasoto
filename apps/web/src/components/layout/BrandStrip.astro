@@ -1,0 +1,66 @@
+---
+import { POPULAR_BRANDS } from '@lib/catalog'
+import BrandLogo from '@components/ui/BrandLogo.astro'
+
+// İki kez render et — sonsuz akış için CSS keyframe ile -50% kaydırılır.
+const items = [...POPULAR_BRANDS, ...POPULAR_BRANDS]
+---
+
+<section
+  class="border-b border-[var(--color-border)]/40 bg-[var(--color-bg)]/80 backdrop-blur"
+  aria-label="Uyumlu markalar"
+>
+  <div class="relative overflow-hidden py-3.5">
+    {/* Sol/sağ fade */}
+    <div
+      class="pointer-events-none absolute inset-y-0 left-0 w-20 z-10 bg-gradient-to-r from-[var(--color-bg)] to-transparent"
+      aria-hidden="true"
+    >
+    </div>
+    <div
+      class="pointer-events-none absolute inset-y-0 right-0 w-20 z-10 bg-gradient-to-l from-[var(--color-bg)] to-transparent"
+      aria-hidden="true"
+    >
+    </div>
+
+    <div class="flex items-center gap-10 brand-marquee" style="width: max-content;">
+      <span class="text-[10px] font-semibold uppercase tracking-[0.25em] text-[var(--color-text-muted)] shrink-0 px-4">
+        3000+ Araç · Uyumlu Markalar
+      </span>
+      {
+        items.map((b) => (
+          <a
+            href={`/konfigurator?brand=${b.slug}`}
+            class="group flex items-center gap-2.5 shrink-0 text-[var(--color-text-muted)] hover:text-[var(--color-text)] transition-colors"
+            aria-label={b.name}
+          >
+            <BrandLogo iconSlug={b.iconSlug} name={b.name} size={26} class="shrink-0 opacity-70 group-hover:opacity-100 transition-opacity" />
+            <span class="text-sm font-medium tracking-wide">{b.name}</span>
+          </a>
+        ))
+      }
+    </div>
+  </div>
+</section>
+
+<style>
+  @keyframes marquee {
+    0% {
+      transform: translate3d(0, 0, 0);
+    }
+    100% {
+      transform: translate3d(-50%, 0, 0);
+    }
+  }
+  .brand-marquee {
+    animation: marquee 50s linear infinite;
+  }
+  .brand-marquee:hover {
+    animation-play-state: paused;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .brand-marquee {
+      animation: none;
+    }
+  }
+</style>

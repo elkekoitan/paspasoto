@@ -21,12 +21,12 @@ type StepKey = 'brand' | 'model' | 'product' | 'mat' | 'border' | 'heel' | 'logo
 const STEPS: { key: StepKey; label: string }[] = [
   { key: 'brand', label: 'Marka' },
   { key: 'model', label: 'Model' },
-  { key: 'product', label: 'Set' },
-  { key: 'mat', label: 'Paspas' },
+  { key: 'product', label: 'Paspas Seti' },
+  { key: 'mat', label: 'Zemin Rengi' },
   { key: 'border', label: 'Kenarlık' },
   { key: 'heel', label: 'Topukluk' },
-  { key: 'logo', label: 'Amblem' },
-  { key: 'summary', label: 'Özet' },
+  { key: 'logo', label: 'Marka Amblemi' },
+  { key: 'summary', label: 'Sipariş Özeti' },
 ]
 
 export default function Configurator() {
@@ -195,6 +195,7 @@ export default function Configurator() {
               heelPadPassenger={heelPadPassenger}
               logoAccessory={logoAccessory}
               total={totalPrice}
+              onAddToCart={() => alert('Sepete ekleme henüz aktif değil — Strapi entegrasyonu beklemede.')}
             />
           )}
         </div>
@@ -646,9 +647,14 @@ function LogoStep({
   return (
     <div>
       <header class="mb-5">
-        <h2 class="font-display text-xl font-semibold">Marka amblemi</h2>
-        <p class="mt-1 text-sm text-[var(--color-text-muted)]">
-          Paspasın üst kısmına monte edilen metal/plastik amblem. {brand && `${brand.name} amblemi otomatik önerildi.`}
+        <h2 class="font-display text-2xl font-semibold">Marka ambleminizi seçin</h2>
+        <p class="mt-2 text-sm text-[var(--color-text-muted)]">
+          Paspasın üst kısmına metal/plastik plaka olarak monte edilir.{' '}
+          {brand && (
+            <span class="text-[var(--color-text-soft)]">
+              {brand.name} ambleminiz otomatik önerildi.
+            </span>
+          )}
         </p>
       </header>
 
@@ -662,20 +668,25 @@ function LogoStep({
               type="button"
               onClick={() => onSelect(a)}
               class={[
-                'text-left p-4 rounded-xl border transition-all flex items-center justify-between gap-3',
+                'group text-left p-5 rounded-2xl border transition-all flex items-center justify-between gap-3',
                 active
-                  ? 'border-[var(--color-primary)] bg-[var(--color-primary-soft)]'
-                  : 'border-[var(--color-border)]/60 bg-[var(--color-surface-2)] hover:border-[var(--color-text-muted)]',
+                  ? 'border-[var(--color-primary)] bg-[var(--color-primary-soft)] shadow-[var(--shadow-glow)]'
+                  : 'border-[var(--color-border)]/60 bg-[var(--color-surface-2)] hover:border-[var(--color-text-muted)] hover:-translate-y-0.5',
               ].join(' ')}
             >
               <div>
-                <div class="font-semibold">{a.name}</div>
-                <div class="mt-0.5 text-xs text-[var(--color-text-muted)]">
-                  {isDecline ? 'Amblem eklenmesin' : `${formatTRY(a.price)} / parça`}
+                <div class="font-semibold text-[var(--color-text)]">
+                  {isDecline ? 'İstemiyorum' : `${brand?.name ?? a.name.split(' ')[0]} Logosu`}
+                </div>
+                <div class="mt-1 text-xs text-[var(--color-text-muted)]">
+                  {isDecline ? 'Logosuz, sade görünüm' : 'Marka amblemi paspas üzerine sabitlenir'}
+                </div>
+                <div class={['mt-2 text-sm font-semibold', isDecline ? 'text-[var(--color-text-muted)]' : 'text-[var(--color-primary)]'].join(' ')}>
+                  {isDecline ? 'Ücretsiz' : `+${formatTRY(a.price)} / adet`}
                 </div>
               </div>
-              <div class={['size-10 grid place-items-center rounded-lg font-display font-bold', isDecline ? 'bg-[var(--color-surface)] text-[var(--color-text-muted)]' : 'bg-[var(--color-bg)] text-[var(--color-primary)]'].join(' ')}>
-                {isDecline ? '✕' : (brand?.name?.[0] ?? 'A')}
+              <div class={['size-12 grid place-items-center rounded-xl font-display font-bold text-lg shrink-0 transition-colors', isDecline ? 'bg-[var(--color-surface)] text-[var(--color-text-muted)]' : 'bg-[var(--color-bg)] text-[var(--color-primary)] group-hover:bg-[var(--color-primary)] group-hover:text-[var(--color-bg)]'].join(' ')}>
+                {isDecline ? '—' : (brand?.name?.[0] ?? '⊕')}
               </div>
             </button>
           )
@@ -685,9 +696,9 @@ function LogoStep({
       <button
         type="button"
         onClick={onContinue}
-        class="mt-5 w-full px-5 py-2.5 rounded-lg text-sm font-semibold bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] text-[var(--color-bg)] transition-colors"
+        class="mt-6 w-full px-5 py-3 rounded-xl text-sm font-semibold bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] text-[var(--color-bg)] transition-all hover:shadow-[var(--shadow-glow)]"
       >
-        Özete git →
+        Sipariş özetini gör →
       </button>
     </div>
   )
@@ -704,6 +715,7 @@ function SummaryStep({
   heelPadPassenger,
   logoAccessory,
   total,
+  onAddToCart,
 }: {
   brand: Brand
   model: VehicleModel
@@ -714,86 +726,92 @@ function SummaryStep({
   heelPadPassenger: boolean
   logoAccessory: LogoAccessory | null
   total: number
+  onAddToCart: () => void
 }) {
   return (
     <div>
       <header class="mb-5">
-        <h2 class="font-display text-xl font-semibold">Konfigürasyon Özeti</h2>
-        <p class="mt-1 text-sm text-[var(--color-text-muted)]">
-          Aşağıdaki kombinasyonu sepete ekle, ardından sipariş bilgilerini gir.
+        <h2 class="font-display text-2xl font-semibold">Paspasınız hazır.</h2>
+        <p class="mt-2 text-sm text-[var(--color-text-muted)]">
+          Aşağıdaki kombinasyonu onayla, atölyemiz aynı gün üretime başlasın.
         </p>
       </header>
 
-      <dl class="space-y-3 text-sm">
+      <dl class="space-y-2 text-sm">
         <Row label="Araç" value={`${brand.name} ${model.name} (${model.chassisCode}, ${model.yearStart}-${model.yearEnd})`} />
         <Row label="Set" value={`${product.name} · ${product.parts} parça`} />
-        <Row label="Paspas zemin" value={matColor.name} swatch={matColor.hex} />
-        <Row label="Kenarlık" value={borderColor.name} swatch={borderColor.hex} />
+        <Row label="Paspas zemin" value={matColor.name} swatchUrl={matColor.swatchUrl} />
+        <Row label="Kenarlık" value={borderColor.name} swatchUrl={borderColor.swatchUrl} />
         <Row
           label="Topukluk"
           value={
             heelPad.name +
-            (heelPadPassenger ? ' (sürücü + yolcu)' : ' (sadece sürücü)')
+            (heelPadPassenger ? ' · sürücü + yolcu' : ' · sadece sürücü')
           }
-          swatch={heelPad.textureHex}
+          swatchUrl={heelPad.swatchUrl}
         />
         <Row
           label="Amblem"
           value={
             logoAccessory && logoAccessory.brandSlug !== null
-              ? `${logoAccessory.name} × ${product.parts}`
+              ? `${brand.name} × ${product.parts}`
               : 'Eklenmedi'
           }
         />
       </dl>
 
-      <div class="mt-6 pt-5 border-t border-[var(--color-border)]/60 flex items-center justify-between">
+      <div class="mt-6 pt-5 border-t border-[var(--color-border)]/60 flex items-center justify-between gap-4">
         <div>
-          <div class="text-xs text-[var(--color-text-muted)]">Toplam</div>
-          <div class="font-display text-3xl font-semibold text-[var(--color-text)]">
+          <div class="text-[10px] uppercase tracking-[0.2em] text-[var(--color-text-muted)] font-semibold">
+            Toplam
+          </div>
+          <div class="font-display text-3xl md:text-4xl font-semibold text-[var(--color-primary)] tabular-nums leading-none mt-1">
             {formatTRY(total)}
           </div>
-          <div class="text-xs text-[var(--color-text-muted)] mt-0.5">KDV dahil · Kargo ayrıca</div>
+          <div class="text-xs text-[var(--color-text-muted)] mt-1.5">KDV dahil · Kargo ayrıca</div>
         </div>
         <button
           type="button"
-          class="px-6 py-3 rounded-xl text-sm font-semibold bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] text-[var(--color-bg)] transition-colors"
+          onClick={onAddToCart}
+          class="px-6 py-3.5 rounded-xl text-sm font-semibold bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] text-[var(--color-bg)] transition-all hover:shadow-[var(--shadow-glow)] whitespace-nowrap"
         >
-          Sepete Ekle
+          Paspasınızı Sipariş Verin
         </button>
       </div>
+
+      <p class="mt-4 text-[10px] text-[var(--color-text-muted)] text-center">
+        ✓ Sipariş onayından sonra atölyemiz aynı gün üretime başlar · Ortalama 5-7 iş günü kapınızda
+      </p>
     </div>
   )
 }
 
-function Row({ label, value, swatch }: { label: string; value: string; swatch?: string }) {
+function Row({ label, value, swatchUrl }: { label: string; value: string; swatchUrl?: string }) {
   return (
     <div class="flex items-center justify-between gap-4 p-3 rounded-lg bg-[var(--color-surface-2)]">
       <dt class="text-[var(--color-text-muted)] text-xs uppercase tracking-wider font-semibold">{label}</dt>
-      <dd class="flex items-center gap-2 text-right">
-        {swatch && (
-          <span
-            class="size-4 rounded-full ring-1 ring-[var(--color-border)]"
-            style={`background: ${swatch};`}
+      <dd class="flex items-center gap-2 text-right text-sm">
+        {swatchUrl && (
+          <img
+            src={swatchUrl}
+            alt=""
+            class="size-5 rounded-full object-cover ring-1 ring-[var(--color-border)]"
             aria-hidden="true"
           />
         )}
-        <span>{value}</span>
+        <span class="text-[var(--color-text)]">{value}</span>
       </dd>
     </div>
   )
 }
 
-/* -------------------- Live Preview (Foto-gerçekçi) -------------------- */
+/* -------------------- Car Body Live Preview -------------------- */
 /**
- * Katmanlı render:
- *   1. Sahne arkaplanı (koyu zemin + spotlight)
- *   2. Kenarlık çerçevesi (gerçek doku img + filter mask)
- *   3. Paspas zemini (gerçek paspas swatch görseli, full-size)
- *   4. Topukluk (sürücü + opsiyonel yolcu)
- *   5. Marka amblem badge
- *   6. Glassmorphism başlık etiketi
- *   7. Reflection / floor shadow
+ * Üst görünüm araç gövdesi içine yerleştirilmiş paspas slot'ları:
+ *   - Sürücü + Yolcu (ön)
+ *   - Sol arka + Sağ arka
+ *   - Bagaj (varsa)
+ * Her paspas slot'u: kenarlık dokusu + zemin doku + topukluk + amblem
  */
 function Preview({
   matColor,
@@ -818,156 +836,328 @@ function Preview({
   total: number
   onAddToCart: () => void
 }) {
+  const showTrunk = product?.includesTrunk ?? false
+  const showRear = (product?.parts ?? 0) >= 4
+  const showLogo = logoAccessory && logoAccessory.brandSlug !== null
+
   return (
-    <div class="rounded-2xl bg-[var(--color-surface)] border border-[var(--color-border)]/60 overflow-hidden shadow-2xl shadow-black/30">
-      {/* Sahne */}
-      <div class="relative aspect-[4/3] overflow-hidden">
-        {/* Zemin gradient */}
+    <div class="rounded-2xl bg-[var(--color-surface)] border border-[var(--color-border)]/60 overflow-hidden shadow-2xl shadow-black/40">
+      <div class="relative aspect-[3/4] overflow-hidden">
+        {/* Zemin sahne */}
         <div
           class="absolute inset-0"
-          style={`background:
-            radial-gradient(ellipse 70% 50% at 50% 30%, ${shade(matColor?.hex ?? '#1f1f26', 12)}, ${shade(matColor?.hex ?? '#1f1f26', -25)} 80%);`}
+          style="background:
+            radial-gradient(ellipse 80% 60% at 50% 30%, #1a1a22, #0b0b0f 85%);"
         />
         {/* Grain */}
         <div
-          class="absolute inset-0 opacity-30 mix-blend-overlay"
-          style="background-image: url(&quot;data:image/svg+xml;utf8,<svg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2'/><feColorMatrix values='0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 0.6 0'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>&quot;);"
+          class="absolute inset-0 opacity-25 mix-blend-overlay"
+          style="background-image: url(&quot;data:image/svg+xml;utf8,<svg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/><feColorMatrix values='0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 0.55 0'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>&quot;);"
         />
 
-        {/* Paspas — perspektif */}
-        <div
-          class="absolute inset-0 grid place-items-center"
-          style="perspective: 1200px;"
+        {/* Araç gövdesi (üstten görünüm) */}
+        <svg
+          viewBox="0 0 400 540"
+          class="absolute inset-x-2 top-2 bottom-2 mx-auto h-[calc(100%-16px)]"
+          aria-label="Araç içi paspas yerleşimi"
         >
-          <div
-            class="relative w-[80%] aspect-[7/5]"
-            style="transform: rotateX(38deg) rotateZ(-2deg) translateZ(0); transform-style: preserve-3d;"
-          >
-            {/* Floor shadow */}
-            <div
-              class="absolute -inset-x-8 -bottom-12 h-12 rounded-full blur-2xl"
-              style="background: radial-gradient(ellipse, rgba(0,0,0,0.55), transparent 70%);"
+          {/* Body outline */}
+          <defs>
+            <linearGradient id="bodyGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+              <stop offset="0%" stop-color="#26262e" />
+              <stop offset="100%" stop-color="#1a1a22" />
+            </linearGradient>
+            <linearGradient id="hood" x1="0%" y1="0%" x2="0%" y2="100%">
+              <stop offset="0%" stop-color="#1f1f27" />
+              <stop offset="100%" stop-color="#15151b" />
+            </linearGradient>
+          </defs>
+
+          {/* Floor shadow */}
+          <ellipse cx="200" cy="510" rx="170" ry="14" fill="rgba(0,0,0,0.55)" filter="blur(8px)" />
+
+          {/* Body (top-down silhouette) */}
+          <path
+            d="M 110 30
+               C 110 18, 130 8, 200 8
+               C 270 8, 290 18, 290 30
+               L 305 100
+               L 320 200
+               L 325 320
+               L 320 440
+               L 305 500
+               C 280 520, 120 520, 95 500
+               L 80 440
+               L 75 320
+               L 80 200
+               L 95 100
+               Z"
+            fill="url(#bodyGrad)"
+            stroke="rgba(255,255,255,0.08)"
+            stroke-width="1"
+          />
+          {/* Hood */}
+          <path
+            d="M 130 40 L 270 40 L 282 90 L 118 90 Z"
+            fill="url(#hood)"
+            opacity="0.7"
+          />
+          {/* Windshield */}
+          <path
+            d="M 130 100 L 270 100 L 285 175 L 115 175 Z"
+            fill="rgba(80,140,200,0.1)"
+            stroke="rgba(255,255,255,0.05)"
+          />
+          {/* Roof line */}
+          <path
+            d="M 135 180 L 265 180 L 280 350 L 120 350 Z"
+            fill="rgba(255,255,255,0.02)"
+            stroke="rgba(255,255,255,0.04)"
+          />
+          {/* Rear window */}
+          <path
+            d="M 130 360 L 270 360 L 275 430 L 125 430 Z"
+            fill="rgba(80,140,200,0.08)"
+            stroke="rgba(255,255,255,0.05)"
+          />
+          {/* Trunk lid */}
+          <rect x="120" y="440" width="160" height="55" rx="4" fill="rgba(255,255,255,0.025)" stroke="rgba(255,255,255,0.05)" />
+
+          {/* Side mirrors */}
+          <ellipse cx="78" cy="160" rx="6" ry="10" fill="#15151b" stroke="rgba(255,255,255,0.06)" />
+          <ellipse cx="322" cy="160" rx="6" ry="10" fill="#15151b" stroke="rgba(255,255,255,0.06)" />
+          {/* Wheel hints */}
+          <rect x="68" y="120" width="14" height="40" rx="3" fill="#0a0a0d" />
+          <rect x="318" y="120" width="14" height="40" rx="3" fill="#0a0a0d" />
+          <rect x="68" y="380" width="14" height="40" rx="3" fill="#0a0a0d" />
+          <rect x="318" y="380" width="14" height="40" rx="3" fill="#0a0a0d" />
+
+          {/* Seat outlines (visual hint) */}
+          <rect x="146" y="195" width="48" height="50" rx="6" fill="rgba(255,255,255,0.03)" stroke="rgba(255,255,255,0.05)" />
+          <rect x="206" y="195" width="48" height="50" rx="6" fill="rgba(255,255,255,0.03)" stroke="rgba(255,255,255,0.05)" />
+          <rect x="146" y="305" width="108" height="38" rx="6" fill="rgba(255,255,255,0.03)" stroke="rgba(255,255,255,0.05)" />
+        </svg>
+
+        {/* Paspas slot'ları — HTML <foreignObject> yerine absolute pozisyonlu div kullan */}
+        {/* Her slot'un x/y/w/h'ı SVG viewBox'u ile orantılı */}
+        <div class="absolute inset-x-2 top-2 bottom-2 mx-auto pointer-events-none">
+          <div class="relative h-full w-full" style="aspect-ratio: 400/540;">
+            {/* Sürücü (sağ ön) — SAĞ HAND DRIVE veya sol-hand. Türkiye SOL hand: sürücü solda. */}
+            <MatSlot
+              x="14.5%" y="42%" w="22%" h="11%" rotate="0deg"
+              matColor={matColor} borderColor={borderColor}
+              heelPad={heelPad}
+              showLogo={!!showLogo}
+              brand={brand}
+              label="SÜRÜCÜ"
             />
-
-            {/* Kenarlık */}
-            <div
-              class="absolute inset-0 rounded-[36px] overflow-hidden"
-              style={`background: ${borderColor?.hex ?? '#0f0f12'}; box-shadow: inset 0 0 0 2px rgba(255,255,255,0.06), 0 30px 60px -20px rgba(0,0,0,0.7);`}
-            >
-              {borderColor?.swatchUrl && (
-                <img
-                  src={borderColor.swatchUrl}
-                  alt=""
-                  class="size-full object-cover"
-                  style="opacity: 0.78; mix-blend-mode: normal;"
-                  loading="eager"
-                />
-              )}
-            </div>
-
-            {/* Paspas zemin (havuzlu kısım) */}
-            <div
-              class="absolute inset-[6%] rounded-[24px] overflow-hidden"
-              style={`background: ${matColor?.hex ?? '#1f1f26'}; box-shadow: inset 0 4px 12px rgba(0,0,0,0.45);`}
-            >
-              {matColor?.swatchUrl && (
-                <img
-                  src={matColor.swatchUrl}
-                  alt=""
-                  class="size-full object-cover"
-                  loading="eager"
-                  style="filter: brightness(1.05) contrast(1.05);"
-                />
-              )}
-              {/* Highlight gradient */}
-              <div
-                class="absolute inset-0"
-                style="background: linear-gradient(165deg, rgba(255,255,255,0.07) 0%, transparent 35%, transparent 65%, rgba(0,0,0,0.18) 100%);"
+            {/* Yolcu (sol ön) */}
+            <MatSlot
+              x="63.5%" y="42%" w="22%" h="11%" rotate="0deg"
+              matColor={matColor} borderColor={borderColor}
+              heelPad={heelPadPassenger ? heelPad : null}
+              showLogo={!!showLogo}
+              brand={brand}
+              label="YOLCU"
+            />
+            {/* Sol arka */}
+            {showRear && (
+              <MatSlot
+                x="14.5%" y="65%" w="22%" h="10%" rotate="0deg"
+                matColor={matColor} borderColor={borderColor}
+                heelPad={null}
+                showLogo={!!showLogo}
+                brand={brand}
+                label=""
               />
-            </div>
-
-            {/* Sürücü topukluk */}
-            {heelPad && (
-              <div
-                class="absolute top-[10%] left-[12%] w-[28%] h-[18%] rounded-lg overflow-hidden"
-                style="box-shadow: 0 4px 8px rgba(0,0,0,0.35), inset 0 0 0 1px rgba(255,255,255,0.08);"
-              >
-                <img
-                  src={heelPad.swatchUrl}
-                  alt=""
-                  class="size-full object-cover"
-                />
-                <div
-                  class="absolute inset-0"
-                  style="background: linear-gradient(180deg, rgba(255,255,255,0.12) 0%, transparent 50%);"
-                />
-              </div>
             )}
-
-            {/* Yolcu topukluk */}
-            {heelPad && heelPadPassenger && (
-              <div
-                class="absolute top-[10%] right-[12%] w-[28%] h-[18%] rounded-lg overflow-hidden"
-                style="box-shadow: 0 4px 8px rgba(0,0,0,0.35), inset 0 0 0 1px rgba(255,255,255,0.08);"
-              >
-                <img src={heelPad.swatchUrl} alt="" class="size-full object-cover" />
-                <div
-                  class="absolute inset-0"
-                  style="background: linear-gradient(180deg, rgba(255,255,255,0.12) 0%, transparent 50%);"
-                />
-              </div>
+            {/* Sağ arka */}
+            {showRear && (
+              <MatSlot
+                x="63.5%" y="65%" w="22%" h="10%" rotate="0deg"
+                matColor={matColor} borderColor={borderColor}
+                heelPad={null}
+                showLogo={!!showLogo}
+                brand={brand}
+                label=""
+              />
             )}
-
-            {/* Amblem */}
-            {logoAccessory && logoAccessory.brandSlug && (
-              <div
-                class="absolute top-[12%] left-1/2 -translate-x-1/2 px-4 py-1.5 rounded-md backdrop-blur"
-                style="background: rgba(15,15,18,0.85); box-shadow: 0 2px 6px rgba(0,0,0,0.4), inset 0 0 0 1px rgba(255,255,255,0.12);"
-              >
-                <span class="text-[11px] font-display font-bold tracking-[0.2em] text-[var(--color-text)]">
-                  {brand?.name?.toUpperCase() ?? 'BRAND'}
+            {/* Arka sıra etiketi */}
+            {showRear && (
+              <div class="absolute" style="left: 50%; top: 70%; transform: translate(-50%, -50%);">
+                <span class="text-[8px] font-semibold tracking-[0.3em] text-[var(--color-text-muted)] bg-[var(--color-bg)]/70 px-2 py-0.5 rounded">
+                  ARKA SIRA
                 </span>
               </div>
             )}
+            {/* Bagaj */}
+            {showTrunk && (
+              <MatSlot
+                x="32%" y="83%" w="36%" h="11%" rotate="0deg"
+                matColor={matColor} borderColor={borderColor}
+                heelPad={null}
+                showLogo={false}
+                brand={brand}
+                label="BAGAJ"
+              />
+            )}
           </div>
         </div>
 
-        {/* "Canlı Önizleme" rozet */}
-        <div class="absolute top-3 left-3 px-2.5 py-1 rounded-full bg-[var(--color-bg)]/60 backdrop-blur-md ring-1 ring-white/10 text-[10px] uppercase tracking-[0.18em] text-[var(--color-text-muted)] font-semibold flex items-center gap-1.5">
+        {/* Üst rozetler */}
+        <div class="absolute top-3 left-3 px-2.5 py-1 rounded-full bg-[var(--color-bg)]/70 backdrop-blur-md ring-1 ring-white/10 text-[10px] uppercase tracking-[0.18em] text-[var(--color-text-muted)] font-semibold flex items-center gap-1.5">
           <span class="size-1.5 rounded-full bg-[var(--color-success)] animate-pulse" />
           Canlı Önizleme
         </div>
+        <div class="absolute top-3 right-3 px-2.5 py-1 rounded-full bg-[var(--color-bg)]/70 backdrop-blur-md ring-1 ring-white/10 text-[10px] tracking-wider text-[var(--color-text-soft)] font-medium">
+          {brand && model ? `${brand.name} ${model.name} ${model.chassisCode}` : 'Aracını seç'}
+        </div>
 
-        {/* Set ipucu */}
-        {product && (
-          <div class="absolute bottom-3 right-3 px-2.5 py-1 rounded-full bg-[var(--color-bg)]/60 backdrop-blur-md ring-1 ring-white/10 text-[10px] text-[var(--color-text-soft)] font-medium">
-            {product.parts} parça · {product.name}
-          </div>
-        )}
+        {/* Alt kombinasyon chip'leri */}
+        <div class="absolute bottom-3 left-3 right-3 flex flex-wrap gap-1.5 justify-start">
+          {matColor && (
+            <ChipPreview swatch={matColor.swatchUrl} label={matColor.name} />
+          )}
+          {borderColor && (
+            <ChipPreview swatch={borderColor.swatchUrl} label={borderColor.name} />
+          )}
+          {product && (
+            <ChipPreview icon="◆" label={`${product.parts} parça`} />
+          )}
+        </div>
       </div>
 
-      {/* Detay */}
-      <div class="p-5 border-t border-[var(--color-border)]/60">
-        <div class="text-[10px] uppercase tracking-[0.2em] text-[var(--color-text-muted)] font-semibold">
-          {brand && model ? `${brand.name} ${model.name} (${model.chassisCode})` : 'Aracını seç'}
-        </div>
-        <div class="mt-2 flex items-center justify-between gap-3">
+      {/* Özet alt panel */}
+      <div class="p-5 border-t border-[var(--color-border)]/60 space-y-3">
+        <dl class="grid grid-cols-[80px_1fr] gap-y-2 gap-x-4 text-xs">
+          <dt class="text-[var(--color-text-muted)]">Araç</dt>
+          <dd class="text-right text-[var(--color-text)] font-medium">
+            {brand && model ? `${brand.name} ${model.name} ${model.chassisCode}` : '—'}
+          </dd>
+          <dt class="text-[var(--color-text-muted)]">Set</dt>
+          <dd class="text-right text-[var(--color-text)] font-medium">{product?.name ?? '—'}</dd>
+          <dt class="text-[var(--color-text-muted)]">Topukluk</dt>
+          <dd class="text-right text-[var(--color-text)] font-medium">
+            {heelPad?.name ?? '—'}
+            {heelPadPassenger && heelPad ? ' (sürücü+yolcu)' : ''}
+          </dd>
+          <dt class="text-[var(--color-text-muted)]">Amblem</dt>
+          <dd class="text-right text-[var(--color-text)] font-medium">
+            {showLogo ? `${brand?.name} × ${product?.parts ?? 0}` : 'Eklenmedi'}
+          </dd>
+        </dl>
+
+        <div class="flex items-end justify-between pt-3 border-t border-[var(--color-border)]/60">
           <div>
-            <div class="text-2xl font-display font-semibold text-[var(--color-text)] tabular-nums">
+            <div class="text-[10px] uppercase tracking-[0.2em] text-[var(--color-text-muted)] font-semibold">
+              Toplam
+            </div>
+            <div class="text-3xl font-display font-semibold text-[var(--color-primary)] tabular-nums leading-none mt-1">
               {formatTRY(total)}
             </div>
-            <div class="text-[10px] text-[var(--color-text-muted)] mt-0.5">KDV dahil · Kargo ayrıca</div>
+            <div class="text-[10px] text-[var(--color-text-muted)] mt-1.5">KDV dahil · Kargo ayrıca</div>
           </div>
           <button
             type="button"
             onClick={onAddToCart}
-            class="px-4 py-2.5 rounded-xl text-sm font-semibold bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] text-[var(--color-bg)] transition-all hover:shadow-[var(--shadow-glow)]"
+            class="px-5 py-3 rounded-xl text-sm font-semibold bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] text-[var(--color-bg)] transition-all hover:shadow-[var(--shadow-glow)] whitespace-nowrap"
           >
-            Sepete Ekle
+            Paspasınızı Sipariş Verin
           </button>
         </div>
       </div>
     </div>
+  )
+}
+
+/* MatSlot — araç içi paspas yerleştirme */
+function MatSlot({
+  x,
+  y,
+  w,
+  h,
+  rotate,
+  matColor,
+  borderColor,
+  heelPad,
+  showLogo,
+  brand,
+  label,
+}: {
+  x: string
+  y: string
+  w: string
+  h: string
+  rotate: string
+  matColor: MatColor | null
+  borderColor: BorderColor | null
+  heelPad: HeelPad | null
+  showLogo: boolean
+  brand: Brand | null
+  label: string
+}) {
+  return (
+    <div
+      class="absolute rounded-md overflow-hidden shadow-lg"
+      style={`left: ${x}; top: ${y}; width: ${w}; height: ${h}; transform: rotate(${rotate}); box-shadow: 0 6px 14px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.04);`}
+    >
+      {/* Kenarlık */}
+      {borderColor && (
+        <img
+          src={borderColor.swatchUrl}
+          alt=""
+          class="absolute inset-0 size-full object-cover"
+          loading="eager"
+        />
+      )}
+      {/* Zemin */}
+      <div class="absolute inset-[14%] rounded-sm overflow-hidden">
+        {matColor && (
+          <img
+            src={matColor.swatchUrl}
+            alt=""
+            class="size-full object-cover"
+            loading="eager"
+          />
+        )}
+        <div
+          class="absolute inset-0"
+          style="background: linear-gradient(180deg, rgba(255,255,255,0.10) 0%, transparent 30%, transparent 70%, rgba(0,0,0,0.25) 100%);"
+        />
+      </div>
+      {/* Topukluk */}
+      {heelPad && (
+        <div class="absolute top-[18%] left-[18%] right-[58%] bottom-[55%] rounded-sm overflow-hidden ring-1 ring-white/10">
+          <img src={heelPad.swatchUrl} alt="" class="size-full object-cover" loading="eager" />
+        </div>
+      )}
+      {/* Amblem badge */}
+      {showLogo && (
+        <div class="absolute top-[18%] left-1/2 -translate-x-1/2 px-1 py-0.5 rounded-[2px] bg-black/85 backdrop-blur leading-none">
+          <span class="text-[6px] font-bold tracking-[0.15em] text-white whitespace-nowrap">
+            {brand?.name?.toUpperCase() ?? ''}
+          </span>
+        </div>
+      )}
+      {/* Etiket */}
+      {label && (
+        <span class="absolute bottom-[2px] left-1/2 -translate-x-1/2 text-[7px] font-semibold tracking-[0.15em] text-white/70 bg-black/40 px-1 rounded leading-none py-0.5">
+          {label}
+        </span>
+      )}
+    </div>
+  )
+}
+
+function ChipPreview({ swatch, label, icon }: { swatch?: string; label: string; icon?: string }) {
+  return (
+    <span class="inline-flex items-center gap-1.5 px-2 py-1 rounded-full bg-[var(--color-bg)]/70 backdrop-blur-md ring-1 ring-white/10 text-[10px] text-[var(--color-text-soft)] font-medium">
+      {swatch && (
+        <img src={swatch} alt="" class="size-3 rounded-full object-cover ring-1 ring-white/10" />
+      )}
+      {icon && <span class="text-[var(--color-primary)]">{icon}</span>}
+      {label}
+    </span>
   )
 }
 
