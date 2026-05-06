@@ -2,33 +2,117 @@
 export const prerender = false
 import AdminLayout from '@layouts/AdminLayout.astro'
 import { getSession } from '../../../server/auth'
-import { listOrders, PRODUCTION_TIMELINE } from '../../../server/db'
+import { listOrders, PRODUCTION_TIMELINE, type OrderStatus } from '../../../server/db'
 import { formatTRY, formatDateTime } from '@lib/format'
 
 if (!getSession(Astro.cookies)) return Astro.redirect('/admin/login')
 
-const filter = Astro.url.searchParams.get('filter') ?? 'all'
-const all = listOrders()
-const filtered =
-  filter === 'production'
-    ? all.filter((o) => ['received', 'payment_confirmed', 'production_started', 'production_cutting', 'production_sewing', 'quality_check'].includes(o.productionStatus))
-    : filter === 'shipped'
-    ? all.filter((o) => o.productionStatus === 'shipped')
-    : filter === 'delivered'
-    ? all.filter((o) => o.productionStatus === 'delivered')
-    : filter === 'unpaid'
-    ? all.filter((o) => o.paymentStatus !== 'tamamlandi' && o.productionStatus !== 'cancelled')
-    : all
+const params = Astro.url.searchParams
+const filter = params.get('filter') ?? 'all'
+const status = params.get('status') ?? '' // tek bir aşama
+const brand = params.get('brand') ?? ''
+const range = params.get('range') ?? '' // 7 / 30 / custom
+const fromStr = params.get('from') ?? ''
+const toStr = params.get('to') ?? ''
+const q = params.get('q') ?? ''
+const sort = params.get('sort') ?? 'date-desc'
 
+const all = listOrders()
+
+// 1) Filtre chip mantığı (önceki davranış korunuyor)
+let filtered = all
+if (filter === 'production') {
+  filtered = filtered.filter((o) => ['received', 'payment_confirmed', 'production_started', 'production_cutting', 'production_sewing', 'quality_check'].includes(o.productionStatus))
+} else if (filter === 'shipped') {
+  filtered = filtered.filter((o) => o.productionStatus === 'shipped')
+} else if (filter === 'delivered') {
+  filtered = filtered.filter((o) => o.productionStatus === 'delivered')
+} else if (filter === 'unpaid') {
+  filtered = filtered.filter((o) => o.paymentStatus !== 'tamamlandi' && o.productionStatus !== 'cancelled')
+} else if (filter === 'cancelled') {
+  filtered = filtered.filter((o) => o.productionStatus === 'cancelled')
+}
+
+// 2) Tek aşama filtresi
+if (status) filtered = filtered.filter((o) => o.productionStatus === status)
+
+// 3) Marka filtresi
+if (brand) filtered = filtered.filter((o) => o.items.some((it) => it.brandSlug === brand))
+
+// 4) Tarih aralığı
+const day = 24 * 60 * 60 * 1000
+const now = Date.now()
+let fromTs: number | null = null
+let toTs: number | null = null
+if (range === '7') fromTs = now - 7 * day
+else if (range === '30') fromTs = now - 30 * day
+else if (range === '90') fromTs = now - 90 * day
+if (fromStr) fromTs = new Date(fromStr).getTime()
+if (toStr) toTs = new Date(toStr).getTime() + day - 1
+if (fromTs) filtered = filtered.filter((o) => o.createdAt >= fromTs!)
+if (toTs) filtered = filtered.filter((o) => o.createdAt <= toTs!)
+
+// 5) Arama (sipariş no, müşteri ad, telefon, plaka/şasi opsiyonel)
+const qLower = q.trim().toLowerCase()
+if (qLower) {
+  filtered = filtered.filter((o) => {
+    return (
+      o.orderNo.toLowerCase().includes(qLower) ||
+      o.customer.fullName.toLowerCase().includes(qLower) ||
+      o.customer.phone.replace(/\s/g, '').includes(qLower.replace(/\s/g, '')) ||
+      o.items.some((it) => `${it.brandName} ${it.modelName}`.toLowerCase().includes(qLower))
+    )
+  })
+}
+
+// 6) Sıralama
+if (sort === 'date-asc') filtered = [...filtered].sort((a, b) => a.createdAt - b.createdAt)
+else if (sort === 'total-desc') filtered = [...filtered].sort((a, b) => b.total - a.total)
+else if (sort === 'total-asc') filtered = [...filtered].sort((a, b) => a.total - b.total)
+else if (sort === 'paid-desc') filtered = [...filtered].sort((a, b) => b.paidAmount - a.paidAmount)
+// default: date-desc (listOrders zaten sıralı)
+
+// Hızlı filtre chipleri için sayım (filtrelenmemiş set üzerinden)
 const FILTERS = [
   { k: 'all', l: 'Tümü', n: all.length },
   { k: 'production', l: 'Üretimde', n: all.filter((o) => ['received', 'payment_confirmed', 'production_started', 'production_cutting', 'production_sewing', 'quality_check'].includes(o.productionStatus)).length },
   { k: 'shipped', l: 'Kargoda', n: all.filter((o) => o.productionStatus === 'shipped').length },
-  { k: 'delivered', l: 'Teslim Edildi', n: all.filter((o) => o.productionStatus === 'delivered').length },
-  { k: 'unpaid', l: 'Ödeme Bekliyor', n: all.filter((o) => o.paymentStatus !== 'tamamlandi').length },
+  { k: 'delivered', l: 'Teslim', n: all.filter((o) => o.productionStatus === 'delivered').length },
+  { k: 'unpaid', l: 'Ödeme Bekleyen', n: all.filter((o) => o.paymentStatus !== 'tamamlandi' && o.productionStatus !== 'cancelled').length },
+  { k: 'cancelled', l: 'İptal', n: all.filter((o) => o.productionStatus === 'cancelled').length },
 ]
 
+// Marka dropdown — sadece sipariş gelmiş markalar
+const brandSet = new Map<string, string>()
+for (const o of all) for (const it of o.items) brandSet.set(it.brandSlug, it.brandName)
+const brandOptions = [...brandSet.entries()].map(([slug, name]) => ({ slug, name })).sort((a, b) => a.name.localeCompare(b.name, 'tr'))
+
+const STATUS_CHIP: Record<string, string> = {
+  received: 'bg-blue-500/15 text-blue-400 border-blue-500/30',
+  payment_confirmed: 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30',
+  production_started: 'bg-amber-500/15 text-amber-400 border-amber-500/30',
+  production_cutting: 'bg-amber-500/15 text-amber-400 border-amber-500/30',
+  production_sewing: 'bg-amber-500/15 text-amber-400 border-amber-500/30',
+  quality_check: 'bg-violet-500/15 text-violet-400 border-violet-500/30',
+  shipped: 'bg-cyan-500/15 text-cyan-400 border-cyan-500/30',
+  delivered: 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30',
+  cancelled: 'bg-red-500/15 text-red-400 border-red-500/30',
+}
+const PAYMENT_CHIP: Record<string, string> = {
+  bekliyor: 'bg-amber-500/15 text-amber-400 border-amber-500/30',
+  kismi: 'bg-blue-500/15 text-blue-400 border-blue-500/30',
+  tamamlandi: 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30',
+  iade: 'bg-red-500/15 text-red-400 border-red-500/30',
+}
+
 const statusLabel = (s: string) => PRODUCTION_TIMELINE.find((t) => t.status === s)?.label ?? s
+
+// Toplamlar (filtrelenmiş set için)
+const totalAmount = filtered.reduce((s, o) => s + o.total, 0)
+const paidAmount = filtered.reduce((s, o) => s + o.paidAmount, 0)
+const remaining = totalAmount - paidAmount
+
+const hasActiveFilter = !!(filter !== 'all' || status || brand || range || fromStr || toStr || q || sort !== 'date-desc')
 ---
 
 <AdminLayout title="Siparişler" current="orders">
@@ -46,74 +130,209 @@ const statusLabel = (s: string) => PRODUCTION_TIMELINE.find((t) => t.status === 
       </a>
     </header>
 
-    <div class="flex flex-wrap gap-2 mb-6">
-      {
-        FILTERS.map((f) => (
-          <a
-            href={f.k === 'all' ? '/admin/orders' : `/admin/orders?filter=${f.k}`}
+    {/* Filtre formu */}
+    <form method="get" class="mb-5 p-4 rounded-2xl bg-[var(--color-surface)] border border-[var(--color-border)]/60">
+      {/* Hızlı durum chipleri */}
+      <div class="flex flex-wrap gap-2 mb-3">
+        {FILTERS.map((f) => (
+          <button
+            type="submit"
+            name="filter"
+            value={f.k === 'all' ? '' : f.k}
             class={[
               'inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium border transition-colors',
               filter === f.k
                 ? 'border-[var(--color-primary)] bg-[var(--color-primary-soft)] text-[var(--color-primary)]'
-                : 'border-[var(--color-border)] text-[var(--color-text-soft)] hover:text-[var(--color-text)]',
+                : 'border-[var(--color-border)] text-[var(--color-text-soft)] hover:text-[var(--color-text)] bg-[var(--color-surface-2)]/40',
             ].join(' ')}
           >
             {f.l}
             <span class="text-[10px] opacity-60">({f.n})</span>
-          </a>
-        ))
-      }
+          </button>
+        ))}
+      </div>
+
+      {/* Detaylı filtreler grid */}
+      <div class="grid grid-cols-2 md:grid-cols-6 gap-2.5 items-end">
+        <label class="md:col-span-2">
+          <div class="text-[10px] uppercase tracking-wider text-[var(--color-text-muted)] font-semibold mb-1">Arama</div>
+          <input
+            type="text"
+            name="q"
+            value={q}
+            placeholder="Sipariş no / müşteri / telefon / araç"
+            class="w-full px-3 py-2 rounded-lg bg-[var(--color-surface-2)] border border-[var(--color-border)] focus:border-[var(--color-primary)] outline-none text-sm"
+          />
+        </label>
+        <label>
+          <div class="text-[10px] uppercase tracking-wider text-[var(--color-text-muted)] font-semibold mb-1">Marka</div>
+          <select name="brand" class="w-full px-3 py-2 rounded-lg bg-[var(--color-surface-2)] border border-[var(--color-border)] focus:border-[var(--color-primary)] outline-none text-sm">
+            <option value="">Tümü</option>
+            {brandOptions.map((b) => (
+              <option value={b.slug} selected={brand === b.slug}>{b.name}</option>
+            ))}
+          </select>
+        </label>
+        <label>
+          <div class="text-[10px] uppercase tracking-wider text-[var(--color-text-muted)] font-semibold mb-1">Üretim Aşaması</div>
+          <select name="status" class="w-full px-3 py-2 rounded-lg bg-[var(--color-surface-2)] border border-[var(--color-border)] focus:border-[var(--color-primary)] outline-none text-sm">
+            <option value="">Tümü</option>
+            {PRODUCTION_TIMELINE.map((t) => (
+              <option value={t.status} selected={status === t.status}>{t.label}</option>
+            ))}
+            <option value="cancelled" selected={status === 'cancelled'}>İptal</option>
+          </select>
+        </label>
+        <label>
+          <div class="text-[10px] uppercase tracking-wider text-[var(--color-text-muted)] font-semibold mb-1">Sıralama</div>
+          <select name="sort" class="w-full px-3 py-2 rounded-lg bg-[var(--color-surface-2)] border border-[var(--color-border)] focus:border-[var(--color-primary)] outline-none text-sm">
+            <option value="date-desc" selected={sort === 'date-desc'}>Yeniden eskiye</option>
+            <option value="date-asc" selected={sort === 'date-asc'}>Eskiden yeniye</option>
+            <option value="total-desc" selected={sort === 'total-desc'}>Tutar ↓</option>
+            <option value="total-asc" selected={sort === 'total-asc'}>Tutar ↑</option>
+            <option value="paid-desc" selected={sort === 'paid-desc'}>Tahsilat ↓</option>
+          </select>
+        </label>
+        <label>
+          <div class="text-[10px] uppercase tracking-wider text-[var(--color-text-muted)] font-semibold mb-1">Başlangıç</div>
+          <input
+            type="date"
+            name="from"
+            value={fromStr}
+            class="w-full px-3 py-2 rounded-lg bg-[var(--color-surface-2)] border border-[var(--color-border)] focus:border-[var(--color-primary)] outline-none text-sm"
+          />
+        </label>
+        <label>
+          <div class="text-[10px] uppercase tracking-wider text-[var(--color-text-muted)] font-semibold mb-1">Bitiş</div>
+          <input
+            type="date"
+            name="to"
+            value={toStr}
+            class="w-full px-3 py-2 rounded-lg bg-[var(--color-surface-2)] border border-[var(--color-border)] focus:border-[var(--color-primary)] outline-none text-sm"
+          />
+        </label>
+        <div class="md:col-span-3 flex items-center gap-2 flex-wrap">
+          {/* Hızlı tarih kısayolları */}
+          <button type="submit" name="range" value="7" class={['px-2.5 py-1 rounded-md text-[11px] border', range === '7' ? 'bg-[var(--color-primary-soft)] border-[var(--color-primary)] text-[var(--color-primary)]' : 'border-[var(--color-border)] text-[var(--color-text-soft)] hover:text-[var(--color-text)]'].join(' ')}>Son 7 gün</button>
+          <button type="submit" name="range" value="30" class={['px-2.5 py-1 rounded-md text-[11px] border', range === '30' ? 'bg-[var(--color-primary-soft)] border-[var(--color-primary)] text-[var(--color-primary)]' : 'border-[var(--color-border)] text-[var(--color-text-soft)] hover:text-[var(--color-text)]'].join(' ')}>Son 30 gün</button>
+          <button type="submit" name="range" value="90" class={['px-2.5 py-1 rounded-md text-[11px] border', range === '90' ? 'bg-[var(--color-primary-soft)] border-[var(--color-primary)] text-[var(--color-primary)]' : 'border-[var(--color-border)] text-[var(--color-text-soft)] hover:text-[var(--color-text)]'].join(' ')}>Son 90 gün</button>
+        </div>
+        <div class="md:col-span-3 flex items-center justify-end gap-2">
+          {hasActiveFilter && (
+            <a href="/admin/orders" class="px-3 py-2 rounded-lg text-xs font-medium text-[var(--color-text-muted)] hover:text-[var(--color-text)]">
+              Filtreleri temizle
+            </a>
+          )}
+          <button type="submit" class="px-4 py-2 rounded-lg text-xs font-semibold bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] text-[var(--color-bg)]">
+            Filtrele
+          </button>
+        </div>
+      </div>
+
+      {/* Hidden inputs to preserve filter chip state across detail filters */}
+      <input type="hidden" name="filter" value={filter} />
+    </form>
+
+    {/* Filtrelenmiş set özet */}
+    <div class="mb-5 grid grid-cols-2 md:grid-cols-4 gap-3 text-xs">
+      <div class="px-3 py-2 rounded-lg bg-[var(--color-surface)] border border-[var(--color-border)]/60">
+        <div class="text-[10px] uppercase tracking-wider text-[var(--color-text-muted)] font-semibold">Sonuç</div>
+        <div class="mt-0.5 font-display font-semibold tabular-nums">{filtered.length} sipariş</div>
+      </div>
+      <div class="px-3 py-2 rounded-lg bg-[var(--color-surface)] border border-[var(--color-border)]/60">
+        <div class="text-[10px] uppercase tracking-wider text-[var(--color-text-muted)] font-semibold">Toplam Ciro</div>
+        <div class="mt-0.5 font-display font-semibold tabular-nums">{formatTRY(totalAmount)}</div>
+      </div>
+      <div class="px-3 py-2 rounded-lg bg-[var(--color-surface)] border border-[var(--color-border)]/60">
+        <div class="text-[10px] uppercase tracking-wider text-[var(--color-text-muted)] font-semibold">Tahsil</div>
+        <div class="mt-0.5 font-display font-semibold tabular-nums text-[var(--color-success)]">{formatTRY(paidAmount)}</div>
+      </div>
+      <div class="px-3 py-2 rounded-lg bg-[var(--color-surface)] border border-[var(--color-border)]/60">
+        <div class="text-[10px] uppercase tracking-wider text-[var(--color-text-muted)] font-semibold">Bakiye</div>
+        <div class={`mt-0.5 font-display font-semibold tabular-nums ${remaining > 0 ? 'text-[var(--color-warning)]' : 'text-[var(--color-success)]'}`}>{formatTRY(remaining)}</div>
+      </div>
     </div>
 
+    {/* Tablo */}
     <div class="rounded-2xl bg-[var(--color-surface)] border border-[var(--color-border)]/60 overflow-hidden">
-      {
-        filtered.length === 0 ? (
-          <div class="p-12 text-center text-[var(--color-text-muted)]">Bu filtrede sipariş yok.</div>
-        ) : (
-          <div class="overflow-x-auto">
-            <table class="w-full text-sm">
-              <thead class="text-[10px] uppercase tracking-wider text-[var(--color-text-muted)] border-b border-[var(--color-border)]/40">
-                <tr>
-                  <th class="px-5 py-3 text-left font-semibold">Sipariş No</th>
-                  <th class="px-5 py-3 text-left font-semibold">Müşteri / Telefon</th>
-                  <th class="px-5 py-3 text-left font-semibold">Araç</th>
-                  <th class="px-5 py-3 text-left font-semibold">Tarih</th>
-                  <th class="px-5 py-3 text-left font-semibold">Durum</th>
-                  <th class="px-5 py-3 text-right font-semibold">Toplam</th>
+      {filtered.length === 0 ? (
+        <div class="p-12 text-center text-[var(--color-text-muted)]">
+          <p class="mb-3">Bu filtreye uyan sipariş bulunamadı.</p>
+          {hasActiveFilter && (
+            <a href="/admin/orders" class="text-sm text-[var(--color-primary)] hover:underline">Filtreleri temizle →</a>
+          )}
+        </div>
+      ) : (
+        <div class="overflow-x-auto">
+          <table class="w-full text-sm">
+            <thead class="text-[10px] uppercase tracking-wider text-[var(--color-text-muted)] border-b border-[var(--color-border)]/40">
+              <tr>
+                <th class="px-5 py-3 text-left font-semibold">Sipariş No</th>
+                <th class="px-5 py-3 text-left font-semibold">Müşteri / Telefon</th>
+                <th class="px-5 py-3 text-left font-semibold">Araç</th>
+                <th class="px-5 py-3 text-left font-semibold">Tarih</th>
+                <th class="px-5 py-3 text-left font-semibold">Üretim</th>
+                <th class="px-5 py-3 text-left font-semibold">Ödeme</th>
+                <th class="px-5 py-3 text-right font-semibold">Toplam</th>
+                <th class="px-5 py-3 text-right font-semibold">Bakiye</th>
+              </tr>
+            </thead>
+            <tbody>
+              {filtered.map((o) => (
+                <tr
+                  data-href={`/admin/orders/${o.orderNo}`}
+                  class="border-b border-[var(--color-border)]/30 hover:bg-[var(--color-surface-2)]/60 cursor-pointer transition-colors row-link"
+                >
+                  <td class="px-5 py-3">
+                    <a href={`/admin/orders/${o.orderNo}`} class="font-mono text-xs text-[var(--color-primary)] hover:underline">
+                      {o.orderNo}
+                    </a>
+                  </td>
+                  <td class="px-5 py-3">
+                    <div class="font-medium">{o.customer.fullName}</div>
+                    <div class="text-[10px] text-[var(--color-text-muted)]">{o.customer.phone}</div>
+                  </td>
+                  <td class="px-5 py-3 text-xs">
+                    {o.items[0] ? `${o.items[0].brandName} ${o.items[0].modelName}` : '—'}
+                    {o.items[0]?.modelChassis && (
+                      <span class="block text-[10px] text-[var(--color-text-muted)]">{o.items[0].modelChassis}</span>
+                    )}
+                  </td>
+                  <td class="px-5 py-3 text-xs text-[var(--color-text-muted)] whitespace-nowrap">
+                    {formatDateTime(o.createdAt)}
+                  </td>
+                  <td class="px-5 py-3 text-xs">
+                    <span class={`px-2 py-0.5 rounded-full text-[10px] font-semibold border whitespace-nowrap ${STATUS_CHIP[o.productionStatus] ?? ''}`}>
+                      {statusLabel(o.productionStatus)}
+                    </span>
+                  </td>
+                  <td class="px-5 py-3 text-xs">
+                    <span class={`px-2 py-0.5 rounded-full text-[10px] font-semibold border whitespace-nowrap ${PAYMENT_CHIP[o.paymentStatus] ?? ''}`}>
+                      {o.paymentStatus === 'tamamlandi' ? 'Tamam' : o.paymentStatus === 'kismi' ? `Kısmi ${formatTRY(o.paidAmount)}` : o.paymentStatus === 'iade' ? 'İade' : 'Bekleniyor'}
+                    </span>
+                  </td>
+                  <td class="px-5 py-3 text-right font-semibold tabular-nums">{formatTRY(o.total)}</td>
+                  <td class={`px-5 py-3 text-right tabular-nums ${o.total - o.paidAmount > 0 ? 'text-[var(--color-warning)]' : 'text-[var(--color-success)]'}`}>
+                    {formatTRY(o.total - o.paidAmount)}
+                  </td>
                 </tr>
-              </thead>
-              <tbody>
-                {filtered.map((o) => (
-                  <tr class="border-b border-[var(--color-border)]/30 hover:bg-[var(--color-surface-2)]/40">
-                    <td class="px-5 py-3">
-                      <a href={`/admin/orders/${o.orderNo}`} class="font-mono text-xs text-[var(--color-primary)] hover:underline">
-                        {o.orderNo}
-                      </a>
-                    </td>
-                    <td class="px-5 py-3">
-                      <div class="font-medium">{o.customer.fullName}</div>
-                      <div class="text-[10px] text-[var(--color-text-muted)]">{o.customer.phone}</div>
-                    </td>
-                    <td class="px-5 py-3 text-xs">
-                      {o.items[0] ? `${o.items[0].brandName} ${o.items[0].modelName}` : '—'}
-                    </td>
-                    <td class="px-5 py-3 text-xs text-[var(--color-text-muted)] whitespace-nowrap">
-                      {formatDateTime(o.createdAt)}
-                    </td>
-                    <td class="px-5 py-3 text-xs">
-                      <div>{statusLabel(o.productionStatus)}</div>
-                      <div class="text-[10px] text-[var(--color-text-muted)]">
-                        {o.paymentStatus === 'tamamlandi' ? '✓ Ödeme tamam' : o.paymentStatus === 'kismi' ? `Kısmi ${formatTRY(o.paidAmount)}` : 'Ödeme bekleniyor'}
-                      </div>
-                    </td>
-                    <td class="px-5 py-3 text-right font-semibold tabular-nums">{formatTRY(o.total)}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )
-      }
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
     </div>
   </div>
+
+  <script>
+    // Tablo satırına tıklayınca aç (link/buton hariç)
+    document.querySelectorAll<HTMLElement>('tr.row-link').forEach((row) => {
+      row.addEventListener('click', (e) => {
+        const t = e.target as HTMLElement
+        if (t.closest('a, button, input, select, textarea')) return
+        const href = row.dataset.href
+        if (href) window.location.href = href
+      })
+    })
+  </script>
 </AdminLayout>

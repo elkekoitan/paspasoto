@@ -9,6 +9,7 @@ import {
   PRODUCTS,
 } from '../../lib/catalog'
 import { formatTRY } from '../../lib/format'
+import ClientBrandLogo from '../ui/ClientBrandLogo'
 
 const CITIES = [
   'İstanbul', 'Ankara', 'İzmir', 'Bursa', 'Antalya', 'Konya', 'Adana', 'Gaziantep',
@@ -212,14 +213,39 @@ export default function NewOrderForm() {
           </div>
         </Section>
 
-        <Section title="Paspas Konfigürasyonu">
-          <div class="grid sm:grid-cols-2 gap-3">
-            <Field label="Marka" required>
-              <select value={brandSlug} onChange={(e) => { setBrandSlug((e.target as HTMLSelectElement).value); setModelSlug('') }} required class={inp}>
-                {BRANDS.map((b) => <option value={b.slug}>{b.name}</option>)}
-              </select>
-            </Field>
-            <Field label="Model" required>
+        <Section title="Araç Seçimi">
+          {/* Marka grid — logoyla */}
+          <div class="mb-4">
+            <div class="text-[10px] uppercase tracking-wider text-[var(--color-text-muted)] font-semibold mb-2">Marka</div>
+            <div class="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-7 gap-1.5 max-h-[260px] overflow-y-auto pr-1">
+              {BRANDS.map((b) => {
+                const active = brandSlug === b.slug
+                return (
+                  <button
+                    key={b.slug}
+                    type="button"
+                    onClick={() => { setBrandSlug(b.slug); setModelSlug('') }}
+                    class={[
+                      'aspect-[5/4] rounded-lg border flex flex-col items-center justify-center gap-1 px-1 py-1.5 transition-all',
+                      active
+                        ? 'border-[var(--color-primary)] bg-[var(--color-primary-soft)] shadow-[var(--shadow-glow)] -translate-y-0.5'
+                        : 'border-[var(--color-border)]/60 bg-[var(--color-surface-2)] hover:border-[var(--color-text-muted)]',
+                    ].join(' ')}
+                    title={b.name}
+                  >
+                    <ClientBrandLogo iconSlug={b.iconSlug} name={b.name} size={26} color={b.color} />
+                    <span class={['text-[10px] truncate w-full text-center leading-none', active ? 'text-[var(--color-text)] font-semibold' : 'text-[var(--color-text-soft)]'].join(' ')}>
+                      {b.name}
+                    </span>
+                  </button>
+                )
+              })}
+            </div>
+          </div>
+
+          {/* Model + Set + Adet */}
+          <div class="grid sm:grid-cols-3 gap-3">
+            <Field label="Model (şasi · yıl)" required class="sm:col-span-2">
               <select value={modelSlug} onChange={(e) => setModelSlug((e.target as HTMLSelectElement).value)} required class={inp}>
                 <option value="">Seçin...</option>
                 {models.map((m) => (
@@ -227,38 +253,124 @@ export default function NewOrderForm() {
                 ))}
               </select>
             </Field>
-            <Field label="Set Tipi" required>
-              <select value={productSlug} onChange={(e) => setProductSlug((e.target as HTMLSelectElement).value)} required class={inp}>
-                {PRODUCTS.map((p) => <option value={p.slug}>{p.name} ({p.parts} parça)</option>)}
-              </select>
-            </Field>
             <Field label="Adet" required>
               <input type="number" min="1" value={qty} onInput={(e) => setQty(parseInt((e.target as HTMLInputElement).value) || 1)} required class={inp} />
             </Field>
-            <Field label="Paspas Zemini">
-              <select value={matSlug} onChange={(e) => setMatSlug((e.target as HTMLSelectElement).value)} class={inp}>
-                {MAT_COLORS.map((c) => <option value={c.slug}>{c.name}</option>)}
-              </select>
-            </Field>
-            <Field label="Kenarlık">
-              <select value={borderSlug} onChange={(e) => setBorderSlug((e.target as HTMLSelectElement).value)} class={inp}>
-                {BORDER_COLORS.map((c) => <option value={c.slug}>{c.name}</option>)}
-              </select>
-            </Field>
-            <Field label="Topukluk">
-              <select value={heelSlug} onChange={(e) => setHeelSlug((e.target as HTMLSelectElement).value)} class={inp}>
-                {HEEL_PADS.map((h) => <option value={h.slug}>{h.name}{h.pricePremium > 0 ? ` (+${h.pricePremium}₺)` : ''}</option>)}
-              </select>
-            </Field>
-            <div class="flex items-end gap-3">
-              <label class="flex items-center gap-2 text-sm cursor-pointer">
-                <input type="checkbox" checked={heelPassenger} onChange={(e) => setHeelPassenger((e.target as HTMLInputElement).checked)} class="size-4 accent-[var(--color-primary)]" />
-                Yolcu topukluk +100₺
-              </label>
+          </div>
+
+          {/* Set tipi seçimi — kart */}
+          <div class="mt-4">
+            <div class="text-[10px] uppercase tracking-wider text-[var(--color-text-muted)] font-semibold mb-2">Set Tipi</div>
+            <div class="grid sm:grid-cols-3 gap-2">
+              {PRODUCTS.map((p) => {
+                const active = productSlug === p.slug
+                return (
+                  <button
+                    key={p.slug}
+                    type="button"
+                    onClick={() => setProductSlug(p.slug)}
+                    class={[
+                      'p-3 rounded-lg border text-left transition-all',
+                      active
+                        ? 'border-[var(--color-primary)] bg-[var(--color-primary-soft)]'
+                        : 'border-[var(--color-border)]/60 bg-[var(--color-surface-2)] hover:border-[var(--color-text-muted)]',
+                    ].join(' ')}
+                  >
+                    <div class="flex items-baseline justify-between">
+                      <span class="font-semibold text-sm">{p.name}</span>
+                      <span class="text-xs text-[var(--color-primary)] tabular-nums">{formatTRY(p.basePrice)}</span>
+                    </div>
+                    <div class="text-[10px] text-[var(--color-text-muted)] mt-0.5">{p.parts} parça {p.includesTrunk ? '· bagaj dahil' : ''}</div>
+                  </button>
+                )
+              })}
             </div>
-            <label class="flex items-center gap-2 text-sm cursor-pointer sm:col-span-2 p-3 rounded-lg bg-[var(--color-surface-2)]">
+          </div>
+        </Section>
+
+        <Section title="Renk & Aksesuar">
+          {/* Mat Zemin — swatch grid */}
+          <div class="mb-4">
+            <div class="text-[10px] uppercase tracking-wider text-[var(--color-text-muted)] font-semibold mb-2">Paspas Zemini</div>
+            <div class="grid grid-cols-5 sm:grid-cols-10 gap-1.5">
+              {MAT_COLORS.map((c) => {
+                const active = matSlug === c.slug
+                return (
+                  <button key={c.slug} type="button" onClick={() => setMatSlug(c.slug)} title={c.name}
+                    class={['group relative aspect-square rounded-lg overflow-hidden ring-2 transition-all',
+                      active ? 'ring-[var(--color-primary)] scale-105' : 'ring-[var(--color-border)] hover:ring-[var(--color-text-muted)]'].join(' ')}>
+                    <img src={c.swatchUrl} alt={c.name} class="size-full object-cover" loading="lazy" />
+                    {active && (
+                      <span class="absolute inset-0 flex items-center justify-center bg-black/35">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5" /></svg>
+                      </span>
+                    )}
+                  </button>
+                )
+              })}
+            </div>
+            <div class="text-[10px] text-[var(--color-text-muted)] mt-1.5">Seçili: <span class="text-[var(--color-text-soft)]">{matColor.name}</span></div>
+          </div>
+
+          {/* Border swatch grid */}
+          <div class="mb-4">
+            <div class="text-[10px] uppercase tracking-wider text-[var(--color-text-muted)] font-semibold mb-2">Kenarlık</div>
+            <div class="grid grid-cols-5 sm:grid-cols-10 md:grid-cols-15 gap-1.5">
+              {BORDER_COLORS.map((c) => {
+                const active = borderSlug === c.slug
+                return (
+                  <button key={c.slug} type="button" onClick={() => setBorderSlug(c.slug)} title={c.name}
+                    class={['group relative aspect-square rounded-lg overflow-hidden ring-2 transition-all',
+                      active ? 'ring-[var(--color-primary)] scale-105' : 'ring-[var(--color-border)] hover:ring-[var(--color-text-muted)]'].join(' ')}>
+                    <img src={c.swatchUrl} alt={c.name} class="size-full object-cover" loading="lazy" />
+                    {active && (
+                      <span class="absolute inset-0 flex items-center justify-center bg-black/35">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5" /></svg>
+                      </span>
+                    )}
+                  </button>
+                )
+              })}
+            </div>
+            <div class="text-[10px] text-[var(--color-text-muted)] mt-1.5">Seçili: <span class="text-[var(--color-text-soft)]">{borderColor.name}</span></div>
+          </div>
+
+          {/* Heel pad swatch */}
+          <div class="mb-4">
+            <div class="text-[10px] uppercase tracking-wider text-[var(--color-text-muted)] font-semibold mb-2">Topukluk</div>
+            <div class="grid grid-cols-4 sm:grid-cols-8 gap-1.5">
+              {HEEL_PADS.map((h) => {
+                const active = heelSlug === h.slug
+                return (
+                  <button key={h.slug} type="button" onClick={() => setHeelSlug(h.slug)} title={h.name}
+                    class={['relative aspect-square rounded-lg overflow-hidden ring-2 transition-all',
+                      active ? 'ring-[var(--color-primary)] scale-105' : 'ring-[var(--color-border)] hover:ring-[var(--color-text-muted)]'].join(' ')}>
+                    <img src={h.swatchUrl} alt={h.name} class="size-full object-cover" />
+                    {h.pricePremium > 0 && (
+                      <span class="absolute top-0.5 right-0.5 px-1 py-0.5 text-[8px] rounded bg-black/70 text-white font-semibold leading-none">
+                        +{h.pricePremium}
+                      </span>
+                    )}
+                    {active && (
+                      <span class="absolute inset-0 flex items-center justify-center bg-black/35">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5" /></svg>
+                      </span>
+                    )}
+                  </button>
+                )
+              })}
+            </div>
+            <div class="text-[10px] text-[var(--color-text-muted)] mt-1.5">Seçili: <span class="text-[var(--color-text-soft)]">{heelPad.name}{heelPad.pricePremium > 0 ? ` (+${formatTRY(heelPad.pricePremium)})` : ''}</span></div>
+          </div>
+
+          <div class="grid sm:grid-cols-2 gap-3">
+            <label class="flex items-center gap-2 text-sm cursor-pointer p-3 rounded-lg bg-[var(--color-surface-2)] hover:bg-[var(--color-surface-2)]/70 transition-colors">
+              <input type="checkbox" checked={heelPassenger} onChange={(e) => setHeelPassenger((e.target as HTMLInputElement).checked)} class="size-4 accent-[var(--color-primary)]" />
+              Yolcu topukluğu da olsun <span class="text-[var(--color-primary)] ml-auto">+{formatTRY(100)}</span>
+            </label>
+            <label class="flex items-center gap-2 text-sm cursor-pointer p-3 rounded-lg bg-[var(--color-surface-2)] hover:bg-[var(--color-surface-2)]/70 transition-colors">
               <input type="checkbox" checked={logoEnabled} onChange={(e) => setLogoEnabled((e.target as HTMLInputElement).checked)} class="size-4 accent-[var(--color-primary)]" />
-              {brand.name} amblemi paspasa eklensin (+{formatTRY(150)} × {product.parts})
+              {brand.name} amblemi <span class="text-[var(--color-primary)] ml-auto">+{formatTRY(150)} × {product.parts}</span>
             </label>
           </div>
         </Section>
@@ -383,12 +495,66 @@ export default function NewOrderForm() {
 
       <aside class="lg:sticky lg:top-6 self-start">
         <div class="rounded-2xl bg-[var(--color-surface)] border border-[var(--color-border)]/60 p-5">
-          <h3 class="font-display text-base font-semibold mb-4">Sipariş Özeti</h3>
+          <h3 class="font-display text-base font-semibold mb-3 flex items-center justify-between">
+            Canlı Önizleme
+            <span class="text-[10px] uppercase tracking-wider text-[var(--color-success)] font-medium flex items-center gap-1">
+              <span class="size-1.5 rounded-full bg-[var(--color-success)] animate-pulse"></span>
+              Anlık
+            </span>
+          </h3>
 
-          <div class="rounded-xl overflow-hidden ring-1 ring-[var(--color-border)] aspect-[4/3] relative mb-4">
-            <img src={borderColor.swatchUrl} alt="" class="absolute inset-0 size-full object-cover" />
-            <div class="absolute inset-[12%] rounded-md overflow-hidden">
-              <img src={matColor.swatchUrl} alt="" class="size-full object-cover" />
+          {/* Araç içi paspas yerleşimi — top-down preview */}
+          <div class="rounded-xl overflow-hidden ring-1 ring-[var(--color-border)] relative mb-4 aspect-[3/4]"
+               style="background: radial-gradient(ellipse 80% 60% at 50% 30%, #1a1a22, #0b0b0f 85%);">
+            {/* Araç gövdesi */}
+            <svg viewBox="0 0 400 540" class="absolute inset-x-1 top-1 bottom-1 mx-auto h-[calc(100%-8px)]">
+              <defs>
+                <linearGradient id="bg" x1="0%" y1="0%" x2="0%" y2="100%">
+                  <stop offset="0%" stop-color="#26262e" />
+                  <stop offset="100%" stop-color="#1a1a22" />
+                </linearGradient>
+              </defs>
+              <ellipse cx="200" cy="510" rx="170" ry="14" fill="rgba(0,0,0,0.55)" filter="blur(8px)" />
+              <path d="M 110 30 C 110 18, 130 8, 200 8 C 270 8, 290 18, 290 30 L 305 100 L 320 200 L 325 320 L 320 440 L 305 500 C 280 520, 120 520, 95 500 L 80 440 L 75 320 L 80 200 L 95 100 Z"
+                    fill="url(#bg)" stroke="rgba(255,255,255,0.08)" stroke-width="1" />
+              <path d="M 130 100 L 270 100 L 285 175 L 115 175 Z" fill="rgba(80,140,200,0.1)" stroke="rgba(255,255,255,0.05)" />
+              <path d="M 130 360 L 270 360 L 275 430 L 125 430 Z" fill="rgba(80,140,200,0.08)" stroke="rgba(255,255,255,0.05)" />
+              <rect x="120" y="440" width="160" height="55" rx="4" fill="rgba(255,255,255,0.025)" stroke="rgba(255,255,255,0.05)" />
+              <rect x="68" y="120" width="14" height="40" rx="3" fill="#0a0a0d" />
+              <rect x="318" y="120" width="14" height="40" rx="3" fill="#0a0a0d" />
+              <rect x="68" y="380" width="14" height="40" rx="3" fill="#0a0a0d" />
+              <rect x="318" y="380" width="14" height="40" rx="3" fill="#0a0a0d" />
+              <rect x="146" y="195" width="48" height="50" rx="6" fill="rgba(255,255,255,0.03)" stroke="rgba(255,255,255,0.05)" />
+              <rect x="206" y="195" width="48" height="50" rx="6" fill="rgba(255,255,255,0.03)" stroke="rgba(255,255,255,0.05)" />
+              <rect x="146" y="305" width="108" height="38" rx="6" fill="rgba(255,255,255,0.03)" stroke="rgba(255,255,255,0.05)" />
+            </svg>
+
+            {/* Paspas slot'ları */}
+            <div class="absolute inset-x-1 top-1 bottom-1 mx-auto pointer-events-none" style="aspect-ratio: 400/540;">
+              <PreviewMat x="14.5%" y="42%" w="22%" h="11%" mat={matColor} border={borderColor} heel={heelPad} logoBrand={logoEnabled ? brand : null} label="SÜRÜCÜ" />
+              <PreviewMat x="63.5%" y="42%" w="22%" h="11%" mat={matColor} border={borderColor} heel={heelPassenger ? heelPad : null} logoBrand={logoEnabled ? brand : null} label="YOLCU" />
+              {product.parts >= 4 && (
+                <>
+                  <PreviewMat x="14.5%" y="65%" w="22%" h="10%" mat={matColor} border={borderColor} heel={null} logoBrand={logoEnabled ? brand : null} label="" />
+                  <PreviewMat x="63.5%" y="65%" w="22%" h="10%" mat={matColor} border={borderColor} heel={null} logoBrand={logoEnabled ? brand : null} label="" />
+                </>
+              )}
+              {product.includesTrunk && (
+                <PreviewMat x="32%" y="83%" w="36%" h="11%" mat={matColor} border={borderColor} heel={null} logoBrand={null} label="BAGAJ" />
+              )}
+            </div>
+
+            {/* Üst etiket */}
+            <div class="absolute top-2 left-2 px-2 py-0.5 rounded-full bg-black/60 backdrop-blur ring-1 ring-white/10 text-[9px] uppercase tracking-wider text-[var(--color-text-soft)] font-medium flex items-center gap-1">
+              <ClientBrandLogo iconSlug={brand.iconSlug} name={brand.name} size={10} color={brand.color} />
+              {brand.name} {model?.name ?? ''}
+            </div>
+
+            {/* Alt chip'ler */}
+            <div class="absolute bottom-2 left-2 right-2 flex flex-wrap gap-1 justify-start">
+              <PreviewChip swatch={matColor.swatchUrl} label={matColor.name} />
+              <PreviewChip swatch={borderColor.swatchUrl} label={borderColor.name} />
+              <PreviewChip icon="◆" label={`${product.parts} parça`} />
             </div>
           </div>
 
@@ -496,6 +662,55 @@ function Row({ label, value }: { label: string; value: string }) {
       <dt class="text-[var(--color-text-muted)]">{label}</dt>
       <dd class="text-right text-[var(--color-text)]">{value}</dd>
     </div>
+  )
+}
+
+function PreviewMat({
+  x, y, w, h, mat, border, heel, logoBrand, label,
+}: {
+  x: string; y: string; w: string; h: string
+  mat: { swatchUrl: string; name: string }
+  border: { swatchUrl: string; name: string }
+  heel: { swatchUrl: string } | null
+  logoBrand: { iconSlug?: string; name: string; color?: string } | null
+  label: string
+}) {
+  return (
+    <div
+      class="absolute rounded-md overflow-hidden shadow-lg"
+      style={`left: ${x}; top: ${y}; width: ${w}; height: ${h}; box-shadow: 0 6px 14px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.04);`}
+    >
+      <img src={border.swatchUrl} alt="" class="absolute inset-0 size-full object-cover" loading="eager" />
+      <div class="absolute inset-[14%] rounded-sm overflow-hidden">
+        <img src={mat.swatchUrl} alt="" class="size-full object-cover" loading="eager" />
+        <div class="absolute inset-0" style="background: linear-gradient(180deg, rgba(255,255,255,0.10) 0%, transparent 30%, transparent 70%, rgba(0,0,0,0.25) 100%);"></div>
+      </div>
+      {heel && (
+        <div class="absolute top-[18%] left-[18%] right-[58%] bottom-[55%] rounded-sm overflow-hidden ring-1 ring-white/10">
+          <img src={heel.swatchUrl} alt="" class="size-full object-cover" loading="eager" />
+        </div>
+      )}
+      {logoBrand && (
+        <div class="absolute top-[20%] left-1/2 -translate-x-1/2 size-[18%] grid place-items-center rounded-full bg-black/65 backdrop-blur ring-1 ring-white/15">
+          <ClientBrandLogo iconSlug={logoBrand.iconSlug} name={logoBrand.name} size={16} color="#ffffff" />
+        </div>
+      )}
+      {label && (
+        <span class="absolute bottom-[2px] left-1/2 -translate-x-1/2 text-[7px] font-semibold tracking-[0.15em] text-white/70 bg-black/40 px-1 rounded leading-none py-0.5">
+          {label}
+        </span>
+      )}
+    </div>
+  )
+}
+
+function PreviewChip({ swatch, label, icon }: { swatch?: string; label: string; icon?: string }) {
+  return (
+    <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-black/60 backdrop-blur ring-1 ring-white/10 text-[9px] text-[var(--color-text-soft)] font-medium">
+      {swatch && <img src={swatch} alt="" class="size-2.5 rounded-full object-cover ring-1 ring-white/10" />}
+      {icon && <span class="text-[var(--color-primary)]">{icon}</span>}
+      {label}
+    </span>
   )
 }
 

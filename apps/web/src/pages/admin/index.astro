@@ -30,10 +30,10 @@ const awaitingPaymentCount = orders.filter(
 ).length
 
 /* Top brands (adet) */
-const brandTally = new Map<string, { name: string; count: number; revenue: number }>()
+const brandTally = new Map<string, { slug: string; name: string; count: number; revenue: number }>()
 for (const o of orders) {
   for (const it of o.items) {
-    const prev = brandTally.get(it.brandSlug) ?? { name: it.brandName, count: 0, revenue: 0 }
+    const prev = brandTally.get(it.brandSlug) ?? { slug: it.brandSlug, name: it.brandName, count: 0, revenue: 0 }
     prev.count += it.qty
     prev.revenue += (it.unitPrice ?? 0) * it.qty
     brandTally.set(it.brandSlug, prev)
@@ -134,50 +134,71 @@ const paidPercent = totalRevenue ? Math.round((paidRevenue / totalRevenue) * 100
       </a>
     </header>
 
-    {/* KPI Row */}
+    {/* KPI Row — tıklanınca filtreli sipariş listesine */}
     <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-      <div class="p-5 rounded-2xl bg-[var(--color-surface)] border border-[var(--color-border)]/60">
-        <div class="text-[10px] uppercase tracking-[0.2em] text-[var(--color-text-muted)] font-semibold">Toplam Sipariş</div>
+      <a href="/admin/orders" class="p-5 rounded-2xl bg-[var(--color-surface)] border border-[var(--color-border)]/60 hover:border-[var(--color-primary)]/40 hover:-translate-y-0.5 transition-all group">
+        <div class="text-[10px] uppercase tracking-[0.2em] text-[var(--color-text-muted)] font-semibold flex items-center justify-between">
+          Toplam Sipariş
+          <span class="text-[var(--color-text-muted)] group-hover:text-[var(--color-primary)] transition-colors">→</span>
+        </div>
         <div class="mt-2 font-display text-3xl font-semibold tabular-nums">{orders.length}</div>
         <div class="mt-1 text-xs text-[var(--color-text-muted)]">Son 7 gün: {last7.length}</div>
-      </div>
-      <div class="p-5 rounded-2xl bg-[var(--color-surface)] border border-[var(--color-border)]/60">
-        <div class="text-[10px] uppercase tracking-[0.2em] text-[var(--color-text-muted)] font-semibold">Üretimde</div>
+      </a>
+      <a href="/admin/orders?filter=production" class="p-5 rounded-2xl bg-[var(--color-surface)] border border-[var(--color-border)]/60 hover:border-amber-500/40 hover:-translate-y-0.5 transition-all group">
+        <div class="text-[10px] uppercase tracking-[0.2em] text-[var(--color-text-muted)] font-semibold flex items-center justify-between">
+          Üretimde
+          <span class="text-[var(--color-text-muted)] group-hover:text-amber-400 transition-colors">→</span>
+        </div>
         <div class="mt-2 font-display text-3xl font-semibold tabular-nums">{inProductionCount}</div>
         <div class="mt-1 text-xs text-[var(--color-text-muted)]">Kargoda: {shippedCount} · Teslim: {deliveredCount}</div>
-      </div>
-      <div class="p-5 rounded-2xl bg-[var(--color-surface)] border border-[var(--color-border)]/60">
-        <div class="text-[10px] uppercase tracking-[0.2em] text-[var(--color-text-muted)] font-semibold">Ödeme Bekliyor</div>
+      </a>
+      <a href="/admin/orders?filter=unpaid" class="p-5 rounded-2xl bg-[var(--color-surface)] border border-[var(--color-border)]/60 hover:border-blue-500/40 hover:-translate-y-0.5 transition-all group">
+        <div class="text-[10px] uppercase tracking-[0.2em] text-[var(--color-text-muted)] font-semibold flex items-center justify-between">
+          Ödeme Bekliyor
+          <span class="text-[var(--color-text-muted)] group-hover:text-blue-400 transition-colors">→</span>
+        </div>
         <div class="mt-2 font-display text-3xl font-semibold tabular-nums">{awaitingPaymentCount}</div>
         <div class="mt-1 text-xs text-[var(--color-text-muted)]">Açık: {formatTRY(remainingRevenue)}</div>
-      </div>
-      <div class="p-5 rounded-2xl bg-[var(--color-surface)] border border-[var(--color-border)]/60">
-        <div class="text-[10px] uppercase tracking-[0.2em] text-[var(--color-text-muted)] font-semibold">Ciro</div>
+      </a>
+      <a href="/admin/orders?sort=total-desc" class="p-5 rounded-2xl bg-[var(--color-surface)] border border-[var(--color-border)]/60 hover:border-emerald-500/40 hover:-translate-y-0.5 transition-all group">
+        <div class="text-[10px] uppercase tracking-[0.2em] text-[var(--color-text-muted)] font-semibold flex items-center justify-between">
+          Ciro
+          <span class="text-[var(--color-text-muted)] group-hover:text-emerald-400 transition-colors">→</span>
+        </div>
         <div class="mt-2 font-display text-3xl font-semibold tabular-nums">{formatTRY(totalRevenue)}</div>
         <div class="mt-1 text-xs text-[var(--color-text-muted)]">Tahsil: {formatTRY(paidRevenue)} (%{paidPercent})</div>
-      </div>
+      </a>
     </div>
 
-    {/* 30/7/% kart üçlüsü */}
+    {/* 30/7/% kart üçlüsü — tarih filtreleriyle */}
     <div class="grid md:grid-cols-3 gap-4 mb-10">
-      <div class="p-5 rounded-2xl bg-gradient-to-br from-[var(--color-primary-soft)] to-[var(--color-surface)] border border-[var(--color-primary)]/30">
-        <div class="text-[10px] uppercase tracking-[0.2em] text-[var(--color-primary)] font-semibold">Bu Ay (30 gün)</div>
+      <a href="/admin/orders?range=30" class="p-5 rounded-2xl bg-gradient-to-br from-[var(--color-primary-soft)] to-[var(--color-surface)] border border-[var(--color-primary)]/30 hover:border-[var(--color-primary)] hover:-translate-y-0.5 transition-all group">
+        <div class="text-[10px] uppercase tracking-[0.2em] text-[var(--color-primary)] font-semibold flex items-center justify-between">
+          Bu Ay (30 gün)
+          <span class="opacity-60 group-hover:opacity-100">→</span>
+        </div>
         <div class="mt-2 font-display text-3xl font-semibold">{formatTRY(revenueLast30)}</div>
         <div class="mt-1 text-xs text-[var(--color-text-soft)]">{last30.length} sipariş</div>
-      </div>
-      <div class="p-5 rounded-2xl bg-[var(--color-surface)] border border-[var(--color-border)]/60">
-        <div class="text-[10px] uppercase tracking-[0.2em] text-[var(--color-text-muted)] font-semibold">Bu Hafta (7 gün)</div>
+      </a>
+      <a href="/admin/orders?range=7" class="p-5 rounded-2xl bg-[var(--color-surface)] border border-[var(--color-border)]/60 hover:border-[var(--color-primary)]/40 hover:-translate-y-0.5 transition-all group">
+        <div class="text-[10px] uppercase tracking-[0.2em] text-[var(--color-text-muted)] font-semibold flex items-center justify-between">
+          Bu Hafta (7 gün)
+          <span class="opacity-60 group-hover:opacity-100">→</span>
+        </div>
         <div class="mt-2 font-display text-3xl font-semibold">{formatTRY(revenueLast7)}</div>
         <div class="mt-1 text-xs text-[var(--color-text-soft)]">{last7.length} sipariş</div>
-      </div>
-      <div class="p-5 rounded-2xl bg-[var(--color-surface)] border border-[var(--color-border)]/60">
-        <div class="text-[10px] uppercase tracking-[0.2em] text-[var(--color-text-muted)] font-semibold">Tahsilat Tamamlanma</div>
+      </a>
+      <a href="/admin/orders?filter=unpaid" class="p-5 rounded-2xl bg-[var(--color-surface)] border border-[var(--color-border)]/60 hover:border-emerald-500/40 hover:-translate-y-0.5 transition-all group">
+        <div class="text-[10px] uppercase tracking-[0.2em] text-[var(--color-text-muted)] font-semibold flex items-center justify-between">
+          Tahsilat Tamamlanma
+          <span class="opacity-60 group-hover:opacity-100">→</span>
+        </div>
         <div class="mt-2 font-display text-3xl font-semibold">%{paidPercent}</div>
         <div class="mt-2 h-2 rounded-full bg-[var(--color-surface-2)] overflow-hidden">
           <div class="h-full bg-gradient-to-r from-emerald-500 to-emerald-400" style={`width: ${paidPercent}%`}></div>
         </div>
         <div class="mt-1 text-xs text-[var(--color-text-soft)]">Açık: {formatTRY(remainingRevenue)}</div>
-      </div>
+      </a>
     </div>
 
     {/* Analiz panelleri */}
@@ -194,13 +215,15 @@ const paidPercent = totalRevenue ? Math.round((paidRevenue / totalRevenue) * 100
           <ul class="space-y-2.5">
             {topBrands.map((b) => (
               <li>
-                <div class="flex items-baseline justify-between mb-1">
-                  <span class="text-sm font-medium">{b.name}</span>
-                  <span class="text-[11px] text-[var(--color-text-muted)] tabular-nums">{b.count} adet · {formatTRY(b.revenue)}</span>
-                </div>
-                <div class="h-2 rounded-full bg-[var(--color-surface-2)] overflow-hidden">
-                  <div class="h-full bg-gradient-to-r from-[var(--color-primary)] to-[var(--color-primary-hover)]" style={`width: ${(b.count / maxBrandCount) * 100}%`}></div>
-                </div>
+                <a href={`/admin/orders?brand=${b.slug}`} class="block group">
+                  <div class="flex items-baseline justify-between mb-1">
+                    <span class="text-sm font-medium group-hover:text-[var(--color-primary)] transition-colors">{b.name}</span>
+                    <span class="text-[11px] text-[var(--color-text-muted)] tabular-nums">{b.count} adet · {formatTRY(b.revenue)}</span>
+                  </div>
+                  <div class="h-2 rounded-full bg-[var(--color-surface-2)] overflow-hidden">
+                    <div class="h-full bg-gradient-to-r from-[var(--color-primary)] to-[var(--color-primary-hover)] group-hover:shadow-[0_0_8px_rgba(var(--color-primary-rgb,236,176,85),0.5)]" style={`width: ${(b.count / maxBrandCount) * 100}%`}></div>
+                  </div>
+                </a>
               </li>
             ))}
           </ul>
@@ -218,14 +241,16 @@ const paidPercent = totalRevenue ? Math.round((paidRevenue / totalRevenue) * 100
         ) : (
           <ul class="space-y-2">
             {stageTally.map((s) => (
-              <li class="flex items-center gap-3">
-                <span class={`px-2 py-0.5 rounded-full text-[10px] font-semibold border whitespace-nowrap min-w-[125px] text-center ${STATUS_CHIP[s.status] ?? ''}`}>
-                  {s.label}
-                </span>
-                <div class="flex-1 h-2 rounded-full bg-[var(--color-surface-2)] overflow-hidden">
-                  <div class="h-full bg-gradient-to-r from-amber-500 to-amber-400" style={`width: ${(s.count / maxStageCount) * 100}%`}></div>
-                </div>
-                <span class="text-xs tabular-nums text-[var(--color-text-soft)] w-8 text-right">{s.count}</span>
+              <li>
+                <a href={`/admin/orders?status=${s.status}`} class="flex items-center gap-3 hover:bg-[var(--color-surface-2)]/50 rounded-lg p-1 -m-1 transition-colors">
+                  <span class={`px-2 py-0.5 rounded-full text-[10px] font-semibold border whitespace-nowrap min-w-[125px] text-center ${STATUS_CHIP[s.status] ?? ''}`}>
+                    {s.label}
+                  </span>
+                  <div class="flex-1 h-2 rounded-full bg-[var(--color-surface-2)] overflow-hidden">
+                    <div class="h-full bg-gradient-to-r from-amber-500 to-amber-400" style={`width: ${(s.count / maxStageCount) * 100}%`}></div>
+                  </div>
+                  <span class="text-xs tabular-nums text-[var(--color-text-soft)] w-8 text-right">{s.count}</span>
+                </a>
               </li>
             ))}
           </ul>
@@ -310,15 +335,17 @@ const paidPercent = totalRevenue ? Math.round((paidRevenue / totalRevenue) * 100
         {topCustomers.length === 0 ? <p class="text-sm text-[var(--color-text-muted)] text-center py-4">Henüz veri yok</p> : (
           <ul class="space-y-2">
             {topCustomers.map((c) => (
-              <li class="flex items-center justify-between gap-3 p-2.5 rounded-lg bg-[var(--color-surface-2)]/50">
-                <div class="min-w-0">
-                  <div class="text-sm font-medium truncate">{c.name}</div>
-                  <div class="text-[10px] text-[var(--color-text-muted)]">{c.phone}</div>
-                </div>
-                <div class="text-right shrink-0">
-                  <div class="text-sm font-semibold tabular-nums">{formatTRY(c.total)}</div>
-                  <div class="text-[10px] text-[var(--color-text-muted)]">{c.orderCount} sipariş</div>
-                </div>
+              <li>
+                <a href={`/admin/orders?q=${encodeURIComponent(c.phone)}`} class="flex items-center justify-between gap-3 p-2.5 rounded-lg bg-[var(--color-surface-2)]/50 hover:bg-[var(--color-surface-2)] transition-colors group">
+                  <div class="min-w-0">
+                    <div class="text-sm font-medium truncate group-hover:text-[var(--color-primary)] transition-colors">{c.name}</div>
+                    <div class="text-[10px] text-[var(--color-text-muted)]">{c.phone}</div>
+                  </div>
+                  <div class="text-right shrink-0">
+                    <div class="text-sm font-semibold tabular-nums">{formatTRY(c.total)}</div>
+                    <div class="text-[10px] text-[var(--color-text-muted)]">{c.orderCount} sipariş</div>
+                  </div>
+                </a>
               </li>
             ))}
           </ul>
@@ -357,7 +384,10 @@ const paidPercent = totalRevenue ? Math.round((paidRevenue / totalRevenue) * 100
             </thead>
             <tbody>
               {orders.slice(0, 10).map((o) => (
-                <tr class="border-b border-[var(--color-border)]/30 hover:bg-[var(--color-surface-2)]/40 transition-colors">
+                <tr
+                  data-href={`/admin/orders/${o.orderNo}`}
+                  class="border-b border-[var(--color-border)]/30 hover:bg-[var(--color-surface-2)]/60 cursor-pointer transition-colors row-link"
+                >
                   <td class="px-5 py-3">
                     <a href={`/admin/orders/${o.orderNo}`} class="font-mono text-xs text-[var(--color-primary)] hover:underline">{o.orderNo}</a>
                   </td>
@@ -393,4 +423,16 @@ const paidPercent = totalRevenue ? Math.round((paidRevenue / totalRevenue) * 100
       )}
     </div>
   </div>
+
+  <script>
+    // Tablo satırlarına tıklayınca data-href'e git (link yerine row-level)
+    document.querySelectorAll<HTMLElement>('tr.row-link').forEach((row) => {
+      row.addEventListener('click', (e) => {
+        const target = e.target as HTMLElement
+        if (target.closest('a, button')) return
+        const href = row.dataset.href
+        if (href) window.location.href = href
+      })
+    })
+  </script>
 </AdminLayout>
