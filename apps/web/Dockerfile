@@ -5,6 +5,9 @@ FROM node:20-alpine AS builder
 
 RUN corepack enable && corepack prepare pnpm@10.33.0 --activate
 
+# pnpm CI modunda interaktif onay isteme — Coolify build no-TTY çalışıyor
+ENV CI=true
+
 WORKDIR /repo
 
 # Monorepo root manifests
@@ -26,9 +29,10 @@ ENV NODE_ENV=production
 WORKDIR /repo/apps/web
 RUN pnpm build
 
-# Sadece prod bağımlılıkları olan ayrı bir node_modules üret
+# Prod node_modules: dev deps'leri kaldır (CI=true sayesinde no-TTY OK)
 WORKDIR /repo
-RUN pnpm install --filter web... --prod --frozen-lockfile --ignore-scripts
+RUN pnpm prune --prod --filter web... --config.confirmModulesPurge=false || \
+    pnpm install --filter web... --prod --frozen-lockfile --ignore-scripts --config.confirmModulesPurge=false
 
 # ----------------- Runner -----------------
 FROM node:20-alpine AS runner
