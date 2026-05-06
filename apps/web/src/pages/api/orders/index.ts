@@ -43,6 +43,7 @@ export const POST: APIRoute = async ({ cookies, request }) => {
     paymentStatus: body.paymentStatus ?? 'bekliyor',
     paymentInstallments: body.paymentInstallments,
     productionStatus: body.productionStatus ?? 'received',
+    deliveryMethod: body.deliveryMethod ?? 'cargo',
     customerNote: body.customerNote,
     internalNote: body.internalNote,
     cargoCompany: body.cargoCompany,

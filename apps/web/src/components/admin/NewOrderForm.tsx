@@ -78,6 +78,9 @@ export default function NewOrderForm() {
   const [discount, setDiscount] = useState(0)
   const [priceNote, setPriceNote] = useState('')
 
+  // Teslimat: kargo / dükkandan teslim
+  const [deliveryMethod, setDeliveryMethod] = useState<'cargo' | 'pickup'>('cargo')
+
   const brand = BRANDS.find((b) => b.slug === brandSlug)!
   const models = useMemo(() => VEHICLE_MODELS.filter((m) => m.brandSlug === brandSlug), [brandSlug])
   const model = models.find((m) => m.slug === modelSlug) ?? models[0]
@@ -161,6 +164,7 @@ export default function NewOrderForm() {
               }))
             : undefined,
         productionStatus: paymentStatus === 'tamamlandi' ? 'payment_confirmed' : 'received',
+        deliveryMethod,
         customerNote: customerNote || undefined,
         internalNote: finalInternalNote,
       }
@@ -372,6 +376,38 @@ export default function NewOrderForm() {
               <input type="checkbox" checked={logoEnabled} onChange={(e) => setLogoEnabled((e.target as HTMLInputElement).checked)} class="size-4 accent-[var(--color-primary)]" />
               {brand.name} amblemi <span class="text-[var(--color-primary)] ml-auto">+{formatTRY(150)} × {product.parts}</span>
             </label>
+          </div>
+        </Section>
+
+        <Section title="Teslimat Yöntemi">
+          <div class="grid grid-cols-2 gap-3">
+            {([
+              { v: 'cargo', label: 'Kargo ile Gönder', icon: '📦', desc: 'Aras / Yurtiçi / MNG / PTT — kargo şirketiyle teslimat' },
+              { v: 'pickup', label: 'Dükkandan Teslim', icon: '🏪', desc: 'Müşteri atölyeye gelip teslim alacak' },
+            ] as const).map((opt) => {
+              const active = deliveryMethod === opt.v
+              return (
+                <button
+                  key={opt.v}
+                  type="button"
+                  onClick={() => setDeliveryMethod(opt.v)}
+                  class={[
+                    'p-4 rounded-xl border text-left transition-all',
+                    active
+                      ? 'border-[var(--color-primary)] bg-[var(--color-primary-soft)] shadow-[var(--shadow-glow)]'
+                      : 'border-[var(--color-border)]/60 bg-[var(--color-surface-2)] hover:border-[var(--color-text-muted)] hover:-translate-y-0.5',
+                  ].join(' ')}
+                >
+                  <div class="flex items-start gap-3">
+                    <span class="text-3xl leading-none">{opt.icon}</span>
+                    <div class="flex-1">
+                      <div class="font-semibold text-sm">{opt.label}</div>
+                      <div class="text-[11px] text-[var(--color-text-muted)] mt-0.5 leading-snug">{opt.desc}</div>
+                    </div>
+                  </div>
+                </button>
+              )
+            })}
           </div>
         </Section>
 

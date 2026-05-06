@@ -17,9 +17,39 @@ export type OrderStatus =
   | 'production_cutting'
   | 'production_sewing'
   | 'quality_check'
+  | 'ready_pickup' // dükkandan teslim almaya hazır
   | 'shipped'
+  | 'picked_up' // dükkandan teslim alındı
   | 'delivered'
   | 'cancelled'
+
+export type DeliveryMethod = 'cargo' | 'pickup'
+
+/** Müşteri tarafında gösterilen 4 aşamalık özet timeline */
+export type CustomerStage = 'received' | 'in_production' | 'ready' | 'delivered'
+
+/** Detaylı admin status'unu müşteri için 4-aşama özet'e map'le */
+export function customerStageOf(status: OrderStatus): CustomerStage | null {
+  switch (status) {
+    case 'received':
+    case 'awaiting_payment':
+      return 'received'
+    case 'payment_confirmed':
+    case 'production_started':
+    case 'production_cutting':
+    case 'production_sewing':
+    case 'quality_check':
+      return 'in_production'
+    case 'ready_pickup':
+    case 'shipped':
+      return 'ready'
+    case 'picked_up':
+    case 'delivered':
+      return 'delivered'
+    case 'cancelled':
+      return null
+  }
+}
 
 export type PaymentMethod =
   | 'elden-nakit'
@@ -110,6 +140,8 @@ export type Order = {
   /** Çoklu tahsilat / taksit planı (parçalı ödemelerde dolu). */
   paymentInstallments?: PaymentInstallment[]
   productionStatus: OrderStatus
+  /** Teslimat yöntemi — kargo ile gönder veya dükkandan teslim alma */
+  deliveryMethod?: DeliveryMethod
   customerNote?: string
   internalNote?: string
   cargoCompany?: 'yurtici' | 'aras' | 'mng' | 'ptt' | 'surat'
@@ -232,6 +264,16 @@ export const PRODUCTION_TIMELINE: { status: OrderStatus; label: string; descript
   { status: 'production_cutting', label: 'Kesim', description: 'Lazer ölçülü kesim yapılıyor.' },
   { status: 'production_sewing', label: 'Dikim & Montaj', description: 'Kenarlık + topukluk + amblem birleştiriliyor.' },
   { status: 'quality_check', label: 'Kalite Kontrol', description: 'Son kontrol ekibimizden geçiyor.' },
+  { status: 'ready_pickup', label: 'Dükkanda Hazır', description: 'Atölyemizde paketlendi — gelip teslim alabilirsiniz.' },
   { status: 'shipped', label: 'Kargoya Verildi', description: 'Aracınızın yolda — takip linki aktif.' },
+  { status: 'picked_up', label: 'Dükkandan Teslim', description: 'Müşteri dükkandan teslim aldı.' },
   { status: 'delivered', label: 'Teslim Edildi', description: 'Aracınızda sürmeye başlayın!' },
+]
+
+/** Müşteri tarafında gösterilen sade 4 aşama */
+export const CUSTOMER_TIMELINE: { stage: CustomerStage; label: string; description: string }[] = [
+  { stage: 'received', label: 'Sipariş Alındı', description: 'Siparişiniz atölyemize ulaştı, kontrol ediliyor.' },
+  { stage: 'in_production', label: 'Üretimde', description: 'Aracınıza özel paspas üretiliyor — kalıp, kesim, dikim ve kalite kontrol.' },
+  { stage: 'ready', label: 'Hazır', description: 'Paspasınız hazır — kargo yolda veya dükkandan teslim almaya hazır.' },
+  { stage: 'delivered', label: 'Teslim Edildi', description: 'Aracınızda kullanım başlasın!' },
 ]

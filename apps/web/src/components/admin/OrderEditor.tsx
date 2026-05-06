@@ -9,8 +9,10 @@ const PRODUCTION_STEPS: { value: OrderStatus; label: string }[] = [
   { value: 'production_cutting', label: 'Kesim' },
   { value: 'production_sewing', label: 'Dikim & Montaj' },
   { value: 'quality_check', label: 'Kalite Kontrol' },
+  { value: 'ready_pickup', label: 'Dükkanda Hazır (teslim alınmayı bekliyor)' },
   { value: 'shipped', label: 'Kargoya Verildi' },
-  { value: 'delivered', label: 'Teslim Edildi' },
+  { value: 'picked_up', label: 'Dükkandan Teslim Alındı' },
+  { value: 'delivered', label: 'Teslim Edildi (kargo)' },
   { value: 'cancelled', label: 'İptal Edildi' },
 ]
 
@@ -109,8 +111,41 @@ export default function OrderEditor({ initial }: { initial: Order }) {
             )}
           </div>
 
-          {/* Kargo bilgisi */}
-          {(order.productionStatus === 'shipped' || order.productionStatus === 'delivered') && (
+          {/* Teslimat Yöntemi */}
+          <div class="mt-4">
+            <div class="text-[10px] uppercase tracking-wider text-[var(--color-text-muted)] font-semibold mb-2">Teslimat Yöntemi</div>
+            <div class="grid grid-cols-2 gap-2">
+              {([
+                { v: 'cargo', label: 'Kargo ile Gönder', icon: '📦', desc: 'Kargoya verilecek' },
+                { v: 'pickup', label: 'Dükkandan Teslim', icon: '🏪', desc: 'Müşteri gelecek' },
+              ] as const).map((opt) => {
+                const active = (order.deliveryMethod ?? 'cargo') === opt.v
+                return (
+                  <button
+                    type="button"
+                    onClick={() => patch({ deliveryMethod: opt.v })}
+                    class={[
+                      'p-3 rounded-lg border text-left transition-all',
+                      active
+                        ? 'border-[var(--color-primary)] bg-[var(--color-primary-soft)]'
+                        : 'border-[var(--color-border)]/60 bg-[var(--color-surface-2)] hover:border-[var(--color-text-muted)]',
+                    ].join(' ')}
+                  >
+                    <div class="flex items-center gap-2">
+                      <span class="text-xl">{opt.icon}</span>
+                      <div>
+                        <div class="font-semibold text-sm">{opt.label}</div>
+                        <div class="text-[10px] text-[var(--color-text-muted)]">{opt.desc}</div>
+                      </div>
+                    </div>
+                  </button>
+                )
+              })}
+            </div>
+          </div>
+
+          {/* Kargo bilgisi (sadece kargo ile gönderim) */}
+          {(order.deliveryMethod ?? 'cargo') === 'cargo' && (order.productionStatus === 'shipped' || order.productionStatus === 'delivered') && (
             <div class="mt-4 grid sm:grid-cols-2 gap-3">
               <Field label="Kargo Firma">
                 <select
@@ -134,6 +169,11 @@ export default function OrderEditor({ initial }: { initial: Order }) {
                   class={inp}
                 />
               </Field>
+            </div>
+          )}
+          {(order.deliveryMethod === 'pickup') && order.productionStatus === 'ready_pickup' && (
+            <div class="mt-4 p-3 rounded-lg bg-[var(--color-primary-soft)]/40 border border-[var(--color-primary)]/30 text-xs">
+              📍 Müşteri atölyeye gelip teslim alacak. Hazır olduğu için müşteri takip ekranında bilgilendirme görüntüleniyor.
             </div>
           )}
         </Section>
