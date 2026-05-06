@@ -22,9 +22,9 @@ const all = listOrders()
 // 1) Filtre chip mantığı (önceki davranış korunuyor)
 let filtered = all
 if (filter === 'production') {
-  filtered = filtered.filter((o) => ['received', 'payment_confirmed', 'production_started', 'production_cutting', 'production_sewing', 'quality_check'].includes(o.productionStatus))
-} else if (filter === 'shipped') {
-  filtered = filtered.filter((o) => o.productionStatus === 'shipped')
+  filtered = filtered.filter((o) => o.productionStatus === 'in_production' || o.productionStatus === 'received' || ['payment_confirmed', 'production_started', 'production_cutting', 'production_sewing', 'quality_check'].includes(o.productionStatus))
+} else if (filter === 'ready') {
+  filtered = filtered.filter((o) => o.productionStatus === 'ready' || o.productionStatus === 'shipped' || o.productionStatus === 'ready_pickup')
 } else if (filter === 'delivered') {
   filtered = filtered.filter((o) => o.productionStatus === 'delivered')
 } else if (filter === 'unpaid') {
@@ -75,8 +75,8 @@ else if (sort === 'paid-desc') filtered = [...filtered].sort((a, b) => b.paidAmo
 // Hızlı filtre chipleri için sayım (filtrelenmemiş set üzerinden)
 const FILTERS = [
   { k: 'all', l: 'Tümü', n: all.length },
-  { k: 'production', l: 'Üretimde', n: all.filter((o) => ['received', 'payment_confirmed', 'production_started', 'production_cutting', 'production_sewing', 'quality_check'].includes(o.productionStatus)).length },
-  { k: 'shipped', l: 'Kargoda', n: all.filter((o) => o.productionStatus === 'shipped').length },
+  { k: 'production', l: 'Üretimde', n: all.filter((o) => o.productionStatus === 'in_production' || o.productionStatus === 'received' || ['payment_confirmed', 'production_started', 'production_cutting', 'production_sewing', 'quality_check'].includes(o.productionStatus)).length },
+  { k: 'ready', l: 'Hazır', n: all.filter((o) => o.productionStatus === 'ready' || o.productionStatus === 'shipped' || o.productionStatus === 'ready_pickup').length },
   { k: 'delivered', l: 'Teslim', n: all.filter((o) => o.productionStatus === 'delivered').length },
   { k: 'unpaid', l: 'Ödeme Bekleyen', n: all.filter((o) => o.paymentStatus !== 'tamamlandi' && o.productionStatus !== 'cancelled').length },
   { k: 'cancelled', l: 'İptal', n: all.filter((o) => o.productionStatus === 'cancelled').length },
@@ -89,14 +89,18 @@ const brandOptions = [...brandSet.entries()].map(([slug, name]) => ({ slug, name
 
 const STATUS_CHIP: Record<string, string> = {
   received: 'bg-blue-500/15 text-blue-400 border-blue-500/30',
-  payment_confirmed: 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30',
+  in_production: 'bg-amber-500/15 text-amber-400 border-amber-500/30',
+  ready: 'bg-cyan-500/15 text-cyan-400 border-cyan-500/30',
+  delivered: 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30',
+  cancelled: 'bg-red-500/15 text-red-400 border-red-500/30',
+  payment_confirmed: 'bg-amber-500/15 text-amber-400 border-amber-500/30',
   production_started: 'bg-amber-500/15 text-amber-400 border-amber-500/30',
   production_cutting: 'bg-amber-500/15 text-amber-400 border-amber-500/30',
   production_sewing: 'bg-amber-500/15 text-amber-400 border-amber-500/30',
-  quality_check: 'bg-violet-500/15 text-violet-400 border-violet-500/30',
+  quality_check: 'bg-amber-500/15 text-amber-400 border-amber-500/30',
+  ready_pickup: 'bg-cyan-500/15 text-cyan-400 border-cyan-500/30',
   shipped: 'bg-cyan-500/15 text-cyan-400 border-cyan-500/30',
-  delivered: 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30',
-  cancelled: 'bg-red-500/15 text-red-400 border-red-500/30',
+  picked_up: 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30',
 }
 const PAYMENT_CHIP: Record<string, string> = {
   bekliyor: 'bg-amber-500/15 text-amber-400 border-amber-500/30',

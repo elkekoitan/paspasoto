@@ -1,24 +1,19 @@
 import { useEffect, useState } from 'preact/hooks'
 import { formatTRY, formatDateTime } from '../../lib/format'
 
-type OrderStatus =
-  | 'received' | 'awaiting_payment' | 'payment_confirmed'
-  | 'production_started' | 'production_cutting' | 'production_sewing'
-  | 'quality_check' | 'ready_pickup' | 'shipped' | 'picked_up' | 'delivered' | 'cancelled'
+type OrderStatus = 'received' | 'in_production' | 'ready' | 'delivered' | 'cancelled' | string
 
 type DeliveryMethod = 'cargo' | 'pickup'
 type CustomerStage = 'received' | 'in_production' | 'ready' | 'delivered'
 
-/**
- * Müşteri tarafında 4 sade aşama gösterilir.
- * Detaylı admin status'leri arka planda kalır.
- */
-function customerStageOf(s: OrderStatus): CustomerStage | null {
+/** Status → 4-aşama (legacy granular kayıtlar da desteklenir) */
+function customerStageOf(s: string): CustomerStage | null {
   if (s === 'cancelled') return null
   if (s === 'received' || s === 'awaiting_payment') return 'received'
-  if (s === 'payment_confirmed' || s === 'production_started' || s === 'production_cutting' || s === 'production_sewing' || s === 'quality_check') return 'in_production'
-  if (s === 'ready_pickup' || s === 'shipped') return 'ready'
-  return 'delivered'
+  if (s === 'in_production' || s === 'payment_confirmed' || s === 'production_started' || s === 'production_cutting' || s === 'production_sewing' || s === 'quality_check') return 'in_production'
+  if (s === 'ready' || s === 'ready_pickup' || s === 'shipped') return 'ready'
+  if (s === 'delivered' || s === 'picked_up') return 'delivered'
+  return null
 }
 
 function stageIndex(stage: CustomerStage | null): number {
@@ -182,10 +177,10 @@ function OrderDetail({ order }: { order: Order }) {
   const isPickup = order.deliveryMethod === 'pickup'
   const isCancelled = order.productionStatus === 'cancelled'
 
-  // 'Hazır' aşamasında alt etiket: kargoda mı, dükkanda mı bekliyor
-  const readyLabel = order.productionStatus === 'shipped' ? 'Kargoda yolda' : isPickup ? 'Dükkanda hazır — gelip teslim alabilirsiniz' : 'Atölyemizde paketlendi'
+  // 'Hazır' aşamasında alt etiket
+  const readyLabel = isPickup ? 'Dükkanda hazır — gelip teslim alabilirsiniz' : order.cargoTrackingNo ? 'Kargoya verildi' : 'Atölyemizde paketlendi'
   // 'Teslim Edildi' aşamasında alt etiket
-  const deliveredLabel = order.productionStatus === 'picked_up' ? 'Dükkandan teslim alındı' : order.productionStatus === 'delivered' ? 'Teslim edildi' : ''
+  const deliveredLabel = isPickup ? 'Dükkandan teslim alındı' : 'Adresinize teslim edildi'
 
   return (
     <div class="grid lg:grid-cols-[minmax(0,1fr)_minmax(0,360px)] gap-6 lg:gap-10">
@@ -225,11 +220,11 @@ function OrderDetail({ order }: { order: Order }) {
               const passed = idx <= currentIdx
               const active = idx === currentIdx
               // ilgili stage'in son event'i
-              const passedStatuses: Record<CustomerStage, OrderStatus[]> = {
+              const passedStatuses: Record<CustomerStage, string[]> = {
                 received: ['received', 'awaiting_payment'],
-                in_production: ['payment_confirmed', 'production_started', 'production_cutting', 'production_sewing', 'quality_check'],
-                ready: ['ready_pickup', 'shipped'],
-                delivered: ['picked_up', 'delivered'],
+                in_production: ['in_production', 'payment_confirmed', 'production_started', 'production_cutting', 'production_sewing', 'quality_check'],
+                ready: ['ready', 'ready_pickup', 'shipped'],
+                delivered: ['delivered', 'picked_up'],
               }
               const stageEvents = order.events.filter((e) => passedStatuses[s.stage].includes(e.status))
               const lastEvent = stageEvents[stageEvents.length - 1]
@@ -261,12 +256,12 @@ function OrderDetail({ order }: { order: Order }) {
                     <p class="mt-0.5 text-xs text-[var(--color-text-muted)] leading-relaxed">
                       {s.stage === 'ready' && active ? readyLabel : s.stage === 'delivered' && active && deliveredLabel ? deliveredLabel : s.description}
                     </p>
-                    {s.stage === 'ready' && active && order.productionStatus === 'shipped' && order.cargoTrackingNo && (
+                    {s.stage === 'ready' && active && !isPickup && order.cargoTrackingNo && (
                       <a href={cargoLink ?? '#'} target="_blank" rel="noopener" class="mt-2 inline-flex items-center gap-1.5 text-xs text-[var(--color-primary)] hover:underline">
                         Kargo takibi → {order.cargoCompany?.toUpperCase()} #{order.cargoTrackingNo}
                       </a>
                     )}
-                    {s.stage === 'ready' && active && order.productionStatus === 'ready_pickup' && (
+                    {s.stage === 'ready' && active && isPickup && (
                       <div class="mt-2 text-xs text-[var(--color-primary)]">
                         📍 Atölye adresimize gelip teslim alabilirsiniz.
                       </div>
@@ -386,7 +381,7 @@ function OrderDetail({ order }: { order: Order }) {
         </div>
 
         {/* Kargo paneli — kargoda veya teslim olmuşsa göster */}
-        {(order.productionStatus === 'shipped' || order.productionStatus === 'delivered') && order.cargoCompany && (
+        {!isPickup && (order.productionStatus === 'ready' || order.productionStatus === 'delivered') && order.cargoCompany && (
           <div class="rounded-2xl bg-[var(--color-surface)] border border-[var(--color-border)]/60 p-5">
             <h3 class="font-display text-base font-semibold">Kargo</h3>
             <div class="mt-3 text-sm space-y-2">

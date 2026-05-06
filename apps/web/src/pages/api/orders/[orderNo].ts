@@ -39,8 +39,8 @@ export const PATCH: APIRoute = async ({ params, cookies, request }) => {
       at: now,
       by: 'admin',
     }
-    if (patch.productionStatus === 'shipped') patch.shippedAt = now
-    if (patch.productionStatus === 'picked_up' || patch.productionStatus === 'delivered') patch.deliveredAt = now
+    if (patch.productionStatus === 'ready') patch.shippedAt = patch.shippedAt ?? now
+    if (patch.productionStatus === 'delivered') patch.deliveredAt = now
   }
   if (patch.paymentStatus === 'tamamlandi' && !patch.paidAt) {
     patch.paidAt = now

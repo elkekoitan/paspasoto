@@ -4,15 +4,9 @@ import type { Order, OrderStatus } from '../../server/db'
 
 const PRODUCTION_STEPS: { value: OrderStatus; label: string }[] = [
   { value: 'received', label: 'Sipariş Alındı' },
-  { value: 'payment_confirmed', label: 'Ödeme Onaylandı' },
-  { value: 'production_started', label: 'Kalıp Hazırlanıyor' },
-  { value: 'production_cutting', label: 'Kesim' },
-  { value: 'production_sewing', label: 'Dikim & Montaj' },
-  { value: 'quality_check', label: 'Kalite Kontrol' },
-  { value: 'ready_pickup', label: 'Dükkanda Hazır (teslim alınmayı bekliyor)' },
-  { value: 'shipped', label: 'Kargoya Verildi' },
-  { value: 'picked_up', label: 'Dükkandan Teslim Alındı' },
-  { value: 'delivered', label: 'Teslim Edildi (kargo)' },
+  { value: 'in_production', label: 'Üretimde' },
+  { value: 'ready', label: 'Hazır' },
+  { value: 'delivered', label: 'Teslim Edildi' },
   { value: 'cancelled', label: 'İptal Edildi' },
 ]
 
@@ -145,7 +139,7 @@ export default function OrderEditor({ initial }: { initial: Order }) {
           </div>
 
           {/* Kargo bilgisi (sadece kargo ile gönderim) */}
-          {(order.deliveryMethod ?? 'cargo') === 'cargo' && (order.productionStatus === 'shipped' || order.productionStatus === 'delivered') && (
+          {(order.deliveryMethod ?? 'cargo') === 'cargo' && (order.productionStatus === 'ready' || order.productionStatus === 'delivered') && (
             <div class="mt-4 grid sm:grid-cols-2 gap-3">
               <Field label="Kargo Firma">
                 <select
@@ -171,7 +165,7 @@ export default function OrderEditor({ initial }: { initial: Order }) {
               </Field>
             </div>
           )}
-          {(order.deliveryMethod === 'pickup') && order.productionStatus === 'ready_pickup' && (
+          {(order.deliveryMethod === 'pickup') && order.productionStatus === 'ready' && (
             <div class="mt-4 p-3 rounded-lg bg-[var(--color-primary-soft)]/40 border border-[var(--color-primary)]/30 text-xs">
               📍 Müşteri atölyeye gelip teslim alacak. Hazır olduğu için müşteri takip ekranında bilgilendirme görüntüleniyor.
             </div>

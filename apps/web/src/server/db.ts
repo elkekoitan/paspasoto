@@ -9,44 +9,46 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync, renameSync } from 'node:fs'
 import { dirname, resolve } from 'node:path'
 
+/**
+ * Sadeleştirilmiş 4-aşama + iptal.
+ * Eski granular status'ler artık kullanılmıyor — eski kayıtlar legacy olarak
+ * customerStageOf() ile aynı 4 grupta görüntülenir.
+ */
 export type OrderStatus =
-  | 'received'
-  | 'awaiting_payment'
-  | 'payment_confirmed'
-  | 'production_started'
-  | 'production_cutting'
-  | 'production_sewing'
-  | 'quality_check'
-  | 'ready_pickup' // dükkandan teslim almaya hazır
-  | 'shipped'
-  | 'picked_up' // dükkandan teslim alındı
-  | 'delivered'
+  | 'received'      // Sipariş Alındı
+  | 'in_production' // Üretimde (kalıp + kesim + dikim + kalite kontrol hepsi tek)
+  | 'ready'         // Hazır (kargoya verildi VEYA dükkanda teslim almaya hazır)
+  | 'delivered'     // Teslim Edildi (kargo veya elden)
   | 'cancelled'
 
 export type DeliveryMethod = 'cargo' | 'pickup'
 
-/** Müşteri tarafında gösterilen 4 aşamalık özet timeline */
+/** Müşteri tarafında gösterilen 4 aşamalık özet timeline (admin = aynı) */
 export type CustomerStage = 'received' | 'in_production' | 'ready' | 'delivered'
 
-/** Detaylı admin status'unu müşteri için 4-aşama özet'e map'le */
-export function customerStageOf(status: OrderStatus): CustomerStage | null {
+/** Status → stage map (legacy data desteği için: eski granular kayıtlar 4 gruba düşer) */
+export function customerStageOf(status: OrderStatus | string): CustomerStage | null {
   switch (status) {
     case 'received':
     case 'awaiting_payment':
       return 'received'
+    case 'in_production':
     case 'payment_confirmed':
     case 'production_started':
     case 'production_cutting':
     case 'production_sewing':
     case 'quality_check':
       return 'in_production'
+    case 'ready':
     case 'ready_pickup':
     case 'shipped':
       return 'ready'
-    case 'picked_up':
     case 'delivered':
+    case 'picked_up':
       return 'delivered'
     case 'cancelled':
+      return null
+    default:
       return null
   }
 }
@@ -257,23 +259,17 @@ export function generateToken(): string {
   return (globalThis.crypto?.randomUUID?.() ?? require('node:crypto').randomUUID()) as string
 }
 
+/** Tek üretim timeline (admin + müşteri ortak) */
 export const PRODUCTION_TIMELINE: { status: OrderStatus; label: string; description: string }[] = [
-  { status: 'received', label: 'Sipariş Alındı', description: 'Siparişiniz sistemimize ulaştı.' },
-  { status: 'payment_confirmed', label: 'Ödeme Onaylandı', description: 'Ödemeniz teyit edildi, üretim sırasına alındı.' },
-  { status: 'production_started', label: 'Kalıp Hazırlanıyor', description: 'Aracınıza özel kalıp atölyemizde hazırlanıyor.' },
-  { status: 'production_cutting', label: 'Kesim', description: 'Lazer ölçülü kesim yapılıyor.' },
-  { status: 'production_sewing', label: 'Dikim & Montaj', description: 'Kenarlık + topukluk + amblem birleştiriliyor.' },
-  { status: 'quality_check', label: 'Kalite Kontrol', description: 'Son kontrol ekibimizden geçiyor.' },
-  { status: 'ready_pickup', label: 'Dükkanda Hazır', description: 'Atölyemizde paketlendi — gelip teslim alabilirsiniz.' },
-  { status: 'shipped', label: 'Kargoya Verildi', description: 'Aracınızın yolda — takip linki aktif.' },
-  { status: 'picked_up', label: 'Dükkandan Teslim', description: 'Müşteri dükkandan teslim aldı.' },
-  { status: 'delivered', label: 'Teslim Edildi', description: 'Aracınızda sürmeye başlayın!' },
+  { status: 'received', label: 'Sipariş Alındı', description: 'Siparişiniz atölyemize ulaştı.' },
+  { status: 'in_production', label: 'Üretimde', description: 'Aracınıza özel paspas üretiliyor — kalıp, kesim, dikim ve kalite kontrol.' },
+  { status: 'ready', label: 'Hazır', description: 'Paspasınız hazır — kargo yolda veya dükkandan teslim almaya hazır.' },
+  { status: 'delivered', label: 'Teslim Edildi', description: 'Aracınızda kullanım başlasın!' },
 ]
 
-/** Müşteri tarafında gösterilen sade 4 aşama */
-export const CUSTOMER_TIMELINE: { stage: CustomerStage; label: string; description: string }[] = [
-  { stage: 'received', label: 'Sipariş Alındı', description: 'Siparişiniz atölyemize ulaştı, kontrol ediliyor.' },
-  { stage: 'in_production', label: 'Üretimde', description: 'Aracınıza özel paspas üretiliyor — kalıp, kesim, dikim ve kalite kontrol.' },
-  { stage: 'ready', label: 'Hazır', description: 'Paspasınız hazır — kargo yolda veya dükkandan teslim almaya hazır.' },
-  { stage: 'delivered', label: 'Teslim Edildi', description: 'Aracınızda kullanım başlasın!' },
-]
+/** Müşteri tarafında gösterilen aşamalar = admin = aynı 4 */
+export const CUSTOMER_TIMELINE = PRODUCTION_TIMELINE.map((t) => ({
+  stage: t.status as CustomerStage,
+  label: t.label,
+  description: t.description,
+}))
