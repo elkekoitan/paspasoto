@@ -90,12 +90,15 @@ export default function Configurator() {
     step === 'logo' ||
     step === 'summary'
 
-  function handleAddToCart() {
-    if (!brand || !model || !product || !matColor || !borderColor || !heelPad) {
-      alert('Lütfen tüm adımları tamamlayın.')
-      return
-    }
-    // WhatsApp'tan teklif al — konfigürasyon detayı mesaja otomatik doldurulur
+  // Müşteri ad/telefon ön talep modal state'i
+  const [contactName, setContactName] = useState('')
+  const [contactPhone, setContactPhone] = useState('')
+  const [submittingQuote, setSubmittingQuote] = useState(false)
+  const [quoteResult, setQuoteResult] = useState<{ orderNo: string; accessToken: string } | null>(null)
+  const [showContactForm, setShowContactForm] = useState(false)
+
+  function buildWhatsAppUrl(orderNo?: string) {
+    if (!brand || !model || !product || !matColor || !borderColor || !heelPad) return ''
     const lines = [
       `Merhaba, aracıma özel paspas teklifi almak istiyorum:`,
       ``,
@@ -108,10 +111,71 @@ export default function Configurator() {
       ``,
       `Tahmini fiyat: ${formatTRY(totalPrice)}`,
     ]
-    const message = encodeURIComponent(lines.join('\n'))
-    const url = `https://wa.me/905550000000?text=${message}`
-    if (typeof window !== 'undefined') {
-      window.open(url, '_blank', 'noopener,noreferrer')
+    if (orderNo) {
+      lines.push('', `📋 Ön talep no: ${orderNo}`)
+    }
+    return `https://wa.me/905545417561?text=${encodeURIComponent(lines.join('\n'))}`
+  }
+
+  function handleAddToCart() {
+    if (!brand || !model || !product || !matColor || !borderColor || !heelPad) {
+      alert('Lütfen tüm adımları tamamlayın.')
+      return
+    }
+    // Müşteri henüz ad/telefon vermediyse mini form aç
+    setShowContactForm(true)
+  }
+
+  async function submitQuote(e: Event) {
+    e.preventDefault()
+    if (!brand || !model || !product || !matColor || !borderColor || !heelPad) return
+    if (!contactName.trim() || !contactPhone.trim()) {
+      alert('Lütfen ad-soyad ve telefonunuzu girin.')
+      return
+    }
+    setSubmittingQuote(true)
+    try {
+      const item = {
+        brandSlug: brand.slug, brandName: brand.name,
+        modelSlug: model.slug, modelName: model.name, modelChassis: model.chassisCode,
+        productSlug: product.slug, productName: product.name, productParts: product.parts,
+        matSlug: matColor.slug, matName: matColor.name, matSwatchUrl: matColor.swatchUrl,
+        borderSlug: borderColor.slug, borderName: borderColor.name, borderSwatchUrl: borderColor.swatchUrl,
+        heelSlug: heelPad.slug, heelName: heelPad.name, heelSwatchUrl: heelPad.swatchUrl,
+        heelPadPassenger,
+        logoBrandSlug: logoAccessory?.brandSlug ?? null,
+        logoQty: logoAccessory && logoAccessory.brandSlug ? product.parts : 0,
+        qty: 1, unitPrice: totalPrice,
+      }
+      const res = await fetch('/api/quote', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          customer: { fullName: contactName.trim(), phone: contactPhone.trim() },
+          items: [item],
+          subtotal: totalPrice,
+          total: totalPrice,
+        }),
+      })
+      if (res.ok) {
+        const data = await res.json()
+        setQuoteResult(data)
+        // WhatsApp'ı orderNo ile aç
+        if (typeof window !== 'undefined') {
+          window.open(buildWhatsAppUrl(data.orderNo), '_blank', 'noopener,noreferrer')
+        }
+      } else {
+        // DB başarısız olsa bile WA'yı aç — müşteri kaybolmasın
+        if (typeof window !== 'undefined') {
+          window.open(buildWhatsAppUrl(), '_blank', 'noopener,noreferrer')
+        }
+      }
+    } catch {
+      if (typeof window !== 'undefined') {
+        window.open(buildWhatsAppUrl(), '_blank', 'noopener,noreferrer')
+      }
+    } finally {
+      setSubmittingQuote(false)
     }
   }
 
@@ -264,6 +328,80 @@ export default function Configurator() {
           onAddToCart={() => handleAddToCart()}
         />
       </aside>
+
+      {/* Müşteri ad/telefon mini form modal — Teklif Al butonuna basınca açılır */}
+      {showContactForm && (
+        <div class="fixed inset-0 z-50 grid place-items-center p-4 bg-black/70 backdrop-blur-sm" onClick={(e) => { if (e.target === e.currentTarget) setShowContactForm(false) }}>
+          <div class="w-full max-w-md rounded-2xl bg-[var(--color-surface)] border border-[var(--color-border)]/60 shadow-2xl overflow-hidden">
+            <div class="p-5 border-b border-[var(--color-border)]/60 flex items-start justify-between gap-3">
+              <div>
+                <h3 class="font-display text-lg font-semibold">WhatsApp'tan Teklif Al</h3>
+                <p class="mt-1 text-xs text-[var(--color-text-muted)] leading-snug">
+                  Bilgileriniz atölyemize ön talep olarak iletilir, WhatsApp uygulaması açılır ve mesajınız hazır olarak gelir.
+                </p>
+              </div>
+              <button type="button" onClick={() => setShowContactForm(false)} class="size-7 grid place-items-center rounded-lg hover:bg-[var(--color-surface-2)]">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12" /></svg>
+              </button>
+            </div>
+            {quoteResult ? (
+              <div class="p-5 space-y-3 text-sm">
+                <div class="size-12 rounded-full bg-emerald-500/15 grid place-items-center mx-auto">
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5" /></svg>
+                </div>
+                <div class="text-center">
+                  <div class="font-semibold">Ön talep oluşturuldu!</div>
+                  <p class="mt-1 text-xs text-[var(--color-text-muted)]">
+                    Sipariş No: <span class="font-mono text-[var(--color-text)]">{quoteResult.orderNo}</span>
+                  </p>
+                  <p class="mt-2 text-xs text-[var(--color-text-soft)]">
+                    WhatsApp uygulaması açılmadıysa <a class="text-emerald-400 underline-offset-2 hover:underline" href={buildWhatsAppUrl(quoteResult.orderNo)} target="_blank" rel="noopener">tıklayın</a>.
+                  </p>
+                </div>
+                <button onClick={() => { setShowContactForm(false); setQuoteResult(null); setContactName(''); setContactPhone('') }} class="w-full mt-3 px-4 py-2.5 rounded-lg text-sm font-medium border border-[var(--color-border)] hover:bg-[var(--color-surface-2)]">
+                  Kapat
+                </button>
+              </div>
+            ) : (
+              <form onSubmit={submitQuote} class="p-5 space-y-3">
+                <div>
+                  <label class="block text-xs font-medium text-[var(--color-text-soft)] mb-1">Ad Soyad</label>
+                  <input
+                    type="text"
+                    value={contactName}
+                    onInput={(e) => setContactName((e.target as HTMLInputElement).value)}
+                    required
+                    placeholder="Mehmet Yılmaz"
+                    class="w-full px-3 py-2.5 rounded-lg bg-[var(--color-surface-2)] border border-[var(--color-border)] focus:border-[var(--color-primary)] outline-none text-sm"
+                  />
+                </div>
+                <div>
+                  <label class="block text-xs font-medium text-[var(--color-text-soft)] mb-1">Telefon (WhatsApp)</label>
+                  <input
+                    type="tel"
+                    value={contactPhone}
+                    onInput={(e) => setContactPhone((e.target as HTMLInputElement).value)}
+                    required
+                    placeholder="0532 123 45 67"
+                    class="w-full px-3 py-2.5 rounded-lg bg-[var(--color-surface-2)] border border-[var(--color-border)] focus:border-[var(--color-primary)] outline-none text-sm font-mono"
+                  />
+                </div>
+                <button
+                  type="submit"
+                  disabled={submittingQuote}
+                  class="w-full mt-2 inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl text-sm font-semibold bg-gradient-to-br from-emerald-500 to-emerald-600 hover:from-emerald-400 text-white transition-all disabled:opacity-60"
+                >
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946C.16 5.335 5.495 0 12.05 0c3.181 0 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414 0 6.557-5.336 11.892-11.893 11.892-1.99 0-3.951-.5-5.688-1.448L.057 24zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.742-.981z"/></svg>
+                  {submittingQuote ? 'Gönderiliyor...' : 'Teklifi Gönder & WhatsApp Aç'}
+                </button>
+                <p class="text-[10px] text-[var(--color-text-muted)] text-center leading-snug">
+                  Bu form ön taleptir — kesin sipariş atölyemizden sonra oluşturulur. Bilgileriniz sadece sipariş takibi için kullanılır.
+                </p>
+              </form>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   )
 }
@@ -353,7 +491,7 @@ function BrandStep({
       <header class="mb-5">
         <h2 class="font-display text-xl font-semibold">Aracının markası</h2>
         <p class="mt-1 text-sm text-[var(--color-text-muted)]">
-          Listede yoksa <a href="https://wa.me/905550000000" class="text-[var(--color-primary)] underline-offset-2 hover:underline">WhatsApp'tan</a> iletin.
+          Listede yoksa <a href="https://wa.me/905545417561" class="text-[var(--color-primary)] underline-offset-2 hover:underline">WhatsApp'tan</a> iletin.
         </p>
       </header>
 
@@ -889,105 +1027,160 @@ function Preview({
           style="background-image: url(&quot;data:image/svg+xml;utf8,<svg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/><feColorMatrix values='0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 0.55 0'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>&quot;);"
         />
 
-        {/* Araç gövdesi (üstten görünüm) */}
+        {/* Araç gövdesi (üstten görünüm) — daha doğru oran, koltuk ve direksiyon detayı */}
         <svg
-          viewBox="0 0 400 540"
+          viewBox="0 0 400 600"
           class="absolute inset-x-2 top-2 bottom-2 mx-auto h-[calc(100%-16px)]"
           aria-label="Araç içi paspas yerleşimi"
         >
-          {/* Body outline */}
           <defs>
-            <linearGradient id="bodyGrad" x1="0%" y1="0%" x2="0%" y2="100%">
-              <stop offset="0%" stop-color="#26262e" />
-              <stop offset="100%" stop-color="#1a1a22" />
-            </linearGradient>
-            <linearGradient id="hood" x1="0%" y1="0%" x2="0%" y2="100%">
-              <stop offset="0%" stop-color="#1f1f27" />
+            {/* Karoser gradyanı */}
+            <linearGradient id="bodyGrad" x1="50%" y1="0%" x2="50%" y2="100%">
+              <stop offset="0%" stop-color="#2a2a32" />
+              <stop offset="50%" stop-color="#222229" />
               <stop offset="100%" stop-color="#15151b" />
             </linearGradient>
+            {/* Cam yüzeyi */}
+            <linearGradient id="glassGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stop-color="rgba(120,160,200,0.18)" />
+              <stop offset="50%" stop-color="rgba(60,90,130,0.12)" />
+              <stop offset="100%" stop-color="rgba(120,160,200,0.18)" />
+            </linearGradient>
+            {/* Koltuk dolgusu */}
+            <linearGradient id="seatGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+              <stop offset="0%" stop-color="rgba(255,255,255,0.06)" />
+              <stop offset="100%" stop-color="rgba(255,255,255,0.02)" />
+            </linearGradient>
+            {/* Sweep ışık efekti — paspas önizlemesini hafifçe parlatır */}
+            <linearGradient id="sweep" x1="0%" y1="0%" x2="100%" y2="0%">
+              <stop offset="0%" stop-color="rgba(255,255,255,0)" />
+              <stop offset="50%" stop-color="rgba(255,255,255,0.08)" />
+              <stop offset="100%" stop-color="rgba(255,255,255,0)" />
+            </linearGradient>
+            <radialGradient id="hotspot" cx="50%" cy="0%" r="60%">
+              <stop offset="0%" stop-color="rgba(255,210,140,0.18)" />
+              <stop offset="100%" stop-color="rgba(255,210,140,0)" />
+            </radialGradient>
           </defs>
 
-          {/* Floor shadow */}
-          <ellipse cx="200" cy="510" rx="170" ry="14" fill="rgba(0,0,0,0.55)" filter="blur(8px)" />
+          {/* Üst spot (atölye ışığı) */}
+          <rect x="0" y="0" width="400" height="200" fill="url(#hotspot)" />
 
-          {/* Body (top-down silhouette) */}
+          {/* Zemin gölgesi */}
+          <ellipse cx="200" cy="572" rx="180" ry="16" fill="rgba(0,0,0,0.5)" filter="blur(10px)" />
+
+          {/* Karoser — daha modern coupe/sedan oranları */}
           <path
-            d="M 110 30
-               C 110 18, 130 8, 200 8
-               C 270 8, 290 18, 290 30
-               L 305 100
-               L 320 200
-               L 325 320
-               L 320 440
-               L 305 500
-               C 280 520, 120 520, 95 500
-               L 80 440
-               L 75 320
-               L 80 200
-               L 95 100
-               Z"
+            d="M 200 18
+               C 132 18, 96 60, 90 110
+               L 80 220
+               L 75 360
+               L 82 480
+               L 95 540
+               C 110 565, 290 565, 305 540
+               L 318 480
+               L 325 360
+               L 320 220
+               L 310 110
+               C 304 60, 268 18, 200 18 Z"
             fill="url(#bodyGrad)"
-            stroke="rgba(255,255,255,0.08)"
-            stroke-width="1"
+            stroke="rgba(255,255,255,0.10)"
+            stroke-width="1.2"
           />
-          {/* Hood */}
-          <path
-            d="M 130 40 L 270 40 L 282 90 L 118 90 Z"
-            fill="url(#hood)"
-            opacity="0.7"
-          />
-          {/* Windshield */}
-          <path
-            d="M 130 100 L 270 100 L 285 175 L 115 175 Z"
-            fill="rgba(80,140,200,0.1)"
-            stroke="rgba(255,255,255,0.05)"
-          />
-          {/* Roof line */}
-          <path
-            d="M 135 180 L 265 180 L 280 350 L 120 350 Z"
-            fill="rgba(255,255,255,0.02)"
-            stroke="rgba(255,255,255,0.04)"
-          />
-          {/* Rear window */}
-          <path
-            d="M 130 360 L 270 360 L 275 430 L 125 430 Z"
-            fill="rgba(80,140,200,0.08)"
-            stroke="rgba(255,255,255,0.05)"
-          />
-          {/* Trunk lid */}
-          <rect x="120" y="440" width="160" height="55" rx="4" fill="rgba(255,255,255,0.025)" stroke="rgba(255,255,255,0.05)" />
 
-          {/* Side mirrors */}
-          <ellipse cx="78" cy="160" rx="6" ry="10" fill="#15151b" stroke="rgba(255,255,255,0.06)" />
-          <ellipse cx="322" cy="160" rx="6" ry="10" fill="#15151b" stroke="rgba(255,255,255,0.06)" />
-          {/* Wheel hints */}
-          <rect x="68" y="120" width="14" height="40" rx="3" fill="#0a0a0d" />
-          <rect x="318" y="120" width="14" height="40" rx="3" fill="#0a0a0d" />
-          <rect x="68" y="380" width="14" height="40" rx="3" fill="#0a0a0d" />
-          <rect x="318" y="380" width="14" height="40" rx="3" fill="#0a0a0d" />
+          {/* Highlight şerit — gövde üst kenarı parlak yansıma */}
+          <path d="M 110 110 C 130 75, 270 75, 290 110" fill="none" stroke="rgba(255,255,255,0.18)" stroke-width="0.8" />
 
-          {/* Seat outlines (visual hint) */}
-          <rect x="146" y="195" width="48" height="50" rx="6" fill="rgba(255,255,255,0.03)" stroke="rgba(255,255,255,0.05)" />
-          <rect x="206" y="195" width="48" height="50" rx="6" fill="rgba(255,255,255,0.03)" stroke="rgba(255,255,255,0.05)" />
-          <rect x="146" y="305" width="108" height="38" rx="6" fill="rgba(255,255,255,0.03)" stroke="rgba(255,255,255,0.05)" />
+          {/* Hood — motor kapağı */}
+          <path d="M 120 80 L 280 80 L 290 130 L 110 130 Z" fill="rgba(255,255,255,0.04)" stroke="rgba(255,255,255,0.06)" />
+          <path d="M 200 80 L 200 130" stroke="rgba(255,255,255,0.05)" stroke-width="0.5" />
+
+          {/* Windshield — ön cam */}
+          <path d="M 120 145 L 280 145 L 295 215 L 105 215 Z" fill="url(#glassGrad)" stroke="rgba(255,255,255,0.06)" />
+          {/* Wiper çizgileri */}
+          <path d="M 145 213 Q 175 195 205 213" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="0.8" />
+          <path d="M 215 213 Q 245 195 275 213" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="0.8" />
+
+          {/* Tavan + iç hat */}
+          <path d="M 125 225 L 275 225 L 285 405 L 115 405 Z" fill="rgba(255,255,255,0.025)" stroke="rgba(255,255,255,0.04)" />
+
+          {/* Arka cam */}
+          <path d="M 120 415 L 280 415 L 290 485 L 110 485 Z" fill="url(#glassGrad)" stroke="rgba(255,255,255,0.05)" />
+          <path d="M 130 480 L 270 480" stroke="rgba(220,80,80,0.45)" stroke-width="0.6" />
+
+          {/* Bagaj kapağı */}
+          <rect x="110" y="490" width="180" height="55" rx="5" fill="rgba(255,255,255,0.03)" stroke="rgba(255,255,255,0.05)" />
+          {/* Marka logo placeholder bagajda */}
+          <circle cx="200" cy="518" r="9" fill="rgba(255,255,255,0.05)" stroke="rgba(255,255,255,0.1)" />
+
+          {/* Yan aynalar */}
+          <ellipse cx="78" cy="190" rx="8" ry="13" fill="#15151b" stroke="rgba(255,255,255,0.08)" />
+          <ellipse cx="322" cy="190" rx="8" ry="13" fill="#15151b" stroke="rgba(255,255,255,0.08)" />
+
+          {/* Ön/arka tekerlekler — daha gerçekçi pozisyon */}
+          <rect x="64" y="155" width="14" height="46" rx="3" fill="#0a0a0d" />
+          <rect x="322" y="155" width="14" height="46" rx="3" fill="#0a0a0d" />
+          <rect x="64" y="425" width="14" height="46" rx="3" fill="#0a0a0d" />
+          <rect x="322" y="425" width="14" height="46" rx="3" fill="#0a0a0d" />
+
+          {/* Far ışıkları (önde) */}
+          <rect x="115" y="32" width="32" height="14" rx="6" fill="rgba(255,250,220,0.18)" stroke="rgba(255,250,220,0.3)" stroke-width="0.5" />
+          <rect x="253" y="32" width="32" height="14" rx="6" fill="rgba(255,250,220,0.18)" stroke="rgba(255,250,220,0.3)" stroke-width="0.5" />
+          {/* Stop lambaları (arkada) */}
+          <rect x="115" y="555" width="32" height="10" rx="4" fill="rgba(220,40,40,0.5)" />
+          <rect x="253" y="555" width="32" height="10" rx="4" fill="rgba(220,40,40,0.5)" />
+
+          {/* Direksiyon */}
+          <g transform="translate(170, 235)">
+            <circle cx="0" cy="0" r="14" fill="none" stroke="rgba(255,255,255,0.12)" stroke-width="2.5" />
+            <line x1="-14" y1="0" x2="14" y2="0" stroke="rgba(255,255,255,0.10)" stroke-width="1.5" />
+            <circle cx="0" cy="0" r="3" fill="rgba(255,255,255,0.10)" />
+          </g>
+
+          {/* Koltuklar — daha 3D */}
+          {/* Sürücü */}
+          <g>
+            <rect x="148" y="250" width="48" height="60" rx="10" fill="url(#seatGrad)" stroke="rgba(255,255,255,0.07)" />
+            <rect x="153" y="282" width="38" height="22" rx="7" fill="rgba(0,0,0,0.18)" />
+            <rect x="155" y="244" width="34" height="10" rx="4" fill="rgba(255,255,255,0.04)" />
+          </g>
+          {/* Yolcu */}
+          <g>
+            <rect x="204" y="250" width="48" height="60" rx="10" fill="url(#seatGrad)" stroke="rgba(255,255,255,0.07)" />
+            <rect x="209" y="282" width="38" height="22" rx="7" fill="rgba(0,0,0,0.18)" />
+            <rect x="211" y="244" width="34" height="10" rx="4" fill="rgba(255,255,255,0.04)" />
+          </g>
+          {/* Arka koltuk sırası */}
+          <g>
+            <rect x="148" y="345" width="104" height="44" rx="10" fill="url(#seatGrad)" stroke="rgba(255,255,255,0.06)" />
+            <rect x="155" y="370" width="42" height="16" rx="5" fill="rgba(0,0,0,0.15)" />
+            <rect x="203" y="370" width="42" height="16" rx="5" fill="rgba(0,0,0,0.15)" />
+          </g>
+
+          {/* Vites kolu */}
+          <rect x="194" y="318" width="12" height="22" rx="4" fill="rgba(255,255,255,0.05)" stroke="rgba(255,255,255,0.08)" />
+
+          {/* Sweep ışık animasyonu */}
+          <rect x="0" y="0" width="80" height="600" fill="url(#sweep)" opacity="0.6">
+            <animateTransform attributeName="transform" type="translate" from="-100 0" to="500 0" dur="6s" repeatCount="indefinite" />
+          </rect>
         </svg>
 
-        {/* Paspas slot'ları — HTML <foreignObject> yerine absolute pozisyonlu div kullan */}
-        {/* Her slot'un x/y/w/h'ı SVG viewBox'u ile orantılı */}
+        {/* Paspas slot'ları — viewBox 0..600 ile birebir orantılı */}
         <div class="absolute inset-x-2 top-2 bottom-2 mx-auto pointer-events-none">
-          <div class="relative h-full w-full" style="aspect-ratio: 400/540;">
-            {/* Sürücü (sağ ön) — SAĞ HAND DRIVE veya sol-hand. Türkiye SOL hand: sürücü solda. */}
+          <div class="relative h-full w-full" style="aspect-ratio: 400/600;">
+            {/* Sürücü ön — koltuğun ayak ucu */}
             <MatSlot
-              x="14.5%" y="42%" w="22%" h="11%" rotate="0deg"
+              x="14%" y="53%" w="22%" h="10%" rotate="0deg"
               matColor={matColor} borderColor={borderColor}
               heelPad={heelPad}
               showLogo={!!showLogo}
               brand={brand}
               label="SÜRÜCÜ"
             />
-            {/* Yolcu (sol ön) */}
+            {/* Yolcu ön */}
             <MatSlot
-              x="63.5%" y="42%" w="22%" h="11%" rotate="0deg"
+              x="64%" y="53%" w="22%" h="10%" rotate="0deg"
               matColor={matColor} borderColor={borderColor}
               heelPad={heelPadPassenger ? heelPad : null}
               showLogo={!!showLogo}
@@ -997,7 +1190,7 @@ function Preview({
             {/* Sol arka */}
             {showRear && (
               <MatSlot
-                x="14.5%" y="65%" w="22%" h="10%" rotate="0deg"
+                x="14%" y="67%" w="22%" h="9%" rotate="0deg"
                 matColor={matColor} borderColor={borderColor}
                 heelPad={null}
                 showLogo={!!showLogo}
@@ -1008,7 +1201,7 @@ function Preview({
             {/* Sağ arka */}
             {showRear && (
               <MatSlot
-                x="63.5%" y="65%" w="22%" h="10%" rotate="0deg"
+                x="64%" y="67%" w="22%" h="9%" rotate="0deg"
                 matColor={matColor} borderColor={borderColor}
                 heelPad={null}
                 showLogo={!!showLogo}
@@ -1016,9 +1209,8 @@ function Preview({
                 label=""
               />
             )}
-            {/* Arka sıra etiketi */}
             {showRear && (
-              <div class="absolute" style="left: 50%; top: 70%; transform: translate(-50%, -50%);">
+              <div class="absolute" style="left: 50%; top: 71%; transform: translate(-50%, -50%);">
                 <span class="text-[8px] font-semibold tracking-[0.3em] text-[var(--color-text-muted)] bg-[var(--color-bg)]/70 px-2 py-0.5 rounded">
                   ARKA SIRA
                 </span>
@@ -1027,7 +1219,7 @@ function Preview({
             {/* Bagaj */}
             {showTrunk && (
               <MatSlot
-                x="32%" y="83%" w="36%" h="11%" rotate="0deg"
+                x="29%" y="83%" w="42%" h="9%" rotate="0deg"
                 matColor={matColor} borderColor={borderColor}
                 heelPad={null}
                 showLogo={false}
