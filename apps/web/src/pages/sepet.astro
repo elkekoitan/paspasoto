@@ -1,0 +1,16 @@
+---
+import Base from '@layouts/Base.astro'
+import CartView from '@components/commerce/CartView.tsx'
+---
+
+<Base title="Sepetim" description="Sepetinizdeki paspaslar.">
+  <section class="container-page py-12 md:py-20">
+    <div class="mb-10">
+      <p class="text-xs uppercase tracking-[0.2em] text-[var(--color-primary)] font-semibold">Sepet</p>
+      <h1 class="mt-2 font-display text-3xl md:text-4xl font-semibold tracking-tight">
+        Sepetiniz
+      </h1>
+    </div>
+    <CartView client:load />
+  </section>
+</Base>

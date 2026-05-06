@@ -49,6 +49,13 @@ const path = Astro.url.pathname
         href="/siparis-takip"
         class="hidden sm:inline-flex items-center gap-2 px-3.5 py-2 rounded-lg text-sm font-medium text-[var(--color-text-soft)] hover:text-[var(--color-text)] transition-colors"
       >
+        Sipariş Takip
+      </a>
+      <a
+        href="/sepet"
+        class="relative inline-flex items-center gap-2 px-3.5 py-2 rounded-lg text-sm font-medium border border-[var(--color-border)] text-[var(--color-text-soft)] hover:text-[var(--color-text)] hover:border-[var(--color-text-muted)] transition-colors"
+        aria-label="Sepetim"
+      >
         <svg
           xmlns="http://www.w3.org/2000/svg"
           width="18"
@@ -60,30 +67,16 @@ const path = Astro.url.pathname
           stroke-linecap="round"
           stroke-linejoin="round"
           aria-hidden="true"
-          ><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"
-          ></path><path d="m3.3 7 8.7 5 8.7-5"></path><path d="M12 22V12"></path></svg
         >
-        Sipariş Takip
-      </a>
-      <a
-        href="/konfigurator"
-        class="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-semibold bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] text-[var(--color-bg)] transition-colors"
-      >
-        Konfigüratör
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          width="16"
-          height="16"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="2.5"
-          stroke-linecap="round"
-          stroke-linejoin="round"
-          aria-hidden="true"
-        >
-          <path d="M5 12h14"></path><path d="m12 5 7 7-7 7"></path>
+          <circle cx="8" cy="21" r="1"></circle>
+          <circle cx="19" cy="21" r="1"></circle>
+          <path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"></path>
         </svg>
+        <span class="hidden sm:inline">Sepetim</span>
+        <span
+          id="cart-count"
+          class="hidden absolute -top-1.5 -right-1.5 size-4 rounded-full bg-[var(--color-primary)] text-[var(--color-bg)] text-[9px] font-bold items-center justify-center"
+        ></span>
       </a>
       <button
         type="button"
@@ -139,4 +132,26 @@ const path = Astro.url.pathname
   toggle?.addEventListener('click', () => {
     menu?.classList.toggle('hidden')
   })
+
+  // Cart count from localStorage
+  function updateCartCount() {
+    try {
+      const raw = localStorage.getItem('paspasoto:cart:v1')
+      const items = raw ? JSON.parse(raw) : []
+      const count = items.reduce((s: number, i: any) => s + (i.qty ?? 0), 0)
+      const el = document.getElementById('cart-count')
+      if (!el) return
+      if (count > 0) {
+        el.textContent = String(count)
+        el.classList.remove('hidden')
+        el.classList.add('flex')
+      } else {
+        el.classList.add('hidden')
+        el.classList.remove('flex')
+      }
+    } catch {}
+  }
+  updateCartCount()
+  window.addEventListener('storage', updateCartCount)
+  document.addEventListener('astro:page-load', updateCartCount)
 </script>

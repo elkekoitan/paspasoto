@@ -1,0 +1,16 @@
+---
+import Base from '@layouts/Base.astro'
+import OrderTracker from '@components/tracker/OrderTracker.tsx'
+---
+
+<Base title="Sipariş Takip" description="Siparişinizin canlı durumu." noindex>
+  <section class="container-page py-12 md:py-20">
+    <div class="mb-8">
+      <p class="text-xs uppercase tracking-[0.2em] text-[var(--color-primary)] font-semibold">Sipariş Takip</p>
+      <h1 class="mt-2 font-display text-3xl md:text-4xl font-semibold tracking-tight">
+        Siparişinizin canlı durumu
+      </h1>
+    </div>
+    <OrderTracker client:load />
+  </section>
+</Base>

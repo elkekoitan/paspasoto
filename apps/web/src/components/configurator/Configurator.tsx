@@ -16,6 +16,7 @@ import {
   type Product,
 } from '../../lib/catalog'
 import { formatTRY } from '../../lib/format'
+import { addToCart } from '../../stores/cart'
 
 type StepKey = 'brand' | 'model' | 'product' | 'mat' | 'border' | 'heel' | 'logo' | 'summary'
 const STEPS: { key: StepKey; label: string }[] = [
@@ -88,6 +89,40 @@ export default function Configurator() {
     (step === 'heel' && !!heelPad) ||
     step === 'logo' ||
     step === 'summary'
+
+  function handleAddToCart() {
+    if (!brand || !model || !product || !matColor || !borderColor || !heelPad) {
+      alert('Lütfen tüm adımları tamamlayın.')
+      return
+    }
+    addToCart({
+      brandSlug: brand.slug,
+      brandName: brand.name,
+      modelSlug: model.slug,
+      modelName: model.name,
+      modelChassis: model.chassisCode,
+      productSlug: product.slug,
+      productName: product.name,
+      productParts: product.parts,
+      matSlug: matColor.slug,
+      matName: matColor.name,
+      matSwatchUrl: matColor.swatchUrl,
+      borderSlug: borderColor.slug,
+      borderName: borderColor.name,
+      borderSwatchUrl: borderColor.swatchUrl,
+      heelSlug: heelPad.slug,
+      heelName: heelPad.name,
+      heelSwatchUrl: heelPad.swatchUrl,
+      heelPadPassenger,
+      logoBrandSlug: logoAccessory?.brandSlug ?? null,
+      logoQty: logoAccessory && logoAccessory.brandSlug ? product.parts : 0,
+      unitPrice: totalPrice,
+      qty: 1,
+    })
+    if (typeof window !== 'undefined') {
+      window.location.href = '/sepet'
+    }
+  }
 
   return (
     <div class="grid lg:grid-cols-[minmax(0,1fr)_minmax(0,420px)] gap-6 lg:gap-10">
@@ -195,7 +230,7 @@ export default function Configurator() {
               heelPadPassenger={heelPadPassenger}
               logoAccessory={logoAccessory}
               total={totalPrice}
-              onAddToCart={() => alert('Sepete ekleme henüz aktif değil — Strapi entegrasyonu beklemede.')}
+              onAddToCart={() => handleAddToCart()}
             />
           )}
         </div>
@@ -235,7 +270,7 @@ export default function Configurator() {
           model={model}
           product={product}
           total={totalPrice}
-          onAddToCart={() => alert('Sepete ekleme henüz aktif değil — Strapi entegrasyonu beklemede.')}
+          onAddToCart={() => handleAddToCart()}
         />
       </aside>
     </div>

@@ -1,0 +1,17 @@
+node_modules
+**/node_modules
+**/.git
+**/.gitignore
+**/dist
+**/.astro
+**/.cache
+**/.tmp
+**/.vscode
+**/.idea
+**/*.log
+**/.env
+**/.env.local
+**/coverage
+**/playwright-report
+.docker-data
+docs/voice-note-*.ogg

@@ -1,0 +1,17 @@
+---
+import Base from '@layouts/Base.astro'
+import Checkout from '@components/commerce/Checkout.tsx'
+---
+
+<Base title="Sipariş Bilgileri" description="İletişim ve teslimat bilgilerinizi girin, siparişinizi tamamlayın." noindex>
+  <section class="container-page py-12 md:py-20">
+    <div class="mb-10">
+      <p class="text-xs uppercase tracking-[0.2em] text-[var(--color-primary)] font-semibold">Sipariş Tamamla</p>
+      <h1 class="mt-2 font-display text-3xl md:text-4xl font-semibold tracking-tight">
+        Siparişinizi tamamlayın
+      </h1>
+      <p class="mt-2 text-[var(--color-text-soft)]">İletişim ve teslimat bilgileri · ödeme yöntemi seçimi</p>
+    </div>
+    <Checkout client:load />
+  </section>
+</Base>

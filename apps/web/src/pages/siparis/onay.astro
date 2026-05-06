@@ -1,0 +1,10 @@
+---
+import Base from '@layouts/Base.astro'
+import OrderConfirmation from '@components/commerce/OrderConfirmation.tsx'
+---
+
+<Base title="Sipariş Alındı" description="Siparişiniz oluşturuldu." noindex>
+  <section class="container-page py-12 md:py-20">
+    <OrderConfirmation client:load />
+  </section>
+</Base>
