@@ -61,11 +61,15 @@ export function loginCheck(password: string): boolean {
 }
 
 export function setSessionCookie(cookies: AstroCookies, token: string) {
+  // Coolify reverse proxy şu an HTTP serving yapıyor (sslip.io). Cookie Secure flag'i
+  // sadece HTTPS varsa true — aksi halde tarayıcı cookie'yi kabul etmez.
+  // Üretimde gerçek domain + TLS olunca COOKIE_SECURE=true env ile aktif edilebilir.
+  const secure = process.env.COOKIE_SECURE === 'true'
   cookies.set(COOKIE_NAME, token, {
     path: '/',
     httpOnly: true,
-    sameSite: 'strict',
-    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'lax',
+    secure,
     maxAge: SESSION_TTL_DAYS * 24 * 60 * 60,
   })
 }
