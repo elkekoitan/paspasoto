@@ -21,8 +21,39 @@ export type OrderStatus =
   | 'delivered'
   | 'cancelled'
 
-export type PaymentMethod = 'havale' | 'kapida' | 'nakit'
+export type PaymentMethod =
+  | 'elden-nakit'
+  | 'elden-kart'
+  | 'havale'
+  | 'kapida'
+  | 'sonra'
+  | 'taksit'
 export type PaymentStatus = 'bekliyor' | 'kismi' | 'tamamlandi' | 'iade'
+
+/**
+ * Tek bir tahsilat kaydı.
+ * Sipariş taksitli/parçalı ödeniyorsa her tahsilat ayrı kayıt olur.
+ */
+export type PaymentInstallment = {
+  id: string
+  /** Vade/planlanan tarih (epoch ms). Tahsil edildiğinde paidAt da set edilir. */
+  dueAt: number
+  amount: number
+  method: PaymentMethod
+  status: 'planlandi' | 'odendi' | 'gecikti' | 'iptal'
+  /** Tahsil edildiği tarih (status === 'odendi' ise dolu). */
+  paidAt?: number
+  note?: string
+}
+
+export const PAYMENT_METHOD_LABELS: Record<PaymentMethod, string> = {
+  'elden-nakit': 'Elden — Nakit',
+  'elden-kart': 'Elden — Kredi Kartı (POS)',
+  havale: 'Havale / EFT',
+  kapida: 'Kapıda Ödeme',
+  sonra: 'Sonra Ödenecek',
+  taksit: 'Parçalı / Taksit',
+}
 
 export type OrderItem = {
   brandSlug: string
@@ -74,6 +105,8 @@ export type Order = {
   paidAmount: number
   paymentMethod: PaymentMethod
   paymentStatus: PaymentStatus
+  /** Çoklu tahsilat / taksit planı (parçalı ödemelerde dolu). */
+  paymentInstallments?: PaymentInstallment[]
   productionStatus: OrderStatus
   customerNote?: string
   internalNote?: string

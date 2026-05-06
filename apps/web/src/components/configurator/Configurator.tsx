@@ -16,6 +16,7 @@ import {
   type Product,
 } from '../../lib/catalog'
 import { formatTRY } from '../../lib/format'
+import ClientBrandLogo from '../ui/ClientBrandLogo'
 
 type StepKey = 'brand' | 'model' | 'product' | 'mat' | 'border' | 'heel' | 'logo' | 'summary'
 const STEPS: { key: StepKey; label: string }[] = [
@@ -373,13 +374,21 @@ function BrandStep({
               type="button"
               onClick={() => onSelect(b)}
               class={[
-                'aspect-[4/3] rounded-xl border transition-all flex items-center justify-center font-display font-semibold text-sm md:text-base',
+                'aspect-[4/3] rounded-xl border transition-all flex flex-col items-center justify-center gap-1.5 px-2 py-2.5',
                 active
-                  ? 'border-[var(--color-primary)] bg-[var(--color-primary-soft)] text-[var(--color-text)]'
-                  : 'border-[var(--color-border)]/60 bg-[var(--color-surface-2)] text-[var(--color-text-soft)] hover:border-[var(--color-text-muted)] hover:text-[var(--color-text)]',
+                  ? 'border-[var(--color-primary)] bg-[var(--color-primary-soft)] shadow-[var(--shadow-glow)] -translate-y-0.5'
+                  : 'border-[var(--color-border)]/60 bg-[var(--color-surface-2)] hover:border-[var(--color-text-muted)] hover:-translate-y-0.5',
               ].join(' ')}
             >
-              {b.name}
+              <ClientBrandLogo
+                iconSlug={b.iconSlug}
+                name={b.name}
+                size={36}
+                color={b.color}
+              />
+              <span class={['font-display font-semibold text-[11px] sm:text-xs leading-none truncate w-full text-center', active ? 'text-[var(--color-text)]' : 'text-[var(--color-text-soft)]'].join(' ')}>
+                {b.name}
+              </span>
             </button>
           )
         })}
@@ -1156,12 +1165,15 @@ function MatSlot({
           <img src={heelPad.swatchUrl} alt="" class="size-full object-cover" loading="eager" />
         </div>
       )}
-      {/* Amblem badge */}
-      {showLogo && (
-        <div class="absolute top-[18%] left-1/2 -translate-x-1/2 px-1 py-0.5 rounded-[2px] bg-black/85 backdrop-blur leading-none">
-          <span class="text-[6px] font-bold tracking-[0.15em] text-white whitespace-nowrap">
-            {brand?.name?.toUpperCase() ?? ''}
-          </span>
+      {/* Amblem (gerçek marka logosu) */}
+      {showLogo && brand && (
+        <div class="absolute top-[20%] left-1/2 -translate-x-1/2 size-[18%] grid place-items-center rounded-full bg-black/65 backdrop-blur ring-1 ring-white/15 shadow-md">
+          <ClientBrandLogo
+            iconSlug={brand.iconSlug}
+            name={brand.name}
+            size={20}
+            color="#ffffff"
+          />
         </div>
       )}
       {/* Etiket */}

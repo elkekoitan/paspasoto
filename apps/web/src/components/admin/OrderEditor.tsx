@@ -167,12 +167,23 @@ export default function OrderEditor({ initial }: { initial: Order }) {
                 onChange={(e) => patch({ paymentMethod: (e.target as HTMLSelectElement).value })}
                 class={inp}
               >
+                <option value="elden-nakit">Elden — Nakit</option>
+                <option value="elden-kart">Elden — Kredi Kartı (POS)</option>
                 <option value="havale">Banka Havalesi / EFT</option>
                 <option value="kapida">Kapıda</option>
-                <option value="nakit">Nakit</option>
+                <option value="sonra">Sonra Ödenecek</option>
+                <option value="taksit">Parçalı / Taksit</option>
               </select>
             </Field>
           </div>
+
+          {/* Taksit / Parçalı tahsilat planı */}
+          {order.paymentMethod === 'taksit' && (
+            <InstallmentManager
+              order={order}
+              onUpdate={(installments) => patch({ paymentInstallments: installments })}
+            />
+          )}
         </Section>
 
         {/* Ürünler */}
@@ -319,5 +330,95 @@ function Field({ label, class: cls, children }: { label: string; class?: string;
       <div class="text-xs font-medium mb-1 text-[var(--color-text-soft)]">{label}</div>
       {children}
     </label>
+  )
+}
+
+/* -------- Taksit Yöneticisi -------- */
+function InstallmentManager({
+  order,
+  onUpdate,
+}: {
+  order: Order
+  onUpdate: (list: any[]) => void | Promise<void>
+}) {
+  const list = order.paymentInstallments ?? []
+  const planned = list.reduce((s, i) => s + (i.amount || 0), 0)
+  const collected = list.filter((i) => i.status === 'odendi').reduce((s, i) => s + (i.amount || 0), 0)
+
+  function add() {
+    const remaining = Math.max(0, order.total - planned)
+    const due = new Date()
+    due.setMonth(due.getMonth() + list.length + 1)
+    const next = [
+      ...list,
+      {
+        id: `inst-${Date.now()}`,
+        dueAt: due.getTime(),
+        amount: Math.round(remaining / 2) || 0,
+        method: 'havale',
+        status: 'planlandi',
+      },
+    ]
+    onUpdate(next)
+  }
+  function update(idx: number, patch: any) {
+    const next = list.map((it, i) => (i === idx ? { ...it, ...patch } : it))
+    onUpdate(next)
+  }
+  function remove(idx: number) {
+    onUpdate(list.filter((_, i) => i !== idx))
+  }
+
+  return (
+    <div class="mt-4 pt-4 border-t border-[var(--color-border)]/60">
+      <div class="flex items-center justify-between mb-3">
+        <div>
+          <h4 class="text-sm font-semibold">Taksit Planı</h4>
+          <p class="text-[10px] text-[var(--color-text-muted)] mt-0.5">
+            Toplam {formatTRY(order.total)} · Planlandı {formatTRY(planned)} · Tahsil {formatTRY(collected)}
+          </p>
+        </div>
+        <button onClick={add} class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-[var(--color-primary)] text-[var(--color-bg)] hover:bg-[var(--color-primary-hover)]">
+          + Taksit
+        </button>
+      </div>
+      {list.length === 0 ? (
+        <p class="text-xs text-[var(--color-text-muted)] py-3 text-center">Henüz taksit planlanmadı.</p>
+      ) : (
+        <div class="space-y-2">
+          {list.map((it, idx) => (
+            <div class="grid grid-cols-[110px_1fr_120px_120px_auto] gap-2 items-center text-xs">
+              <input
+                type="date"
+                value={new Date(it.dueAt).toISOString().slice(0, 10)}
+                onBlur={(e) => update(idx, { dueAt: new Date((e.target as HTMLInputElement).value).getTime() })}
+                class={inp}
+              />
+              <input
+                type="number"
+                min="0"
+                defaultValue={it.amount}
+                onBlur={(e) => update(idx, { amount: parseFloat((e.target as HTMLInputElement).value) || 0 })}
+                class={inp}
+              />
+              <select value={it.method} onChange={(e) => update(idx, { method: (e.target as HTMLSelectElement).value })} class={inp}>
+                <option value="elden-nakit">Nakit</option>
+                <option value="elden-kart">POS</option>
+                <option value="havale">Havale</option>
+              </select>
+              <select value={it.status} onChange={(e) => update(idx, { status: (e.target as HTMLSelectElement).value, paidAt: (e.target as HTMLSelectElement).value === 'odendi' ? Date.now() : undefined })} class={inp}>
+                <option value="planlandi">Planlandı</option>
+                <option value="odendi">Ödendi</option>
+                <option value="gecikti">Gecikti</option>
+                <option value="iptal">İptal</option>
+              </select>
+              <button onClick={() => remove(idx)} class="px-2 py-1.5 rounded-lg text-xs text-[var(--color-danger)] hover:bg-[var(--color-danger)]/10" title="Sil">
+                ×
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
   )
 }

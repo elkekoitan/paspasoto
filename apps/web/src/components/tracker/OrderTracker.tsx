@@ -27,6 +27,12 @@ type OrderItem = {
   qty: number; unitPrice: number
 }
 
+type Installment = {
+  id: string; dueAt: number; amount: number
+  method: string; status: 'planlandi' | 'odendi' | 'gecikti' | 'iptal'
+  paidAt?: number; note?: string
+}
+
 type Order = {
   orderNo: string; accessToken: string
   customer: { fullName: string; phone: string }
@@ -34,9 +40,19 @@ type Order = {
   items: OrderItem[]
   total: number; paidAmount: number
   paymentMethod: string; paymentStatus: string; productionStatus: OrderStatus
-  cargoCompany?: string; cargoTrackingNo?: string
+  paymentInstallments?: Installment[]
+  cargoCompany?: string; cargoTrackingNo?: string; shippedAt?: number; deliveredAt?: number
   createdAt: number
   events: { status: OrderStatus; at: number; note?: string }[]
+}
+
+const PAYMENT_LABEL: Record<string, string> = {
+  'elden-nakit': 'Elden — Nakit',
+  'elden-kart': 'Elden — Kredi Kartı (POS)',
+  havale: 'Havale / EFT',
+  kapida: 'Kapıda Ödeme',
+  sonra: 'Sonra Ödenecek',
+  taksit: 'Parçalı / Taksit',
 }
 
 export default function OrderTracker() {
@@ -242,23 +258,118 @@ function OrderDetail({ order }: { order: Order }) {
       <aside class="space-y-4">
         <div class="rounded-2xl bg-[var(--color-surface)] border border-[var(--color-border)]/60 p-5">
           <h3 class="font-display text-base font-semibold">Ödeme Durumu</h3>
-          <div class="mt-3">
+          <div class="mt-3 flex items-center gap-2 flex-wrap">
             <span class={[
               'px-2.5 py-1 rounded-full text-xs font-semibold border',
               order.paymentStatus === 'tamamlandi' ? 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30'
               : order.paymentStatus === 'kismi' ? 'bg-blue-500/15 text-blue-400 border-blue-500/30'
               : 'bg-amber-500/15 text-amber-400 border-amber-500/30',
             ].join(' ')}>
-              {order.paymentStatus === 'tamamlandi' ? 'Tamamlandı' : order.paymentStatus === 'kismi' ? `Kısmi · ${formatTRY(order.paidAmount)}` : 'Beklemede'}
+              {order.paymentStatus === 'tamamlandi' ? 'Tamamlandı' : order.paymentStatus === 'kismi' ? `Kısmi (${formatTRY(order.paidAmount)})` : 'Beklemede'}
+            </span>
+            <span class="px-2.5 py-1 rounded-full text-[10px] font-medium bg-[var(--color-surface-2)] text-[var(--color-text-soft)]">
+              {PAYMENT_LABEL[order.paymentMethod] ?? order.paymentMethod}
             </span>
           </div>
-          <div class="mt-3 pt-3 border-t border-[var(--color-border)]/60 text-sm">
+          <div class="mt-3 pt-3 border-t border-[var(--color-border)]/60 text-sm space-y-1.5">
             <div class="flex justify-between">
               <span class="text-[var(--color-text-muted)]">Toplam</span>
               <span class="tabular-nums font-semibold">{formatTRY(order.total)}</span>
             </div>
+            <div class="flex justify-between">
+              <span class="text-[var(--color-text-muted)]">Tahsil edildi</span>
+              <span class="tabular-nums text-[var(--color-success)]">{formatTRY(order.paidAmount)}</span>
+            </div>
+            <div class="flex justify-between pt-1 border-t border-[var(--color-border)]/40">
+              <span class="text-[var(--color-text-muted)]">Kalan</span>
+              <span class={[
+                'tabular-nums font-semibold',
+                order.total - order.paidAmount === 0 ? 'text-[var(--color-success)]' : 'text-[var(--color-warning)]',
+              ].join(' ')}>
+                {formatTRY(Math.max(0, order.total - order.paidAmount))}
+              </span>
+            </div>
           </div>
+
+          {/* Taksit planı (varsa) */}
+          {order.paymentInstallments && order.paymentInstallments.length > 0 && (
+            <div class="mt-4 pt-3 border-t border-[var(--color-border)]/60">
+              <h4 class="text-xs font-semibold text-[var(--color-text-soft)] mb-2 uppercase tracking-wider">Taksit Planı</h4>
+              <ol class="space-y-2">
+                {order.paymentInstallments.map((it, idx) => {
+                  const overdue = it.status === 'planlandi' && it.dueAt < Date.now()
+                  return (
+                    <li class="flex items-center justify-between gap-2 p-2 rounded-lg bg-[var(--color-surface-2)]/50">
+                      <div class="flex items-center gap-2 min-w-0">
+                        <span class={[
+                          'size-5 grid place-items-center rounded-full text-[9px] font-bold shrink-0',
+                          it.status === 'odendi' ? 'bg-emerald-500 text-white'
+                          : overdue || it.status === 'gecikti' ? 'bg-red-500 text-white'
+                          : 'bg-[var(--color-border)] text-[var(--color-text-muted)]',
+                        ].join(' ')}>
+                          {it.status === 'odendi' ? '✓' : idx + 1}
+                        </span>
+                        <div class="min-w-0">
+                          <div class="text-xs font-medium tabular-nums">{formatTRY(it.amount)}</div>
+                          <div class="text-[10px] text-[var(--color-text-muted)]">
+                            {new Date(it.dueAt).toLocaleDateString('tr-TR', { day: '2-digit', month: 'short', year: 'numeric' })}
+                            {' · '}
+                            {PAYMENT_LABEL[it.method] ?? it.method}
+                          </div>
+                        </div>
+                      </div>
+                      <span class={[
+                        'px-1.5 py-0.5 rounded text-[9px] font-semibold uppercase tracking-wider whitespace-nowrap',
+                        it.status === 'odendi' ? 'bg-emerald-500/15 text-emerald-400'
+                        : overdue || it.status === 'gecikti' ? 'bg-red-500/15 text-red-400'
+                        : it.status === 'iptal' ? 'bg-[var(--color-surface)] text-[var(--color-text-muted)]'
+                        : 'bg-amber-500/15 text-amber-400',
+                      ].join(' ')}>
+                        {it.status === 'odendi' ? 'Ödendi' : overdue ? 'Gecikti' : it.status === 'iptal' ? 'İptal' : 'Planlı'}
+                      </span>
+                    </li>
+                  )
+                })}
+              </ol>
+            </div>
+          )}
         </div>
+
+        {/* Kargo paneli — kargoda veya teslim olmuşsa göster */}
+        {(order.productionStatus === 'shipped' || order.productionStatus === 'delivered') && order.cargoCompany && (
+          <div class="rounded-2xl bg-[var(--color-surface)] border border-[var(--color-border)]/60 p-5">
+            <h3 class="font-display text-base font-semibold">Kargo</h3>
+            <div class="mt-3 text-sm space-y-2">
+              <div class="flex justify-between">
+                <span class="text-[var(--color-text-muted)]">Firma</span>
+                <span class="font-medium uppercase">{order.cargoCompany}</span>
+              </div>
+              {order.cargoTrackingNo && (
+                <div class="flex justify-between">
+                  <span class="text-[var(--color-text-muted)]">Takip No</span>
+                  <span class="font-mono text-xs">{order.cargoTrackingNo}</span>
+                </div>
+              )}
+              {order.shippedAt && (
+                <div class="flex justify-between">
+                  <span class="text-[var(--color-text-muted)]">Verildi</span>
+                  <span class="text-xs">{formatDateTime(order.shippedAt)}</span>
+                </div>
+              )}
+              {order.deliveredAt && (
+                <div class="flex justify-between">
+                  <span class="text-[var(--color-text-muted)]">Teslim</span>
+                  <span class="text-xs text-[var(--color-success)]">{formatDateTime(order.deliveredAt)}</span>
+                </div>
+              )}
+              {cargoLink && (
+                <a href={cargoLink} target="_blank" rel="noopener" class="mt-2 block text-center px-3 py-2 rounded-lg text-xs font-semibold bg-[var(--color-primary)] text-[var(--color-bg)] hover:bg-[var(--color-primary-hover)]">
+                  Kargoyu Takip Et →
+                </a>
+              )}
+            </div>
+          </div>
+        )}
 
         <div class="rounded-2xl bg-[var(--color-surface)] border border-[var(--color-border)]/60 p-5">
           <h3 class="font-display text-base font-semibold">Teslimat</h3>

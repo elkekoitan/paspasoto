@@ -37,11 +37,37 @@ export default function NewOrderForm() {
   const [qty, setQty] = useState(1)
 
   // Sipariş
-  const [paymentMethod, setPaymentMethod] = useState<'havale' | 'kapida' | 'nakit'>('havale')
+  const [paymentMethod, setPaymentMethod] = useState<
+    'elden-nakit' | 'elden-kart' | 'havale' | 'kapida' | 'sonra' | 'taksit'
+  >('elden-nakit')
   const [paymentStatus, setPaymentStatus] = useState<'bekliyor' | 'tamamlandi' | 'kismi'>('bekliyor')
   const [paidAmount, setPaidAmount] = useState(0)
   const [customerNote, setCustomerNote] = useState('')
   const [internalNote, setInternalNote] = useState('')
+
+  // Taksit planı (paymentMethod === 'taksit' ise)
+  type Installment = { dueAt: string; amount: number; method: string; status: string }
+  const [installments, setInstallments] = useState<Installment[]>([])
+  function addInstallment() {
+    const remaining = Math.max(0, total - installments.reduce((s, i) => s + (i.amount || 0), 0))
+    const today = new Date()
+    today.setMonth(today.getMonth() + installments.length + 1)
+    setInstallments((arr) => [
+      ...arr,
+      {
+        dueAt: today.toISOString().slice(0, 10),
+        amount: Math.round(remaining / 2) || 0,
+        method: 'havale',
+        status: 'planlandi',
+      },
+    ])
+  }
+  function updateInstallment(idx: number, patch: Partial<Installment>) {
+    setInstallments((arr) => arr.map((it, i) => (i === idx ? { ...it, ...patch } : it)))
+  }
+  function removeInstallment(idx: number) {
+    setInstallments((arr) => arr.filter((_, i) => i !== idx))
+  }
 
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState('')
@@ -110,6 +136,16 @@ export default function NewOrderForm() {
         paidAmount,
         paymentMethod,
         paymentStatus,
+        paymentInstallments:
+          paymentMethod === 'taksit' && installments.length
+            ? installments.map((i, idx) => ({
+                id: `${Date.now()}-${idx}`,
+                dueAt: new Date(i.dueAt).getTime(),
+                amount: Number(i.amount) || 0,
+                method: i.method,
+                status: i.status,
+              }))
+            : undefined,
         productionStatus: paymentStatus === 'tamamlandi' ? 'payment_confirmed' : 'received',
         customerNote: customerNote || undefined,
         internalNote: internalNote || undefined,
@@ -218,9 +254,12 @@ export default function NewOrderForm() {
           <div class="grid sm:grid-cols-2 gap-3">
             <Field label="Ödeme Yöntemi">
               <select value={paymentMethod} onChange={(e) => setPaymentMethod((e.target as HTMLSelectElement).value as any)} class={inp}>
+                <option value="elden-nakit">Elden — Nakit</option>
+                <option value="elden-kart">Elden — Kredi Kartı (POS)</option>
                 <option value="havale">Banka Havalesi / EFT</option>
                 <option value="kapida">Kapıda Ödeme</option>
-                <option value="nakit">Nakit</option>
+                <option value="sonra">Sonra Ödenecek</option>
+                <option value="taksit">Parçalı / Taksit</option>
               </select>
             </Field>
             <Field label="Ödeme Durumu">
@@ -234,6 +273,41 @@ export default function NewOrderForm() {
               <input type="number" min="0" value={paidAmount} onInput={(e) => setPaidAmount(parseFloat((e.target as HTMLInputElement).value) || 0)} class={inp} />
             </Field>
             <div></div>
+            {paymentMethod === 'taksit' && (
+              <div class="sm:col-span-2 rounded-xl bg-[var(--color-surface-2)] border border-[var(--color-border)]/60 p-3.5">
+                <div class="flex items-center justify-between mb-3">
+                  <div>
+                    <h4 class="text-sm font-semibold">Taksit Planı</h4>
+                    <p class="text-[10px] text-[var(--color-text-muted)] mt-0.5">
+                      Toplam {formatTRY(total)} · Planlanan: {formatTRY(installments.reduce((s, i) => s + (Number(i.amount) || 0), 0))}
+                    </p>
+                  </div>
+                  <button type="button" onClick={addInstallment} class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-[var(--color-primary)] text-[var(--color-bg)] hover:bg-[var(--color-primary-hover)]">
+                    + Taksit Ekle
+                  </button>
+                </div>
+                {installments.length === 0 ? (
+                  <p class="text-xs text-[var(--color-text-muted)] py-3 text-center">Henüz taksit eklenmedi.</p>
+                ) : (
+                  <div class="space-y-2">
+                    {installments.map((it, idx) => (
+                      <div key={idx} class="grid grid-cols-[1fr_1fr_1fr_auto] gap-2 items-center text-xs">
+                        <input type="date" value={it.dueAt} onInput={(e) => updateInstallment(idx, { dueAt: (e.target as HTMLInputElement).value })} class={inp} />
+                        <input type="number" min="0" value={it.amount} onInput={(e) => updateInstallment(idx, { amount: parseFloat((e.target as HTMLInputElement).value) || 0 })} class={inp} placeholder="Tutar" />
+                        <select value={it.method} onChange={(e) => updateInstallment(idx, { method: (e.target as HTMLSelectElement).value })} class={inp}>
+                          <option value="elden-nakit">Nakit</option>
+                          <option value="elden-kart">POS</option>
+                          <option value="havale">Havale</option>
+                        </select>
+                        <button type="button" onClick={() => removeInstallment(idx)} class="px-2 py-1.5 rounded-lg text-xs text-[var(--color-danger)] hover:bg-[var(--color-danger)]/10" title="Sil">
+                          ×
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
             <Field label="Müşteri Notu" class="sm:col-span-2">
               <textarea value={customerNote} onInput={(e) => setCustomerNote((e.target as HTMLTextAreaElement).value)} rows={2} class={`${inp} resize-none`}></textarea>
             </Field>
