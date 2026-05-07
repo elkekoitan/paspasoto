@@ -3,6 +3,7 @@ import '../styles/globals.css'
 import Header from '@components/layout/Header.astro'
 import BrandStrip from '@components/layout/BrandStrip.astro'
 import Footer from '@components/layout/Footer.astro'
+import MobileBottomNav from '@components/layout/MobileBottomNav.astro'
 
 interface Props {
   title?: string
@@ -69,19 +70,31 @@ const ogImageUrl = new URL(ogImage, SITE_URL).toString()
 
     <slot name="head" />
   </head>
-  <body class="grain">
+  <body class="grain pb-[calc(64px+env(safe-area-inset-bottom))] md:pb-0">
     <a
       href="#main"
       class="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded-md focus:bg-[var(--color-primary)] focus:px-4 focus:py-2 focus:text-[var(--color-bg)]"
     >
       İçeriğe geç
     </a>
+
+    {/* Mobile thin top bar — sadece logo + ortalı (md+ ekranlarda gizli) */}
+    <header class="md:hidden sticky top-0 z-30 bg-[var(--color-bg)]/85 backdrop-blur-md border-b border-[var(--color-border)]/40">
+      <div class="flex items-center justify-center h-12 px-4">
+        <a href="/" class="flex items-center" aria-label="Carmat anasayfa">
+          <img src="/logo.png" alt="Carmat" class="h-7 w-auto" />
+        </a>
+      </div>
+    </header>
+
     <Header />
     <BrandStrip />
     <main id="main">
       <slot />
     </main>
-    <Footer />
+    <div class="hidden md:block"><Footer /></div>
+
+    <MobileBottomNav />
 
     {/* PWA Install Smart Banner — tepeden kayan otomatik davet (admin sayfaları hariç) */}
     {!Astro.url.pathname.startsWith('/admin') && (
@@ -149,7 +162,7 @@ const ogImageUrl = new URL(ogImage, SITE_URL).toString()
         target="_blank"
         rel="noopener"
         aria-label="WhatsApp ile soru sor"
-        class="fixed bottom-5 right-5 z-40 group flex items-center gap-2.5 pl-3.5 pr-4 py-3 rounded-full shadow-2xl shadow-emerald-900/40 ring-1 ring-emerald-400/30 bg-gradient-to-br from-emerald-500 to-emerald-600 text-white hover:scale-[1.04] hover:shadow-emerald-700/40 transition-all"
+        class="fixed right-4 md:right-5 bottom-[calc(72px+env(safe-area-inset-bottom))] md:bottom-5 z-40 group flex items-center gap-2.5 pl-3.5 pr-4 py-3 rounded-full shadow-2xl shadow-emerald-900/40 ring-1 ring-emerald-400/30 bg-gradient-to-br from-emerald-500 to-emerald-600 text-white hover:scale-[1.04] hover:shadow-emerald-700/40 transition-all"
       >
         <span class="size-5 grid place-items-center rounded-full bg-white/15">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
