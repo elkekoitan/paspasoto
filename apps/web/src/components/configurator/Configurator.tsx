@@ -30,17 +30,91 @@ const STEPS: { key: StepKey; label: string }[] = [
   { key: 'summary', label: 'Sipariş Özeti' },
 ]
 
+/**
+ * Konfigüratör tasarımı localStorage'a kaydedilir — kullanıcı sayfayı kapatıp
+ * tekrar açtığında kaldığı yerden devam eder. "Tasarımı sıfırla" butonu ile temizler.
+ */
+const STATE_KEY = 'carmat-config-draft-v2'
+
+function loadDraft<T>(fallback: T): T {
+  if (typeof window === 'undefined') return fallback
+  try {
+    const raw = localStorage.getItem(STATE_KEY)
+    if (!raw) return fallback
+    return JSON.parse(raw) as T
+  } catch {
+    return fallback
+  }
+}
+
+type Draft = {
+  brandSlug?: string | null
+  modelSlug?: string | null
+  productSlug?: string
+  matSlug?: string
+  borderSlug?: string
+  heelSlug?: string
+  heelPadPassenger?: boolean
+  logoBrandSlug?: string | null
+  logoChosen?: boolean
+}
+
 export default function Configurator() {
-  const [step, setStep] = useState<StepKey>('brand')
-  const [brand, setBrand] = useState<Brand | null>(null)
-  const [model, setModel] = useState<VehicleModel | null>(null)
-  const [product, setProduct] = useState<Product | null>(PRODUCTS[1] ?? null) // 4'lü Set varsayılan
-  const [matColor, setMatColor] = useState<MatColor | null>(MAT_COLORS[0] ?? null)
-  const [borderColor, setBorderColor] = useState<BorderColor | null>(BORDER_COLORS[13] ?? null)
-  const [heelPad, setHeelPad] = useState<HeelPad | null>(HEEL_PADS[0] ?? null)
-  const [heelPadPassenger, setHeelPadPassenger] = useState(false)
-  const [logoAccessory, setLogoAccessory] = useState<LogoAccessory | null>(null)
+  // İlk render'da localStorage'dan draft oku
+  const draft = loadDraft<Draft>({})
+
+  const initialBrand = draft.brandSlug ? BRANDS.find((b) => b.slug === draft.brandSlug) ?? null : null
+  const initialModel = draft.modelSlug && initialBrand
+    ? VEHICLE_MODELS.find((m) => m.brandSlug === initialBrand.slug && m.slug === draft.modelSlug) ?? null
+    : null
+
+  const [step, setStep] = useState<StepKey>(initialBrand ? (initialModel ? 'summary' : 'model') : 'brand')
+  const [brand, setBrand] = useState<Brand | null>(initialBrand)
+  const [model, setModel] = useState<VehicleModel | null>(initialModel)
+  const [product, setProduct] = useState<Product | null>(
+    draft.productSlug ? PRODUCTS.find((p) => p.slug === draft.productSlug) ?? PRODUCTS[1]! : PRODUCTS[1]!,
+  )
+  const [matColor, setMatColor] = useState<MatColor | null>(
+    draft.matSlug ? MAT_COLORS.find((c) => c.slug === draft.matSlug) ?? MAT_COLORS[0]! : MAT_COLORS[0]!,
+  )
+  const [borderColor, setBorderColor] = useState<BorderColor | null>(
+    draft.borderSlug ? BORDER_COLORS.find((c) => c.slug === draft.borderSlug) ?? BORDER_COLORS[13]! : BORDER_COLORS[13]!,
+  )
+  const [heelPad, setHeelPad] = useState<HeelPad | null>(
+    draft.heelSlug ? HEEL_PADS.find((h) => h.slug === draft.heelSlug) ?? HEEL_PADS[0]! : HEEL_PADS[0]!,
+  )
+  const [heelPadPassenger, setHeelPadPassenger] = useState<boolean>(!!draft.heelPadPassenger)
+  const [logoAccessory, setLogoAccessory] = useState<LogoAccessory | null>(
+    draft.logoBrandSlug !== undefined
+      ? LOGO_ACCESSORIES.find((l) => l.brandSlug === draft.logoBrandSlug) ?? null
+      : null,
+  )
   const [search, setSearch] = useState('')
+  // Kullanıcıya draft'tan devam ediyoruz uyarısı
+  const [showRestoredHint, setShowRestoredHint] = useState(!!initialBrand)
+
+  // Her değişimde draft kaydet
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    const next: Draft = {
+      brandSlug: brand?.slug ?? null,
+      modelSlug: model?.slug ?? null,
+      productSlug: product?.slug,
+      matSlug: matColor?.slug,
+      borderSlug: borderColor?.slug,
+      heelSlug: heelPad?.slug,
+      heelPadPassenger,
+      logoBrandSlug: logoAccessory?.brandSlug ?? null,
+      logoChosen: logoAccessory !== null,
+    }
+    try { localStorage.setItem(STATE_KEY, JSON.stringify(next)) } catch {}
+  }, [brand, model, product, matColor, borderColor, heelPad, heelPadPassenger, logoAccessory])
+
+  function resetDraft() {
+    if (!confirm('Tüm seçimleriniz silinip baştan başlanacak. Emin misiniz?')) return
+    try { localStorage.removeItem(STATE_KEY) } catch {}
+    window.location.reload()
+  }
 
   // Marka değişince model + amblem otomatik öneri
   useEffect(() => {
@@ -157,6 +231,8 @@ export default function Configurator() {
       if (res.ok) {
         const data = await res.json()
         setQuoteResult(data)
+        // Talep oluştuktan sonra draft'ı temizle — yeni tasarım için
+        try { localStorage.removeItem(STATE_KEY) } catch {}
       } else {
         alert('Talebiniz iletilemedi. Lütfen tekrar deneyin veya WhatsApp\'tan bize ulaşın.')
       }
@@ -171,7 +247,30 @@ export default function Configurator() {
     <div class="grid lg:grid-cols-[minmax(0,1fr)_minmax(0,420px)] gap-6 lg:gap-10">
       {/* Sol: Adım içerikleri */}
       <div class="order-2 lg:order-1">
-        <StepperBar step={step} onJump={(k) => setStep(k)} canJump={(k) => isStepReachable(k, { brand, model, product, matColor, borderColor, heelPad })} />
+        {showRestoredHint && (
+          <div class="mb-4 p-3 rounded-xl bg-[var(--color-primary-soft)] border border-[var(--color-primary)]/30 flex items-center gap-3 text-sm">
+            <span class="size-7 grid place-items-center rounded-full bg-[var(--color-primary)] text-[var(--color-bg)] shrink-0">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 12l2 2 4-4 M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+            </span>
+            <div class="flex-1 text-[var(--color-text-soft)]">
+              <span class="text-[var(--color-text)] font-medium">Önceki tasarımınız yüklendi.</span> Kaldığınız yerden devam edebilirsiniz.
+            </div>
+            <button onClick={() => setShowRestoredHint(false)} class="text-[10px] text-[var(--color-text-muted)] hover:text-[var(--color-text)]">Tamam</button>
+          </div>
+        )}
+        <div class="flex items-center justify-between gap-3 mb-2">
+          <div class="flex-1 min-w-0">
+            <StepperBar step={step} onJump={(k) => setStep(k)} canJump={(k) => isStepReachable(k, { brand, model, product, matColor, borderColor, heelPad })} />
+          </div>
+          <button
+            onClick={resetDraft}
+            class="hidden sm:inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[11px] font-medium text-[var(--color-text-muted)] hover:text-[var(--color-danger)] hover:bg-[var(--color-surface-2)] transition-colors shrink-0"
+            title="Tüm seçimleri sil ve baştan başla"
+          >
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2m3 0v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6h14z" /></svg>
+            Sıfırla
+          </button>
+        </div>
 
         <div class="mt-6 rounded-2xl bg-[var(--color-surface)] border border-[var(--color-border)]/60 p-5 md:p-7">
           {step === 'brand' && (

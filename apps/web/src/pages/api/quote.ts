@@ -1,5 +1,6 @@
 import type { APIRoute } from 'astro'
 import { insertOrder, generateOrderNo, generateToken, type Order } from '../../server/db'
+import { sendPush } from '../../server/push'
 
 export const prerender = false
 
@@ -58,6 +59,16 @@ export const POST: APIRoute = async ({ request }) => {
   }
 
   await insertOrder(order)
+
+  // Admin'e push bildirim
+  const firstItem = order.items[0]
+  void sendPush('admin', {
+    title: '🔔 Yeni Teklif Talebi',
+    body: `${order.customer.fullName} — ${firstItem?.brandName ?? ''} ${firstItem?.modelName ?? ''}`,
+    url: '/admin/talepler',
+    tag: `quote-${order.orderNo}`,
+    requireInteraction: true,
+  }).catch(() => {})
 
   return new Response(
     JSON.stringify({ orderNo: order.orderNo, accessToken: order.accessToken }),

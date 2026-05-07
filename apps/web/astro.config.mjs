@@ -19,7 +19,12 @@ if (!PWA_DISABLED) {
   integrations.push(
     AstroPWA({
       registerType: 'autoUpdate',
-      strategies: 'generateSW',
+      strategies: 'injectManifest',
+      srcDir: 'src',
+      filename: 'sw.ts',
+      injectManifest: {
+        globPatterns: ['**/*.{js,css,html,png,svg,jpg,jpeg,webp,avif,woff2,ico}'],
+      },
       manifest: {
         name: 'PaspasOto — Aracına Özel 3D Paspas',
         short_name: 'PaspasOto',
@@ -56,29 +61,6 @@ if (!PWA_DISABLED) {
             icons: [{ src: '/icons/short-track.png', sizes: '96x96', type: 'image/png' }],
           },
         ],
-      },
-      workbox: {
-        globPatterns: ['**/*.{js,css,html,png,svg,jpg,jpeg,webp,avif,woff2,ico}'],
-        runtimeCaching: [
-          {
-            urlPattern: /^https?:\/\/.*\/uploads\/.*/,
-            handler: 'StaleWhileRevalidate',
-            options: {
-              cacheName: 'strapi-uploads',
-              expiration: { maxEntries: 60, maxAgeSeconds: 60 * 60 * 24 * 30 },
-            },
-          },
-          {
-            urlPattern: /^https?:\/\/.*\/api\/(brands|vehicle-models|mat-colors|border-colors|heel-pads|logo-accessories|products).*/,
-            handler: 'StaleWhileRevalidate',
-            options: {
-              cacheName: 'strapi-catalog',
-              expiration: { maxEntries: 50, maxAgeSeconds: 60 * 60 },
-            },
-          },
-        ],
-        navigateFallback: '/offline',
-        navigateFallbackDenylist: [/^\/admin/, /^\/api/],
       },
       devOptions: { enabled: false },
     }),

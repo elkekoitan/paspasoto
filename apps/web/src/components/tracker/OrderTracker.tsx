@@ -177,6 +177,69 @@ function OrderDetail({ order }: { order: Order }) {
   const isPickup = order.deliveryMethod === 'pickup'
   const isCancelled = order.productionStatus === 'cancelled'
 
+  // Push subscribe state — müşteri sipariş takip sayfasını açtığında "Bildirim al" CTA
+  const [pushState, setPushState] = useState<'idle' | 'subscribed' | 'denied' | 'unsupported'>('idle')
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    if (!('serviceWorker' in navigator) || !('PushManager' in window) || !('Notification' in window)) {
+      setPushState('unsupported')
+      return
+    }
+    if (Notification.permission === 'granted') {
+      // Daha önce subscribe ettiyse durumu yansıt
+      navigator.serviceWorker.ready.then(async (reg) => {
+        const sub = await reg.pushManager.getSubscription()
+        if (sub) setPushState('subscribed')
+      }).catch(() => {})
+    } else if (Notification.permission === 'denied') {
+      setPushState('denied')
+    }
+  }, [])
+
+  function urlBase64ToUint8Array(base64String: string): Uint8Array {
+    const padding = '='.repeat((4 - (base64String.length % 4)) % 4)
+    const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/')
+    const raw = atob(base64)
+    const out = new Uint8Array(raw.length)
+    for (let i = 0; i < raw.length; i++) out[i] = raw.charCodeAt(i)
+    return out
+  }
+
+  async function enablePush() {
+    if (!('serviceWorker' in navigator) || !('PushManager' in window)) return
+    const perm = await Notification.requestPermission()
+    if (perm !== 'granted') {
+      setPushState('denied')
+      return
+    }
+    try {
+      const reg = await navigator.serviceWorker.ready
+      let sub = await reg.pushManager.getSubscription()
+      if (!sub) {
+        const r = await fetch('/api/push/vapid')
+        const { publicKey } = await r.json()
+        if (!publicKey) return
+        sub = await reg.pushManager.subscribe({
+          userVisibleOnly: true,
+          applicationServerKey: urlBase64ToUint8Array(publicKey),
+        })
+      }
+      const res = await fetch('/api/push/subscribe', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          subscription: sub.toJSON(),
+          audience: `order:${order.orderNo}`,
+          token: order.accessToken,
+        }),
+      })
+      if (res.ok) setPushState('subscribed')
+    } catch (e) {
+      console.warn('[push] customer subscribe error:', e)
+    }
+  }
+
   // 'Hazır' aşamasında alt etiket
   const readyLabel = isPickup ? 'Dükkanda hazır — gelip teslim alabilirsiniz' : order.cargoTrackingNo ? 'Kargoya verildi' : 'Atölyemizde paketlendi'
   // 'Teslim Edildi' aşamasında alt etiket
@@ -428,6 +491,31 @@ function OrderDetail({ order }: { order: Order }) {
             </p>
           </div>
         </div>
+
+        {/* Push bildirim aboneliği */}
+        {pushState === 'idle' && (
+          <button
+            onClick={enablePush}
+            class="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold bg-gradient-to-br from-[var(--color-primary)] to-amber-500 hover:from-amber-400 text-[var(--color-bg)] transition-all"
+          >
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9 M13.73 21a2 2 0 0 1-3.46 0" /></svg>
+            <div class="flex-1 text-left">
+              <div class="text-sm">Bildirim Al</div>
+              <div class="text-[10px] opacity-80 font-normal">Sipariş hazır olunca telefonuna gelsin</div>
+            </div>
+          </button>
+        )}
+        {pushState === 'subscribed' && (
+          <div class="px-4 py-3 rounded-xl text-xs bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 flex items-center gap-2">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5" /></svg>
+            <span>Bildirim aktif. Durum değiştiğinde anında haberdar olacaksın.</span>
+          </div>
+        )}
+        {pushState === 'denied' && (
+          <div class="px-4 py-3 rounded-xl text-xs bg-[var(--color-surface)] border border-[var(--color-border)] text-[var(--color-text-muted)]">
+            Bildirim izni reddedildi. Tarayıcı ayarlarından yeniden açabilirsin.
+          </div>
+        )}
 
         <a
           href="https://wa.me/905545417561"
