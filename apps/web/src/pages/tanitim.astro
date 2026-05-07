@@ -1,0 +1,344 @@
+---
+export const prerender = true
+import Base from '@layouts/Base.astro'
+import { MAT_COLORS, BORDER_COLORS, HEEL_PADS } from '@lib/catalog'
+
+// Tanıtım sayfası — Carmat ürünü görsel hikaye
+// Gerçek ürün fotoğrafları için: /public/promo/* klasörüne yükleyin (mat-1.jpg, mat-2.jpg ...)
+// Bulunamayan görseller için procedural SVG fallback render edilir.
+
+const STATS = [
+  { value: '3000+', label: 'Araç Modeli' },
+  { value: '10', label: 'Mat Rengi' },
+  { value: '15', label: 'Kenarlık Rengi' },
+  { value: '5-7', label: 'Gün Teslim' },
+  { value: '2 Yıl', label: 'Garanti' },
+  { value: '100%', label: 'Aracına Özel' },
+]
+
+const FEATURES = [
+  {
+    icon: 'M12 2 2 7l10 5 10-5z M2 17 12 22 22 17 M2 12 12 17 22 12',
+    title: '3D Havuzlu Yapı',
+    text: 'Yüksek kenarlıklı havuz formu sıvı ve kir taşmasını önler. Aracınızın orijinal halısı korunur.',
+  },
+  {
+    icon: 'M3 3h18v18H3z M9 9h6v6H9z M3 9h6 M15 9h6 M9 3v6 M9 15v6',
+    title: 'Lazer Ölçü Kalıbı',
+    text: 'Aracınızın şasi koduna göre milimetrik kalıp. Sürücü pedallarını kapatmaz, koltuk altı ölçülü.',
+  },
+  {
+    icon: 'M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z M3.27 6.96 12 12.01l8.73-5.05 M12 22.08V12',
+    title: 'EVA Köpük Tabanı',
+    text: 'Kaymaz, su geçirmez, koku yapmaz. Tek parça döküm — söküntü ve dikim ayrılması yok.',
+  },
+  {
+    icon: 'M22 11.08V12a10 10 0 1 1-5.93-9.14 M22 4 12 14.01l-3-3',
+    title: '2 Yıl Garanti',
+    text: 'Renk solması, yapışkan kalkması, deformasyon — her birine 2 yıl tam garanti.',
+  },
+]
+
+const STEPS = [
+  { num: 1, title: 'Konfigüratörü Aç', text: 'Aracını seç, paspas + kenarlık + topukluk + amblem kombinasyonunu kendin oluştur.', icon: 'M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z' },
+  { num: 2, title: 'Teklif İste', text: 'Bilgilerin atölyemize iletilir. Birkaç dakika içinde WhatsApp\'tan tarafına teklif gönderilir.', icon: 'M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z' },
+  { num: 3, title: 'Onay & Üretim', text: 'Teklifi onayladığında atölyemiz aynı gün üretime başlar — kalıp, kesim, dikim, kalite kontrol.', icon: 'M14.7 6.3a1 1 0 000 1.4l1.6 1.6a1 1 0 001.4 0l3.77-3.77a6 6 0 01-7.94 7.94l-6.91 6.91a2.12 2.12 0 01-3-3l6.91-6.91a6 6 0 017.94-7.94l-3.76 3.76z' },
+  { num: 4, title: 'Kapına Teslim', text: 'Kargo ile tüm Türkiye\'ye 5-7 iş günü. Veya Konya atölyemizden gel, hazır seni bekleyen paspasını al.', icon: 'M3 7l9 5 9-5-9-5-9 5z M3 7v10l9 5 9-5V7' },
+]
+
+// Konfigürasyon showcase — 3 örnek
+const SHOWCASE = [
+  {
+    title: 'Spor & Klasik',
+    car: 'BMW 3 Serisi G20',
+    matSlug: 'siyah',
+    borderSlug: 'kirmizi',
+    heelSlug: 'antrasit-karbon',
+    accent: 'from-red-500/20 to-transparent',
+  },
+  {
+    title: 'Lüks & Sıcak',
+    car: 'Audi A4 B9',
+    matSlug: 'taba',
+    borderSlug: 'kahve',
+    heelSlug: 'beyaz-noktali',
+    accent: 'from-amber-500/20 to-transparent',
+  },
+  {
+    title: 'Modern & Minimal',
+    car: 'Volkswagen Tiguan',
+    matSlug: 'fume',
+    borderSlug: 'lacivert',
+    heelSlug: 'standart',
+    accent: 'from-blue-500/20 to-transparent',
+  },
+]
+
+const TESTIMONIALS = [
+  {
+    name: 'Mehmet K.',
+    car: 'BMW 5.20i (G30)',
+    text: '4 yıldır farklı paspaslar denedim, hiçbiri tutmadı. Carmat\'ta lazer ölçü gerçekten oldu — tek parça, su geçirmez, çok rahat çıkıp temizlenebiliyor.',
+    rating: 5,
+  },
+  {
+    name: 'Zeynep A.',
+    car: 'Volkswagen Passat B8',
+    text: 'WhatsApp\'tan tüm sürec şeffaf. Kalıbın hazırlanmasından kargoya verilene kadar her aşamada bilgilendirme geldi. Renk uyumu çok başarılı.',
+    rating: 5,
+  },
+  {
+    name: 'Hasan D.',
+    car: 'Tesla Model Y',
+    text: 'Aracımın orijinal halısını koruduğum için aldım — Tesla\'nın halısı pahalı. 1 yıl oldu, hâlâ ilk günkü gibi. Marka logosu da çok temiz işlenmiş.',
+    rating: 5,
+  },
+]
+
+const matColorOf = (slug: string) => MAT_COLORS.find((c) => c.slug === slug)!
+const borderColorOf = (slug: string) => BORDER_COLORS.find((c) => c.slug === slug)!
+const heelOf = (slug: string) => HEEL_PADS.find((h) => h.slug === slug)!
+---
+
+<Base title="Hikayemiz · Carmat" description="Aracına özel kalıplanmış 3D havuzlu oto paspas. Konya atölyemizden kapına gelsin — Carmat'la tanış.">
+  {/* HERO — cinematic */}
+  <section class="relative overflow-hidden">
+    <div class="absolute inset-0">
+      <div class="absolute inset-0" style="background: radial-gradient(ellipse 70% 50% at 50% 30%, rgba(236,176,85,0.18), transparent 70%), linear-gradient(180deg, #0b0b0f, #0b0b0f);"></div>
+      {/* SVG pattern */}
+      <svg class="absolute inset-0 w-full h-full opacity-[0.03]" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <pattern id="dots" x="0" y="0" width="40" height="40" patternUnits="userSpaceOnUse">
+            <circle cx="2" cy="2" r="1" fill="white" />
+          </pattern>
+        </defs>
+        <rect width="100%" height="100%" fill="url(#dots)" />
+      </svg>
+    </div>
+
+    <div class="relative max-w-7xl mx-auto px-6 md:px-10 py-24 md:py-36">
+      <div class="max-w-3xl">
+        <p class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[var(--color-primary-soft)] border border-[var(--color-primary)]/30 text-[var(--color-primary)] text-xs font-semibold uppercase tracking-[0.2em] mb-6">
+          <span class="size-1.5 rounded-full bg-[var(--color-primary)] animate-pulse"></span>
+          Yeni Nesil Akıllı Araç Paspası
+        </p>
+        <h1 class="font-display text-5xl md:text-7xl font-semibold tracking-tight leading-[1.05]">
+          Aracın için<br />
+          <span class="bg-gradient-to-r from-[var(--color-primary)] to-amber-300 bg-clip-text text-transparent">
+            ölçülü, dökümlü, tek parça
+          </span><br />
+          3D havuzlu paspas.
+        </h1>
+        <p class="mt-6 text-lg text-[var(--color-text-soft)] max-w-2xl leading-relaxed">
+          Konya atölyemizde lazer ölçü kalıbıyla aracınıza özel üretiyoruz. Yüksek kenarlıklı havuz formu kir ve sıvının taşmasını engeller; orijinal halı 2 yıl boyunca pırıl pırıl kalır.
+        </p>
+        <div class="mt-10 flex flex-wrap items-center gap-3">
+          <a
+            href="/konfigurator"
+            class="inline-flex items-center gap-2 px-7 py-4 rounded-2xl text-base font-semibold bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] text-[var(--color-bg)] shadow-2xl shadow-[var(--color-primary)]/30 hover:scale-[1.02] transition-all"
+          >
+            Aracını Tasarla
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M5 12h14m-7-7 7 7-7 7" /></svg>
+          </a>
+          <a
+            href="#how-it-works"
+            class="inline-flex items-center gap-2 px-6 py-3.5 rounded-2xl text-sm font-medium border border-[var(--color-border)] hover:border-[var(--color-text-muted)] hover:bg-[var(--color-surface)]"
+          >
+            Nasıl Çalışır?
+          </a>
+        </div>
+      </div>
+
+      {/* Stats row */}
+      <div class="mt-20 grid grid-cols-3 md:grid-cols-6 gap-4 md:gap-6 pt-10 border-t border-[var(--color-border)]/40">
+        {STATS.map((s) => (
+          <div class="text-center md:text-left">
+            <div class="font-display text-2xl md:text-4xl font-semibold tabular-nums bg-gradient-to-br from-white to-[var(--color-text-soft)] bg-clip-text text-transparent">{s.value}</div>
+            <div class="text-[10px] md:text-xs text-[var(--color-text-muted)] uppercase tracking-wider mt-1">{s.label}</div>
+          </div>
+        ))}
+      </div>
+    </div>
+
+    {/* Decorative scroll indicator */}
+    <div class="absolute bottom-8 left-1/2 -translate-x-1/2 hidden md:flex flex-col items-center gap-2 animate-bounce">
+      <div class="text-[10px] uppercase tracking-[0.2em] text-[var(--color-text-muted)]">Aşağı kaydır</div>
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="text-[var(--color-text-muted)]"><path d="M19 9l-7 7-7-7" /></svg>
+    </div>
+  </section>
+
+  {/* WHY CARMAT */}
+  <section class="py-20 md:py-28 max-w-7xl mx-auto px-6 md:px-10">
+    <header class="text-center mb-14" data-reveal>
+      <p class="text-xs uppercase tracking-[0.2em] text-[var(--color-primary)] font-semibold">Neden Carmat</p>
+      <h2 class="mt-3 font-display text-3xl md:text-5xl font-semibold tracking-tight">Detay önemli.</h2>
+      <p class="mt-3 text-[var(--color-text-soft)] max-w-2xl mx-auto">
+        Hazır kesim ucuz paspasla aracınızın iç tabanı 6 ayda eskir. Carmat'la 2 yıl garanti.
+      </p>
+    </header>
+    <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      {FEATURES.map((f) => (
+        <div data-reveal class="p-6 rounded-2xl bg-[var(--color-surface)] border border-[var(--color-border)]/60 hover:border-[var(--color-primary)]/40 hover:-translate-y-1 transition-all">
+          <div class="size-11 rounded-xl bg-[var(--color-primary-soft)] grid place-items-center text-[var(--color-primary)] mb-4">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d={f.icon} /></svg>
+          </div>
+          <h3 class="font-display font-semibold text-base">{f.title}</h3>
+          <p class="mt-1.5 text-sm text-[var(--color-text-soft)] leading-relaxed">{f.text}</p>
+        </div>
+      ))}
+    </div>
+  </section>
+
+  {/* HOW IT WORKS — production timeline */}
+  <section id="how-it-works" class="py-20 md:py-28 bg-[var(--color-surface)]/30">
+    <div class="max-w-7xl mx-auto px-6 md:px-10">
+      <header class="text-center mb-14" data-reveal>
+        <p class="text-xs uppercase tracking-[0.2em] text-[var(--color-primary)] font-semibold">Nasıl Çalışır</p>
+        <h2 class="mt-3 font-display text-3xl md:text-5xl font-semibold tracking-tight">Aracında 4 adımda.</h2>
+      </header>
+
+      <div class="relative">
+        {/* Connecting line */}
+        <div class="hidden lg:block absolute top-12 left-[10%] right-[10%] h-0.5 bg-gradient-to-r from-transparent via-[var(--color-primary)]/30 to-transparent"></div>
+
+        <div class="grid lg:grid-cols-4 gap-6 lg:gap-4 relative">
+          {STEPS.map((s, i) => (
+            <div data-reveal class="relative" style={`animation-delay: ${i * 100}ms`}>
+              <div class="size-24 mx-auto rounded-full bg-gradient-to-br from-[var(--color-primary-soft)] to-[var(--color-surface)] border border-[var(--color-primary)]/30 grid place-items-center mb-5 shadow-lg shadow-[var(--color-primary)]/10 relative">
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="text-[var(--color-primary)]"><path d={s.icon} /></svg>
+                <span class="absolute -top-1 -right-1 size-7 rounded-full bg-[var(--color-primary)] text-[var(--color-bg)] grid place-items-center font-bold text-sm">{s.num}</span>
+              </div>
+              <h3 class="text-center font-display text-lg font-semibold">{s.title}</h3>
+              <p class="mt-2 text-sm text-[var(--color-text-soft)] text-center leading-relaxed max-w-xs mx-auto">{s.text}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  </section>
+
+  {/* SHOWCASE — 3 örnek konfigürasyon */}
+  <section class="py-20 md:py-28 max-w-7xl mx-auto px-6 md:px-10">
+    <header class="text-center mb-14" data-reveal>
+      <p class="text-xs uppercase tracking-[0.2em] text-[var(--color-primary)] font-semibold">İlham</p>
+      <h2 class="mt-3 font-display text-3xl md:text-5xl font-semibold tracking-tight">Üç farklı stil.</h2>
+      <p class="mt-3 text-[var(--color-text-soft)] max-w-2xl mx-auto">
+        Aşağıdaki örneklere bak veya konfigüratörden kendi tasarımını yap.
+      </p>
+    </header>
+
+    <div class="grid md:grid-cols-3 gap-6">
+      {SHOWCASE.map((s) => {
+        const mat = matColorOf(s.matSlug)
+        const border = borderColorOf(s.borderSlug)
+        const heel = heelOf(s.heelSlug)
+        return (
+          <div data-reveal class={`group relative p-6 rounded-3xl bg-gradient-to-br ${s.accent} bg-[var(--color-surface)] border border-[var(--color-border)]/60 hover:border-[var(--color-primary)]/40 transition-all overflow-hidden`}>
+            {/* Mat preview */}
+            <div class="relative aspect-[5/3] rounded-2xl overflow-hidden ring-1 ring-[var(--color-border)] mb-5 group-hover:scale-[1.02] transition-transform">
+              <img src={border.swatchUrl} alt={border.name} class="absolute inset-0 size-full object-cover" />
+              <div class="absolute inset-[10%] rounded-xl overflow-hidden">
+                <img src={mat.swatchUrl} alt={mat.name} class="size-full object-cover" />
+                <div class="absolute inset-0 bg-gradient-to-tr from-black/15 via-transparent to-white/10"></div>
+              </div>
+              {/* Heel badge */}
+              <div class="absolute top-[18%] left-[15%] right-[60%] bottom-[55%] rounded-md overflow-hidden ring-1 ring-white/15">
+                <img src={heel.swatchUrl} alt={heel.name} class="size-full object-cover" />
+              </div>
+              {/* Subtle reflection */}
+              <div class="absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-transparent"></div>
+            </div>
+
+            <h3 class="font-display text-xl font-semibold">{s.title}</h3>
+            <p class="text-xs text-[var(--color-text-muted)] mt-0.5">{s.car}</p>
+            <ul class="mt-4 space-y-1.5 text-xs">
+              <li class="flex items-center gap-2">
+                <span class="size-3 rounded-full" style={`background-color: ${mat.hex}`}></span>
+                <span class="text-[var(--color-text-soft)]">Zemin: {mat.name}</span>
+              </li>
+              <li class="flex items-center gap-2">
+                <span class="size-3 rounded-full" style={`background-color: ${border.hex}`}></span>
+                <span class="text-[var(--color-text-soft)]">Kenarlık: {border.name}</span>
+              </li>
+              <li class="flex items-center gap-2">
+                <span class="size-3 rounded-full" style={`background-color: ${heel.textureHex}`}></span>
+                <span class="text-[var(--color-text-soft)]">Topukluk: {heel.name}</span>
+              </li>
+            </ul>
+
+            <a href="/konfigurator" class="mt-5 inline-flex items-center gap-1.5 text-sm font-semibold text-[var(--color-primary)] hover:underline">
+              Bu stili dene →
+            </a>
+          </div>
+        )
+      })}
+    </div>
+  </section>
+
+  {/* TESTIMONIALS */}
+  <section class="py-20 md:py-28 bg-[var(--color-surface)]/30">
+    <div class="max-w-7xl mx-auto px-6 md:px-10">
+      <header class="text-center mb-14" data-reveal>
+        <p class="text-xs uppercase tracking-[0.2em] text-[var(--color-primary)] font-semibold">Müşteri Yorumları</p>
+        <h2 class="mt-3 font-display text-3xl md:text-5xl font-semibold tracking-tight">Konya'dan Türkiye'ye.</h2>
+      </header>
+
+      <div class="grid md:grid-cols-3 gap-5">
+        {TESTIMONIALS.map((t) => (
+          <div data-reveal class="p-6 rounded-2xl bg-[var(--color-surface)] border border-[var(--color-border)]/60">
+            <div class="flex items-center gap-1 text-amber-400 mb-3">
+              {Array.from({ length: t.rating }).map(() => (
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3 7h7l-5.5 4 2 7L12 16l-6.5 4 2-7L2 9h7z" /></svg>
+              ))}
+            </div>
+            <p class="text-sm text-[var(--color-text-soft)] leading-relaxed">"{t.text}"</p>
+            <div class="mt-4 pt-4 border-t border-[var(--color-border)]/40">
+              <div class="font-medium text-sm">{t.name}</div>
+              <div class="text-xs text-[var(--color-text-muted)]">{t.car}</div>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  {/* FINAL CTA */}
+  <section class="py-20 md:py-28 max-w-4xl mx-auto px-6 md:px-10 text-center">
+    <div data-reveal class="relative overflow-hidden p-10 md:p-16 rounded-3xl bg-gradient-to-br from-[var(--color-primary-soft)] via-[var(--color-surface)] to-[var(--color-surface)] border border-[var(--color-primary)]/40">
+      {/* decorative blobs */}
+      <div class="absolute -top-20 -right-20 size-72 rounded-full bg-[var(--color-primary)]/20 blur-3xl"></div>
+      <div class="absolute -bottom-20 -left-20 size-72 rounded-full bg-amber-500/10 blur-3xl"></div>
+
+      <div class="relative">
+        <h2 class="font-display text-3xl md:text-5xl font-semibold tracking-tight">
+          Aracın hak ediyor.
+        </h2>
+        <p class="mt-4 text-[var(--color-text-soft)] max-w-xl mx-auto">
+          Aracını seç, paspasını kişiselleştir, atölyemizden teklif iste. Onayladığında 5-7 iş gününde teslim.
+        </p>
+        <a
+          href="/konfigurator"
+          class="mt-8 inline-flex items-center gap-2 px-8 py-4 rounded-2xl text-base font-semibold bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] text-[var(--color-bg)] shadow-2xl shadow-[var(--color-primary)]/40 hover:scale-[1.03] transition-all"
+        >
+          Konfigüratörü Aç
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M5 12h14m-7-7 7 7-7 7" /></svg>
+        </a>
+        <p class="mt-4 text-[10px] text-[var(--color-text-muted)] uppercase tracking-wider">
+          ✓ KDV dahil · ✓ 2 yıl garanti · ✓ Türkiye geneli kargo
+        </p>
+      </div>
+    </div>
+  </section>
+</Base>
+
+<style>
+  [data-reveal] {
+    opacity: 0;
+    transform: translateY(24px);
+    transition: opacity 0.7s cubic-bezier(0.4, 0, 0.2, 1), transform 0.7s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  [data-reveal].is-visible {
+    opacity: 1;
+    transform: none;
+  }
+</style>
