@@ -20,21 +20,24 @@ export const POST: APIRoute = async ({ request }) => {
   }
 
   const now = Date.now()
+  const fullName = String(body.customer.fullName).slice(0, 100)
+  const phone = String(body.customer.phone).slice(0, 30)
+  const sa = body.shippingAddress || {}
   const order: Order = {
     orderNo: generateOrderNo(),
     accessToken: generateToken(),
     kind: 'quote',
     customer: {
-      fullName: String(body.customer.fullName).slice(0, 100),
-      phone: String(body.customer.phone).slice(0, 30),
+      fullName,
+      phone,
       email: body.customer.email ? String(body.customer.email).slice(0, 100) : undefined,
     },
     shippingAddress: {
-      fullName: String(body.customer.fullName).slice(0, 100),
-      phone: String(body.customer.phone).slice(0, 30),
-      city: 'Belirtilmedi',
-      district: 'Belirtilmedi',
-      addressLine: 'Müşteri ile WhatsApp üzerinden netleştirilecek',
+      fullName: String(sa.fullName ?? fullName).slice(0, 100),
+      phone: String(sa.phone ?? phone).slice(0, 30),
+      city: String(sa.city ?? 'Belirtilmedi').slice(0, 50),
+      district: String(sa.district ?? 'Belirtilmedi').slice(0, 50),
+      addressLine: String(sa.addressLine ?? 'WhatsApp üzerinden netleştirilecek').slice(0, 500),
     },
     items: body.items,
     subtotal: Number(body.subtotal) || 0,

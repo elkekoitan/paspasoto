@@ -90,12 +90,23 @@ export default function Configurator() {
     step === 'logo' ||
     step === 'summary'
 
-  // Müşteri ad/telefon ön talep modal state'i
+  // Müşteri ön talep formu state'i (ad+telefon+adres)
   const [contactName, setContactName] = useState('')
   const [contactPhone, setContactPhone] = useState('')
+  const [contactCity, setContactCity] = useState('')
+  const [contactDistrict, setContactDistrict] = useState('')
+  const [contactAddress, setContactAddress] = useState('')
   const [submittingQuote, setSubmittingQuote] = useState(false)
   const [quoteResult, setQuoteResult] = useState<{ orderNo: string; accessToken: string } | null>(null)
   const [showContactForm, setShowContactForm] = useState(false)
+
+  const TR_CITIES = [
+    'İstanbul', 'Ankara', 'İzmir', 'Bursa', 'Antalya', 'Konya', 'Adana', 'Gaziantep',
+    'Kayseri', 'Mersin', 'Eskişehir', 'Diyarbakır', 'Samsun', 'Trabzon', 'Sakarya',
+    'Manisa', 'Şanlıurfa', 'Denizli', 'Hatay', 'Balıkesir', 'Kahramanmaraş', 'Van',
+    'Aydın', 'Tekirdağ', 'Muğla', 'Erzurum', 'Mardin', 'Malatya', 'Çorum', 'Ordu',
+    'Afyonkarahisar', 'Sivas', 'Tokat', 'Zonguldak', 'Diğer',
+  ]
 
   function handleAddToCart() {
     if (!brand || !model || !product || !matColor || !borderColor || !heelPad) {
@@ -108,8 +119,8 @@ export default function Configurator() {
   async function submitQuote(e: Event) {
     e.preventDefault()
     if (!brand || !model || !product || !matColor || !borderColor || !heelPad) return
-    if (!contactName.trim() || !contactPhone.trim()) {
-      alert('Lütfen ad-soyad ve telefonunuzu girin.')
+    if (!contactName.trim() || !contactPhone.trim() || !contactCity.trim() || !contactDistrict.trim() || !contactAddress.trim()) {
+      alert('Lütfen tüm alanları doldurun.')
       return
     }
     setSubmittingQuote(true)
@@ -131,6 +142,13 @@ export default function Configurator() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           customer: { fullName: contactName.trim(), phone: contactPhone.trim() },
+          shippingAddress: {
+            fullName: contactName.trim(),
+            phone: contactPhone.trim(),
+            city: contactCity.trim(),
+            district: contactDistrict.trim(),
+            addressLine: contactAddress.trim(),
+          },
           items: [item],
           subtotal: totalPrice,
           total: totalPrice,
@@ -331,45 +349,93 @@ export default function Configurator() {
                     Bu numarayla <a href="/siparis-takip" class="text-[var(--color-primary)] hover:underline">sipariş takip</a> sayfasından ilerlemeyi izleyebilirsiniz.
                   </p>
                 </div>
-                <button onClick={() => { setShowContactForm(false); setQuoteResult(null); setContactName(''); setContactPhone('') }} class="w-full px-4 py-2.5 rounded-lg text-sm font-semibold bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] text-[var(--color-bg)]">
+                <button onClick={() => { setShowContactForm(false); setQuoteResult(null); setContactName(''); setContactPhone(''); setContactCity(''); setContactDistrict(''); setContactAddress('') }} class="w-full px-4 py-2.5 rounded-lg text-sm font-semibold bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] text-[var(--color-bg)]">
                   Tamam
                 </button>
               </div>
             ) : (
-              <form onSubmit={submitQuote} class="p-5 space-y-3">
-                <div>
-                  <label class="block text-xs font-medium text-[var(--color-text-soft)] mb-1">Ad Soyad <span class="text-[var(--color-danger)]">*</span></label>
-                  <input
-                    type="text"
-                    value={contactName}
-                    onInput={(e) => setContactName((e.target as HTMLInputElement).value)}
-                    required
-                    placeholder="Mehmet Yılmaz"
-                    class="w-full px-3 py-2.5 rounded-lg bg-[var(--color-surface-2)] border border-[var(--color-border)] focus:border-[var(--color-primary)] outline-none text-sm"
-                  />
+              <form onSubmit={submitQuote} class="p-5 space-y-3 max-h-[80vh] overflow-y-auto">
+                <p class="text-xs text-[var(--color-text-soft)] bg-[var(--color-surface-2)]/60 rounded-lg px-3 py-2 leading-relaxed">
+                  Size özel teklifimizi hazırlayabilmemiz için lütfen bilgilerinizi tam olarak girin. Kargo bölgesine ve teslimat tipine göre net fiyat hesaplanır.
+                </p>
+
+                {/* Müşteri */}
+                <div class="grid grid-cols-2 gap-2">
+                  <div class="col-span-2">
+                    <label class="block text-xs font-medium text-[var(--color-text-soft)] mb-1">Ad Soyad <span class="text-[var(--color-danger)]">*</span></label>
+                    <input
+                      type="text"
+                      value={contactName}
+                      onInput={(e) => setContactName((e.target as HTMLInputElement).value)}
+                      required
+                      placeholder="Mehmet Yılmaz"
+                      class="w-full px-3 py-2.5 rounded-lg bg-[var(--color-surface-2)] border border-[var(--color-border)] focus:border-[var(--color-primary)] outline-none text-sm"
+                    />
+                  </div>
+                  <div class="col-span-2">
+                    <label class="block text-xs font-medium text-[var(--color-text-soft)] mb-1">Telefon (WhatsApp olan) <span class="text-[var(--color-danger)]">*</span></label>
+                    <input
+                      type="tel"
+                      value={contactPhone}
+                      onInput={(e) => setContactPhone((e.target as HTMLInputElement).value)}
+                      required
+                      placeholder="0532 123 45 67"
+                      class="w-full px-3 py-2.5 rounded-lg bg-[var(--color-surface-2)] border border-[var(--color-border)] focus:border-[var(--color-primary)] outline-none text-sm font-mono"
+                    />
+                  </div>
                 </div>
-                <div>
-                  <label class="block text-xs font-medium text-[var(--color-text-soft)] mb-1">Telefon (WhatsApp olan) <span class="text-[var(--color-danger)]">*</span></label>
-                  <input
-                    type="tel"
-                    value={contactPhone}
-                    onInput={(e) => setContactPhone((e.target as HTMLInputElement).value)}
-                    required
-                    placeholder="0532 123 45 67"
-                    class="w-full px-3 py-2.5 rounded-lg bg-[var(--color-surface-2)] border border-[var(--color-border)] focus:border-[var(--color-primary)] outline-none text-sm font-mono"
-                  />
-                  <p class="mt-1 text-[10px] text-[var(--color-text-muted)]">Atölyemiz size bu numaradan WhatsApp ile teklif gönderecek.</p>
+
+                {/* Adres */}
+                <div class="pt-3 border-t border-[var(--color-border)]/40">
+                  <div class="text-[10px] uppercase tracking-wider text-[var(--color-text-muted)] font-semibold mb-2">Teslimat Adresi</div>
+                  <div class="grid grid-cols-2 gap-2">
+                    <div>
+                      <label class="block text-xs font-medium text-[var(--color-text-soft)] mb-1">İl <span class="text-[var(--color-danger)]">*</span></label>
+                      <select
+                        value={contactCity}
+                        onChange={(e) => setContactCity((e.target as HTMLSelectElement).value)}
+                        required
+                        class="w-full px-3 py-2.5 rounded-lg bg-[var(--color-surface-2)] border border-[var(--color-border)] focus:border-[var(--color-primary)] outline-none text-sm"
+                      >
+                        <option value="">Seçin...</option>
+                        {TR_CITIES.map((c) => <option value={c}>{c}</option>)}
+                      </select>
+                    </div>
+                    <div>
+                      <label class="block text-xs font-medium text-[var(--color-text-soft)] mb-1">İlçe <span class="text-[var(--color-danger)]">*</span></label>
+                      <input
+                        type="text"
+                        value={contactDistrict}
+                        onInput={(e) => setContactDistrict((e.target as HTMLInputElement).value)}
+                        required
+                        placeholder="Selçuklu"
+                        class="w-full px-3 py-2.5 rounded-lg bg-[var(--color-surface-2)] border border-[var(--color-border)] focus:border-[var(--color-primary)] outline-none text-sm"
+                      />
+                    </div>
+                    <div class="col-span-2">
+                      <label class="block text-xs font-medium text-[var(--color-text-soft)] mb-1">Açık Adres <span class="text-[var(--color-danger)]">*</span></label>
+                      <textarea
+                        value={contactAddress}
+                        onInput={(e) => setContactAddress((e.target as HTMLTextAreaElement).value)}
+                        required
+                        rows={2}
+                        placeholder="Mahalle, cadde, sokak, bina no, daire no"
+                        class="w-full px-3 py-2.5 rounded-lg bg-[var(--color-surface-2)] border border-[var(--color-border)] focus:border-[var(--color-primary)] outline-none text-sm resize-none"
+                      ></textarea>
+                    </div>
+                  </div>
                 </div>
+
                 <button
                   type="submit"
                   disabled={submittingQuote}
                   class="w-full mt-2 px-4 py-3 rounded-xl text-sm font-semibold bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] text-[var(--color-bg)] transition-all disabled:opacity-60"
                 >
-                  {submittingQuote ? 'Gönderiliyor...' : 'Teklif İste'}
+                  {submittingQuote ? 'Gönderiliyor...' : 'Size Özel Teklifimizi Gönder →'}
                 </button>
                 <p class="text-[10px] text-[var(--color-text-muted)] text-center leading-snug">
-                  Talebinizi gönderince atölyeye iletilir, fiyat onayı sonrası size WhatsApp'tan ulaşılır.<br/>
-                  Bilgileriniz sadece sipariş takibi için kullanılır.
+                  Bilgileriniz atölyemize ulaşır. Net fiyatımızı WhatsApp'tan tarafınıza göndereceğiz.<br/>
+                  Bilgileriniz sadece sipariş ve teslimat için kullanılır.
                 </p>
               </form>
             )}
