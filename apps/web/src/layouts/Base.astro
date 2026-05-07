@@ -83,22 +83,29 @@ const ogImageUrl = new URL(ogImage, SITE_URL).toString()
     </main>
     <Footer />
 
-    {/* PWA Install banner — mobilde her zaman görünür (admin sayfaları hariç) */}
+    {/* PWA Install Smart Banner — tepeden kayan otomatik davet (admin sayfaları hariç) */}
     {!Astro.url.pathname.startsWith('/admin') && (
-      <div id="pwaInstallBanner" class="hidden md:hidden fixed bottom-20 left-3 right-3 z-40 px-4 py-3 rounded-2xl bg-gradient-to-br from-[var(--color-primary)] to-[var(--color-primary-hover)] text-[var(--color-bg)] shadow-2xl flex items-center gap-3">
-        <span class="size-9 grid place-items-center rounded-full bg-white/20 shrink-0">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M12 3v12m0 0 4-4m-4 4-4-4M5 21h14" />
-          </svg>
-        </span>
-        <div class="flex-1 min-w-0">
-          <div class="font-semibold text-sm leading-tight">Uygulamayı Yükle</div>
-          <div class="text-[11px] opacity-80 leading-tight mt-0.5">Carmat'ı telefonuna ekle, hızlıca aç</div>
+      <div
+        id="pwaInstallBanner"
+        class="hidden fixed top-0 left-0 right-0 z-[60] px-3 py-2.5 bg-gradient-to-r from-[var(--color-primary)] via-amber-400 to-[var(--color-primary)] text-[var(--color-bg)] shadow-xl shadow-amber-500/30 transform -translate-y-full transition-transform duration-500"
+      >
+        <div class="max-w-2xl mx-auto flex items-center gap-3">
+          <span class="size-10 grid place-items-center rounded-xl bg-black/20 ring-1 ring-black/10 shrink-0">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 3v12m0 0 4-4m-4 4-4-4M5 21h14" />
+            </svg>
+          </span>
+          <div class="flex-1 min-w-0">
+            <div class="font-bold text-sm leading-tight">Carmat uygulamasını ana ekrana ekle</div>
+            <div class="text-[11px] opacity-85 leading-tight mt-0.5 truncate">Hızlı erişim · Çevrimdışı çalışır · Bildirim alır</div>
+          </div>
+          <button id="pwaInstallBtn" type="button" class="px-3.5 py-2 rounded-xl bg-black hover:bg-black/85 text-white text-xs font-bold whitespace-nowrap shadow-md">
+            Ekle
+          </button>
+          <button id="pwaInstallClose" type="button" aria-label="Kapat" class="size-8 grid place-items-center rounded-xl hover:bg-black/15 shrink-0">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12" /></svg>
+          </button>
         </div>
-        <button id="pwaInstallBtn" type="button" class="px-3 py-1.5 rounded-lg bg-black/20 hover:bg-black/30 text-xs font-bold whitespace-nowrap">Yükle</button>
-        <button id="pwaInstallClose" type="button" aria-label="Kapat" class="size-7 grid place-items-center rounded-lg hover:bg-black/20 shrink-0">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12" /></svg>
-        </button>
       </div>
     )}
 
@@ -166,7 +173,7 @@ const ogImageUrl = new URL(ogImage, SITE_URL).toString()
         })
       }
 
-      // PWA install banner — mobilde her zaman görünür (1x dismiss edilirse 7 gün gizli)
+      // PWA install banner — tepeden kayar, otomatik açılır (1x dismiss edilirse 14 gün gizli)
       const banner = document.getElementById('pwaInstallBanner')
       const installBtn = document.getElementById('pwaInstallBtn') as HTMLButtonElement | null
       const closeBtn = document.getElementById('pwaInstallClose')
@@ -178,43 +185,65 @@ const ogImageUrl = new URL(ogImage, SITE_URL).toString()
       const isStandalone =
         window.matchMedia('(display-mode: standalone)').matches ||
         (navigator as any).standalone === true
-      const isMobile = window.matchMedia('(max-width: 768px)').matches
       const dismissedAt = parseInt(localStorage.getItem('pwa-dismiss') || '0', 10)
-      const dismissedRecently = Date.now() - dismissedAt < 7 * 24 * 60 * 60 * 1000
+      const dismissedRecently = Date.now() - dismissedAt < 14 * 24 * 60 * 60 * 1000
 
       let deferredPrompt: any = null
+      let bannerShown = false
+
+      function showBanner() {
+        if (!banner || isStandalone || dismissedRecently || bannerShown) return
+        bannerShown = true
+        banner.classList.remove('hidden')
+        // body'yi banner kadar aşağı it
+        document.body.style.paddingTop = banner.offsetHeight + 'px'
+        // bir frame sonra slide-down animasyonu başlat
+        requestAnimationFrame(() => {
+          banner.classList.remove('-translate-y-full')
+        })
+      }
+      function hideBanner(persist = false) {
+        if (!banner) return
+        banner.classList.add('-translate-y-full')
+        document.body.style.paddingTop = ''
+        setTimeout(() => banner.classList.add('hidden'), 500)
+        if (persist) localStorage.setItem('pwa-dismiss', String(Date.now()))
+      }
+
+      // Android — native install hazır
       window.addEventListener('beforeinstallprompt', (e: any) => {
         e.preventDefault()
         deferredPrompt = e
+        // 1.5sn gecikmeyle göster — sayfa yüklenmesini bozmasın
+        setTimeout(showBanner, 1500)
       })
 
-      // Banner görünürlük kuralı: mobile + standalone değil + dismiss edilmemiş
-      if (banner && isMobile && !isStandalone && !dismissedRecently) {
-        banner.classList.remove('hidden')
+      // iOS Safari — beforeinstallprompt yok, kendi banner'ımızla göster
+      if (isIOS && !isStandalone && !dismissedRecently) {
+        setTimeout(showBanner, 1500)
       }
+
+      // Android — beforeinstallprompt 4sn'de gelmediyse fallback olarak göster
+      // (kullanıcı manuel olarak menüden yüklemek isteyebilir)
+      setTimeout(() => {
+        if (!isStandalone && !dismissedRecently && !bannerShown) showBanner()
+      }, 4000)
 
       installBtn?.addEventListener('click', async () => {
         if (deferredPrompt) {
-          // Android — native prompt
           deferredPrompt.prompt()
           const choice = await deferredPrompt.userChoice
-          if (choice.outcome === 'accepted') {
-            banner?.classList.add('hidden')
-          }
+          if (choice.outcome === 'accepted') hideBanner(true)
           deferredPrompt = null
         } else if (isIOS) {
-          // iOS — manual instructions modal
           iosModal?.classList.remove('hidden')
           iosModal?.classList.add('flex')
         } else {
-          // Fallback: Android Chrome menüsündeki "Uygulamayı yükle"yi göster
+          // Android beforeinstallprompt henüz tetiklenmediyse: tarayıcı menüsünü göster
           alert('Tarayıcı menüsünden (⋮) "Uygulamayı yükle" / "Ana Ekrana Ekle" seçeneğine dokunun.')
         }
       })
-      closeBtn?.addEventListener('click', () => {
-        banner?.classList.add('hidden')
-        localStorage.setItem('pwa-dismiss', String(Date.now()))
-      })
+      closeBtn?.addEventListener('click', () => hideBanner(true))
       iosClose?.addEventListener('click', () => {
         iosModal?.classList.add('hidden')
         iosModal?.classList.remove('flex')

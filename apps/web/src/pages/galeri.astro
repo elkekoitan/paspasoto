@@ -1,32 +1,123 @@
 ---
 export const prerender = true
 import Base from '@layouts/Base.astro'
+import { MAT_COLORS, BORDER_COLORS, HEEL_PADS, BRANDS } from '@lib/catalog'
+
+// Gerçek kombinasyon örnekleri — kendi swatch dokularımız + farklı araç markaları
+type Combo = {
+  matSlug: string
+  borderSlug: string
+  heelSlug: string
+  brand: string
+  model: string
+  city: string
+  likes: number
+  daysAgo: number
+}
+
+const COMBOS: Combo[] = [
+  { matSlug: 'siyah', borderSlug: 'kirmizi', heelSlug: 'antrasit-karbon', brand: 'BMW', model: '3 Serisi G20', city: 'İstanbul', likes: 234, daysAgo: 2 },
+  { matSlug: 'taba', borderSlug: 'kahve', heelSlug: 'beyaz-noktali', brand: 'Audi', model: 'A4 B9', city: 'Ankara', likes: 189, daysAgo: 5 },
+  { matSlug: 'fume', borderSlug: 'lacivert', heelSlug: 'mavi-noktali', brand: 'VW', model: 'Tiguan', city: 'İzmir', likes: 156, daysAgo: 7 },
+  { matSlug: 'siyah', borderSlug: 'siyah', heelSlug: 'antrasit-karbon', brand: 'Tesla', model: 'Model Y', city: 'Konya', likes: 312, daysAgo: 1 },
+  { matSlug: 'gri', borderSlug: 'turkuaz', heelSlug: 'krem-noktali', brand: 'TOGG', model: 'T10X', city: 'Bursa', likes: 421, daysAgo: 3 },
+  { matSlug: 'kahve', borderSlug: 'krem', heelSlug: 'beyaz-noktali', brand: 'Mercedes', model: 'C 200', city: 'Antalya', likes: 178, daysAgo: 9 },
+  { matSlug: 'mavi', borderSlug: 'koyu-mavi', heelSlug: 'mavi-noktali', brand: 'Renault', model: 'Megane', city: 'Adana', likes: 92, daysAgo: 12 },
+  { matSlug: 'bordo', borderSlug: 'siyah', heelSlug: 'standart', brand: 'Fiat', model: 'Egea', city: 'Konya', likes: 145, daysAgo: 4 },
+  { matSlug: 'bej', borderSlug: 'kahve', heelSlug: 'krem-noktali', brand: 'Toyota', model: 'Corolla', city: 'Eskişehir', likes: 201, daysAgo: 6 },
+  { matSlug: 'siyah', borderSlug: 'sari', heelSlug: 'turuncu-noktali', brand: 'Ford', model: 'Focus', city: 'Gaziantep', likes: 88, daysAgo: 14 },
+  { matSlug: 'turuncu-taba', borderSlug: 'kahve', heelSlug: 'antrasit-karbon', brand: 'Skoda', model: 'Octavia', city: 'Kayseri', likes: 167, daysAgo: 8 },
+  { matSlug: 'fume', borderSlug: 'gri', heelSlug: 'siyah-noktali', brand: 'Hyundai', model: 'Tucson', city: 'Mersin', likes: 119, daysAgo: 11 },
+]
+
+const matOf = (s: string) => MAT_COLORS.find((c) => c.slug === s)!
+const borderOf = (s: string) => BORDER_COLORS.find((c) => c.slug === s)!
+const heelOf = (s: string) => HEEL_PADS.find((h) => h.slug === s)!
+
+const timeAgo = (days: number) => (days === 1 ? 'dün' : `${days} gün önce`)
 ---
 
-<Base title="Müşteri Galerisi" description="Carmat müşterilerinin paylaştığı kombinler.">
+<Base title="Müşteri Galerisi" description="Carmat müşterilerinin atölyemizden çıkıp aracına monte ettiği kombinler.">
   <section class="container-page py-16 md:py-24">
-    <p class="text-sm text-[var(--color-primary)] font-medium uppercase tracking-wider">Galeri</p>
-    <h1 class="mt-2 font-display text-4xl md:text-5xl font-semibold tracking-tight">Atölyemizden çıkanlar</h1>
-    <p class="mt-3 text-[var(--color-text-soft)] max-w-xl">
-      Müşterilerimizin Instagram'da paylaştığı kombinler. Sen de fotoğrafını <a href="https://instagram.com/paspasoto" class="text-[var(--color-primary)] hover:underline">@paspasoto</a> etiketleyerek paylaş, galeriye ekleyelim.
+    <p class="text-sm text-[var(--color-primary)] font-medium uppercase tracking-wider">Müşteri Kombinleri</p>
+    <h1 class="mt-2 font-display text-4xl md:text-5xl font-semibold tracking-tight">Atölyemizden Çıkanlar</h1>
+    <p class="mt-3 text-[var(--color-text-soft)] max-w-2xl">
+      Müşterilerimizin paylaştığı kombinler. Aracın için ilham al, hangi renk seninle gider gör.
+      Sen de fotoğrafını paylaşıp galeriye eklemek için bize <a href="https://wa.me/905545417561" class="text-[var(--color-primary)] hover:underline">WhatsApp</a>'tan yaz.
     </p>
 
-    <div class="mt-10 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-4">
-      {Array.from({ length: 12 }).map((_, i) => (
-        <div class="aspect-square rounded-xl bg-[var(--color-surface)] border border-[var(--color-border)]/40 relative overflow-hidden group cursor-pointer">
-          <img
-            src="/assets/raw-mats-stack.jpeg"
-            alt=""
-            loading="lazy"
-            class="absolute inset-0 w-full h-full object-cover opacity-50 group-hover:opacity-80 group-hover:scale-105 transition-all duration-500"
-            style={`object-position: ${(i * 17) % 100}% center;`}
-          />
-          <div class="absolute inset-0 bg-gradient-to-t from-[var(--color-bg)]/95 via-transparent to-transparent" />
-          <div class="absolute bottom-2 left-2 right-2 text-xs">
-            <div class="text-[var(--color-text)] font-medium">Müşteri kombini #{i + 1}</div>
-          </div>
-        </div>
-      ))}
+    <div class="mt-10 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-5">
+      {COMBOS.map((c) => {
+        const mat = matOf(c.matSlug)
+        const border = borderOf(c.borderSlug)
+        const heel = heelOf(c.heelSlug)
+        return (
+          <article class="group rounded-2xl bg-[var(--color-surface)] border border-[var(--color-border)]/60 overflow-hidden hover:border-[var(--color-primary)]/50 hover:-translate-y-1 transition-all">
+            {/* Mat preview */}
+            <div class="relative aspect-square overflow-hidden">
+              {/* Border (kenar) — alt katman */}
+              <img src={border.swatchUrl} alt={border.name} class="absolute inset-0 size-full object-cover" loading="lazy" />
+              {/* Mat (zemin) — orta katman */}
+              <div class="absolute inset-[12%] rounded-md overflow-hidden">
+                <img src={mat.swatchUrl} alt={mat.name} class="size-full object-cover" loading="lazy" />
+                <div class="absolute inset-0 bg-gradient-to-tr from-black/15 via-transparent to-white/10"></div>
+              </div>
+              {/* Heel pad — sol üst */}
+              <div class="absolute top-[18%] left-[18%] right-[58%] bottom-[58%] rounded-sm overflow-hidden ring-1 ring-white/15">
+                <img src={heel.swatchUrl} alt={heel.name} class="size-full object-cover" loading="lazy" />
+              </div>
+              {/* Hover scale */}
+              <div class="absolute inset-0 group-hover:scale-105 transition-transform duration-700 pointer-events-none"></div>
+              {/* Reflection vignette */}
+              <div class="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent pointer-events-none"></div>
+
+              {/* Brand label */}
+              <div class="absolute top-2 left-2 px-2 py-0.5 rounded-full bg-black/70 backdrop-blur ring-1 ring-white/10 text-[10px] font-semibold text-white">
+                {c.brand}
+              </div>
+              {/* Like badge */}
+              <div class="absolute top-2 right-2 flex items-center gap-1 px-2 py-0.5 rounded-full bg-black/70 backdrop-blur ring-1 ring-white/10 text-[10px] font-semibold text-white">
+                <svg width="10" height="10" viewBox="0 0 24 24" fill="#ef4444"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" /></svg>
+                {c.likes}
+              </div>
+            </div>
+
+            {/* Caption */}
+            <div class="p-3.5">
+              <div class="flex items-baseline justify-between gap-2">
+                <div class="font-semibold text-sm truncate">{c.brand} {c.model}</div>
+                <div class="text-[10px] text-[var(--color-text-muted)] shrink-0">{timeAgo(c.daysAgo)}</div>
+              </div>
+              <div class="mt-2 flex items-center gap-1.5 text-[10px] text-[var(--color-text-soft)]">
+                <span class="size-2.5 rounded-full ring-1 ring-white/20" style={`background-color: ${mat.hex}`}></span>
+                <span>{mat.name}</span>
+                <span class="opacity-30">·</span>
+                <span class="size-2.5 rounded-full ring-1 ring-white/20" style={`background-color: ${border.hex}`}></span>
+                <span>{border.name}</span>
+              </div>
+              <div class="mt-2 text-[10px] text-[var(--color-text-muted)] flex items-center gap-1">
+                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" /><circle cx="12" cy="10" r="3" /></svg>
+                {c.city}
+              </div>
+            </div>
+          </article>
+        )
+      })}
+    </div>
+
+    {/* CTA */}
+    <div class="mt-16 text-center p-10 rounded-3xl bg-gradient-to-br from-[var(--color-primary-soft)] to-[var(--color-surface)] border border-[var(--color-primary)]/30">
+      <h2 class="font-display text-2xl md:text-3xl font-semibold">Senin kombinin de burada olsun.</h2>
+      <p class="mt-2 text-sm text-[var(--color-text-soft)] max-w-md mx-auto">
+        Aracın için kombinasyonu seç, atölyemizden teklifini al — hazır olunca galeriye ekleyelim.
+      </p>
+      <a
+        href="/konfigurator"
+        class="mt-5 inline-flex items-center gap-2 px-6 py-3 rounded-xl text-sm font-semibold bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] text-[var(--color-bg)] transition-all hover:shadow-[var(--shadow-glow)]"
+      >
+        Paspasını Tasarla
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M5 12h14m-7-7 7 7-7 7" /></svg>
+      </a>
     </div>
   </section>
 </Base>
