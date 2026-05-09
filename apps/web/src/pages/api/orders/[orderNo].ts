@@ -5,6 +5,12 @@ import { sendPush, type PushPayload } from '../../../server/push'
 import { applyMovement, hasOrderConsumed, getStockBySku } from '../../../server/stock'
 import { computeConsumption } from '../../../server/stock-recipes'
 import { sendStatusChangeMail } from '../../../server/mail'
+import {
+  sendWhatsAppTextAsync,
+  buildProductionStartedMessage,
+  buildReadyMessage,
+  buildDeliveredMessage,
+} from '../../../server/whatsapp-client'
 
 const STATUS_LABEL: Record<string, string> = {
   received: 'Sipariş Alındı',
@@ -104,14 +110,41 @@ export const PATCH: APIRoute = async ({ params, cookies, request }) => {
     } satisfies PushPayload).catch(() => {})
 
     // Müşteriye e-posta (varsa)
+    const trackingFullUrl = `${process.env.PUBLIC_SITE_URL ?? 'https://carmat.com.tr'}/siparis-takip/detay?o=${updated.orderNo}&t=${updated.accessToken}`
     if (updated.customer.email) {
       void sendStatusChangeMail({
         to: updated.customer.email,
         customerName: updated.customer.fullName,
         orderNo: updated.orderNo,
         status: statusLabel,
-        trackingUrl: `${process.env.PUBLIC_SITE_URL ?? 'https://carmat.com.tr'}/siparis-takip/detay?o=${updated.orderNo}&t=${updated.accessToken}`,
+        trackingUrl: trackingFullUrl,
       }).catch(() => {})
+    }
+
+    // WhatsApp otomatik gönderim (Evolution API üzerinden — env tanımlı + AUTO_SEND=true)
+    if (updated.customer.phone) {
+      let waMessage: string | null = null
+      if (patch.productionStatus === 'in_production') {
+        waMessage = buildProductionStartedMessage({
+          customerName: updated.customer.fullName,
+          orderNo: updated.orderNo,
+          trackingUrl: trackingFullUrl,
+        })
+      } else if (patch.productionStatus === 'ready') {
+        waMessage = buildReadyMessage({
+          customerName: updated.customer.fullName,
+          orderNo: updated.orderNo,
+          trackingUrl: trackingFullUrl,
+          cargoTrackingNo: updated.cargoTrackingNo,
+          cargoCompany: updated.cargoCompany,
+        })
+      } else if (patch.productionStatus === 'delivered') {
+        waMessage = buildDeliveredMessage({
+          customerName: updated.customer.fullName,
+          orderNo: updated.orderNo,
+        })
+      }
+      if (waMessage) sendWhatsAppTextAsync(updated.customer.phone, waMessage)
     }
   }
 
