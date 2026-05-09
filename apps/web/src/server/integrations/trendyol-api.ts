@@ -104,6 +104,7 @@ export async function listOrders(opts: {
   startDate?: number
   endDate?: number
   status?: 'Created' | 'Picking' | 'Invoiced' | 'Shipped' | 'Cancelled' | 'Delivered'
+  /** Trendyol /integration/order endpoint sipariş status filter — orderByField */
   page?: number
   size?: number
 } = {}): Promise<{ orders: TrendyolOrder[]; totalCount: number; page: number; size: number }> {
@@ -139,25 +140,29 @@ export async function listOrders(opts: {
 /* ─────────────────────────────────────────────────────────
    Webhook yönetimi
    ───────────────────────────────────────────────────────── */
+/** Trendyol yeni API status enum — UPPERCASE (2024+ /integration/ endpoint'i) */
+export type TrendyolStatus =
+  | 'CREATED'
+  | 'PICKING'
+  | 'INVOICED'
+  | 'SHIPPED'
+  | 'CANCELLED'
+  | 'DELIVERED'
+  | 'UNDELIVERED'
+  | 'RETURNED'
+  | 'UNSUPPLIED'
+  | 'AWAITING'
+  | 'UNPACKED'
+  | 'AT_COLLECTION_POINT'
+  | 'VERIFIED'
+
 export type TrendyolWebhook = {
   id?: string
   url: string
   username?: string
   password?: string
   authenticationType?: 'BASIC_AUTHENTICATION' | 'API_KEY' | 'NONE'
-  subscribedStatuses: Array<
-    | 'Created'
-    | 'Picking'
-    | 'Invoiced'
-    | 'Shipped'
-    | 'Cancelled'
-    | 'Delivered'
-    | 'UnDelivered'
-    | 'UnDeliveredAndReturned'
-    | 'Returned'
-    | 'AtCollectionPoint'
-    | 'UnSupplied'
-  >
+  subscribedStatuses: TrendyolStatus[]
   status?: 'ACTIVE' | 'PASSIVE'
   apiKey?: string
 }
@@ -185,13 +190,13 @@ export async function createWebhook(spec: {
     username: spec.webhookSecret ? 'carmat' : undefined,
     password: spec.webhookSecret,
     subscribedStatuses: spec.statuses ?? [
-      'Created',
-      'Picking',
-      'Invoiced',
-      'Shipped',
-      'Cancelled',
-      'Delivered',
-      'Returned',
+      'CREATED',
+      'PICKING',
+      'INVOICED',
+      'SHIPPED',
+      'CANCELLED',
+      'DELIVERED',
+      'RETURNED',
     ],
   }
   const res = await trendyolFetch(`/integration/webhook/sellers/${supplierId}/webhooks`, {

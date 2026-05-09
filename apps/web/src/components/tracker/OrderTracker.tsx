@@ -265,6 +265,14 @@ function OrderDetail({ order }: { order: Order }) {
             <span class="text-xs text-[var(--color-text-muted)]">
               <span class="font-mono text-[var(--color-text)]">{order.orderNo}</span>
             </span>
+            {order.channel === 'trendyol' && order.externalRef?.id && (
+              <span class="px-2.5 py-1 rounded-full text-[10px] font-semibold bg-orange-500/15 border border-orange-500/40 text-orange-400 inline-flex items-center gap-1.5">
+                <span>🛒</span>
+                <span>Trendyol</span>
+                <span class="font-mono opacity-80">·</span>
+                <span class="font-mono opacity-90">{order.externalRef.id}</span>
+              </span>
+            )}
           </div>
           {i && (
             <h2 class="mt-3 font-display text-2xl md:text-3xl font-semibold tracking-tight">
