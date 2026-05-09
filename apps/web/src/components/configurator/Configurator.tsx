@@ -417,8 +417,26 @@ export default function Configurator() {
            </div>
         </div>
 
-        {/* Right Side: Price & Summary HUD */}
-        <div class="hidden md:flex flex-col justify-end items-end flex-1 pb-10 pointer-events-auto">
+        {/* Right Side: Live Preview + Price HUD */}
+        <div class="hidden md:flex flex-col justify-between items-end flex-1 py-8 pointer-events-auto gap-6">
+           {/* Canlı paspas önizlemesi — mat color seçildiyse görünür */}
+           {matColor && borderColor && heelPad && product && (
+             <div class="w-full max-w-[360px] animate-in slide-in-from-right-8 fade-in duration-700">
+               <Preview
+                 matColor={matColor}
+                 borderColor={borderColor}
+                 heelPad={heelPad}
+                 heelPadPassenger={heelPosition === 'both' || heelPosition === 'passenger-only'}
+                 logoAccessory={logos.some((l) => l.brandSlug !== null) ? { id: 0, brandSlug: brand?.slug ?? null, name: brand?.name ?? '', price: 0 } : null}
+                 brand={brand}
+                 model={model}
+                 product={product}
+                 total={totalPrice}
+                 onAddToCart={() => setStep('summary')}
+               />
+             </div>
+           )}
+
            <div class="text-right animate-in slide-in-from-right-8 fade-in duration-1000 delay-300">
              <div class="text-[11px] uppercase tracking-[0.4em] text-white/50 font-bold mb-2 drop-shadow-md">Canlı Konfigürasyon</div>
              <div class="text-7xl font-display font-semibold tabular-nums tracking-tighter drop-shadow-[0_5px_15px_rgba(0,0,0,0.8)] text-white">{formatTRY(totalPrice)}</div>
