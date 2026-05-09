@@ -6,10 +6,11 @@
 import type { Channel } from '../db'
 import type { PlatformAdapter } from './types'
 import { trendyolAdapter } from './trendyol'
+import { hepsiburadaAdapter } from './hepsiburada'
 
 const REGISTRY: Partial<Record<Channel, PlatformAdapter>> = {
   trendyol: trendyolAdapter,
-  // hepsiburada: hepsiburadaAdapter,
+  hepsiburada: hepsiburadaAdapter,
   // woocommerce: woocommerceAdapter,
   // shopify: shopifyAdapter,
   // n11: n11Adapter,
