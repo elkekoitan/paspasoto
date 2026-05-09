@@ -20,7 +20,7 @@ RUN pnpm install --filter web... --frozen-lockfile
 # Source + build
 COPY apps/web ./apps/web
 
-ARG PUBLIC_SITE_URL=https://paspasoto.com
+ARG PUBLIC_SITE_URL=https://carmat.com.tr
 ENV PUBLIC_SITE_URL=$PUBLIC_SITE_URL
 ENV PWA_DISABLED=false
 ENV NODE_ENV=production

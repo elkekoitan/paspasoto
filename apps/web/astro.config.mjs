@@ -26,10 +26,10 @@ if (!PWA_DISABLED) {
         globPatterns: ['**/*.{js,css,html,png,svg,jpg,jpeg,webp,avif,woff2,ico}'],
       },
       manifest: {
-        name: 'PaspasOto — Aracına Özel 3D Paspas',
-        short_name: 'PaspasOto',
+        name: 'Carmat — Aracına Özel Paspas, Koltuk & Direksiyon',
+        short_name: 'Carmat',
         description:
-          'Aracına özel 3D havuzlu oto paspas. Konfigüre et, atölyemizden kapına gelsin.',
+          'Aracına özel 3D havuzlu paspas, koltuk kılıfı ve direksiyon kılıfı. Konfigüre et, atölyemizden kapına gelsin.',
         start_url: '/?source=pwa',
         scope: '/',
         display: 'standalone',
