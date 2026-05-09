@@ -52,7 +52,7 @@ export async function testConnection(): Promise<{
 }> {
   try {
     const { supplierId } = getCreds()
-    const res = await trendyolFetch(`/sapigw/suppliers/${supplierId}/addresses`)
+    const res = await trendyolFetch(`/integration/sellers/${supplierId}/addresses`)
     if (res.ok) {
       return { ok: true, status: res.status, message: 'Bağlantı başarılı — supplier doğrulandı.' }
     }
@@ -117,7 +117,7 @@ export async function listOrders(opts: {
   params.set('orderByField', 'PackageLastModifiedDate')
   params.set('orderByDirection', 'DESC')
 
-  const res = await trendyolFetch(`/sapigw/suppliers/${supplierId}/orders?${params.toString()}`)
+  const res = await trendyolFetch(`/integration/order/sellers/${supplierId}/orders?${params.toString()}`)
   if (!res.ok) {
     const text = await res.text()
     throw new Error(`Trendyol listOrders: ${res.status} ${text.slice(0, 240)}`)
@@ -164,7 +164,7 @@ export type TrendyolWebhook = {
 
 export async function listWebhooks(): Promise<TrendyolWebhook[]> {
   const { supplierId } = getCreds()
-  const res = await trendyolFetch(`/sapigw/suppliers/${supplierId}/webhooks`)
+  const res = await trendyolFetch(`/integration/webhook/sellers/${supplierId}/webhooks`)
   if (!res.ok) {
     const text = await res.text()
     throw new Error(`Trendyol listWebhooks: ${res.status} — ${text.slice(0, 240)}`)
@@ -194,7 +194,7 @@ export async function createWebhook(spec: {
       'Returned',
     ],
   }
-  const res = await trendyolFetch(`/sapigw/suppliers/${supplierId}/webhooks`, {
+  const res = await trendyolFetch(`/integration/webhook/sellers/${supplierId}/webhooks`, {
     method: 'POST',
     body: JSON.stringify(body),
   })
@@ -208,7 +208,7 @@ export async function createWebhook(spec: {
 export async function deleteWebhook(webhookId: string): Promise<boolean> {
   const { supplierId } = getCreds()
   const res = await trendyolFetch(
-    `/sapigw/suppliers/${supplierId}/webhooks/${webhookId}`,
+    `/integration/webhook/sellers/${supplierId}/webhooks/${webhookId}`,
     { method: 'DELETE' },
   )
   return res.ok
@@ -219,8 +219,8 @@ export async function deleteWebhook(webhookId: string): Promise<boolean> {
    ───────────────────────────────────────────────────────── */
 export async function listBrands(query?: string): Promise<Array<{ id: number; name: string }>> {
   const path = query
-    ? `/sapigw/brands/by-name?name=${encodeURIComponent(query)}`
-    : `/sapigw/brands?page=0&size=200`
+    ? `/integration/product/brands/by-name?name=${encodeURIComponent(query)}`
+    : `/integration/product/brands?page=0&size=200`
   const res = await trendyolFetch(path)
   if (!res.ok) {
     const text = await res.text()
