@@ -1,0 +1,25 @@
+---
+export const prerender = true
+import Base from '@layouts/Base.astro'
+import SteeringCoverConfigurator from '@components/configurator/SteeringCoverConfigurator.tsx'
+---
+
+<Base
+  title="Direksiyon Kılıfı Tasarla"
+  description="Aracınıza uygun direksiyon kılıfı — boyut, desen, malzeme seçin. Atölyemizden net fiyat teklifi alın."
+>
+  <section class="container-page py-10 md:py-16">
+    <div class="mb-6">
+      <a href="/konfigurator" class="text-xs text-[var(--color-text-muted)] hover:text-[var(--color-primary)]">← Tüm ürünler</a>
+      <p class="mt-3 text-sm text-[var(--color-primary)] font-medium uppercase tracking-wider">Direksiyon Kılıfı</p>
+      <h1 class="mt-2 font-display text-3xl md:text-4xl font-semibold tracking-tight">
+        Direksiyonunuzu <span class="text-gradient-amber">tasarlayın</span>.
+      </h1>
+      <p class="mt-2 text-[var(--color-text-soft)] max-w-2xl">
+        3 boyut · 5 desen · 4 malzeme. Tutuş hissinizi seçin, atölyemiz WhatsApp'tan net fiyatı iletir.
+      </p>
+    </div>
+
+    <SteeringCoverConfigurator client:load />
+  </section>
+</Base>

@@ -1,6 +1,17 @@
 ---
-const NAV = [
-  { href: '/konfigurator', label: 'Konfigüratör' },
+type NavChild = { href: string; label: string; desc?: string }
+type NavItem = { href: string; label: string; children?: NavChild[] }
+
+const NAV: NavItem[] = [
+  {
+    href: '/konfigurator',
+    label: 'Tasarla',
+    children: [
+      { href: '/konfigurator', label: 'Paspas', desc: 'Aracınıza özel ölçü, 5 paspas + bagaj' },
+      { href: '/konfigurator/koltuk', label: 'Koltuk Kılıfı', desc: '5 malzeme · 8 renk seçeneği' },
+      { href: '/konfigurator/direksiyon', label: 'Direksiyon Kılıfı', desc: '3 boyut · 5 desen · 4 malzeme' },
+    ],
+  },
   { href: '/markalar', label: 'Markalar' },
   { href: '/tanitim', label: 'Hikayemiz' },
   { href: '/galeri', label: 'Galeri' },
@@ -13,10 +24,10 @@ const path = Astro.url.pathname
   class="hidden md:block sticky top-0 z-40 border-b border-[var(--color-border)]/60 bg-[var(--color-bg)]/85 backdrop-blur-md"
 >
   <div class="container-page flex h-16 items-center justify-between gap-4">
-    <a href="/" class="flex items-center group gap-2" aria-label="PaspasOto anasayfa">
+    <a href="/" class="flex items-center group gap-2" aria-label="Carmat anasayfa">
       <img
-        src="/images/paspasoto_logo_1778184847608.png"
-        alt="PaspasOto"
+        src="/logo.png"
+        alt="Carmat"
         class="h-10 md:h-12 w-auto object-contain drop-shadow-md group-hover:scale-105 group-hover:drop-shadow-[0_0_15px_rgba(var(--color-primary-rgb),0.5)] transition-all duration-300"
       />
     </a>
@@ -25,6 +36,51 @@ const path = Astro.url.pathname
       {
         NAV.map((item) => {
           const active = path === item.href || path.startsWith(item.href + '/')
+          if (item.children && item.children.length > 0) {
+            return (
+              <div class="relative group/dropdown">
+                <a
+                  href={item.href}
+                  class:list={[
+                    'inline-flex items-center gap-1 px-3.5 py-2 rounded-lg text-sm font-medium transition-colors',
+                    active
+                      ? 'text-[var(--color-text)] bg-[var(--color-surface-2)]'
+                      : 'text-[var(--color-text-soft)] hover:text-[var(--color-text)] hover:bg-[var(--color-surface)]',
+                  ]}
+                >
+                  {item.label}
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="opacity-70 transition-transform group-hover/dropdown:rotate-180" aria-hidden="true">
+                    <polyline points="6 9 12 15 18 9" />
+                  </svg>
+                </a>
+                <div
+                  class="invisible opacity-0 translate-y-1 group-hover/dropdown:visible group-hover/dropdown:opacity-100 group-hover/dropdown:translate-y-0 absolute left-0 top-full pt-2 transition-all duration-200 z-50"
+                >
+                  <div class="min-w-[280px] rounded-2xl border border-[var(--color-border)]/60 bg-[var(--color-surface)] shadow-xl shadow-black/40 backdrop-blur-md p-2">
+                    {item.children.map((child) => {
+                      const childActive = path === child.href
+                      return (
+                        <a
+                          href={child.href}
+                          class:list={[
+                            'block px-3 py-2.5 rounded-xl transition-colors',
+                            childActive
+                              ? 'bg-[var(--color-surface-2)]'
+                              : 'hover:bg-[var(--color-surface-2)]',
+                          ]}
+                        >
+                          <div class="text-sm font-semibold text-[var(--color-text)]">{child.label}</div>
+                          {child.desc && (
+                            <div class="text-[11px] text-[var(--color-text-muted)] mt-0.5">{child.desc}</div>
+                          )}
+                        </a>
+                      )
+                    })}
+                  </div>
+                </div>
+              </div>
+            )
+          }
           return (
             <a
               href={item.href}
@@ -85,12 +141,26 @@ const path = Astro.url.pathname
     <nav class="container-page py-3 flex flex-col gap-1" aria-label="Mobil navigasyon">
       {
         NAV.map((item) => (
-          <a
-            href={item.href}
-            class="px-3 py-2.5 rounded-lg text-sm font-medium text-[var(--color-text-soft)] hover:text-[var(--color-text)] hover:bg-[var(--color-surface)]"
-          >
-            {item.label}
-          </a>
+          <>
+            <a
+              href={item.href}
+              class="px-3 py-2.5 rounded-lg text-sm font-medium text-[var(--color-text-soft)] hover:text-[var(--color-text)] hover:bg-[var(--color-surface)]"
+            >
+              {item.label}
+            </a>
+            {item.children && (
+              <div class="pl-3 flex flex-col gap-0.5 border-l border-[var(--color-border)]/40 ml-3 mb-1">
+                {item.children.map((child) => (
+                  <a
+                    href={child.href}
+                    class="px-3 py-2 rounded-lg text-xs font-medium text-[var(--color-text-muted)] hover:text-[var(--color-text)] hover:bg-[var(--color-surface)]"
+                  >
+                    {child.label}
+                  </a>
+                ))}
+              </div>
+            )}
+          </>
         ))
       }
       <a
@@ -109,5 +179,4 @@ const path = Astro.url.pathname
   toggle?.addEventListener('click', () => {
     menu?.classList.toggle('hidden')
   })
-
 </script>

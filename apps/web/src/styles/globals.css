@@ -155,11 +155,34 @@
   }
 }
 
-/* Astro view transitions overrides */
+/* Native MPA View Transitions — Chromium 126+ (Edge/Chrome/Opera).
+   Cross-document fade. Fallback: instant navigation (no JS gerekmez). */
+@view-transition {
+  navigation: auto;
+}
+
 ::view-transition-old(root),
 ::view-transition-new(root) {
-  animation-duration: 240ms;
+  animation-duration: 260ms;
   animation-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+}
+::view-transition-old(root) {
+  animation-name: vt-fade-out;
+}
+::view-transition-new(root) {
+  animation-name: vt-fade-in;
+}
+@keyframes vt-fade-out {
+  to { opacity: 0; transform: translateY(-4px); }
+}
+@keyframes vt-fade-in {
+  from { opacity: 0; transform: translateY(8px); }
+}
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-old(root),
+  ::view-transition-new(root) {
+    animation: none !important;
+  }
 }
 
 /* Scroll reveal — Intersection Observer ile [data-reveal] elementlere uygulanır */
@@ -191,4 +214,56 @@
   background: linear-gradient(110deg, transparent 40%, rgba(255,255,255,0.06) 50%, transparent 60%);
   background-size: 200% 100%;
   animation: shimmer 2.5s linear infinite;
+}
+
+/* Premium hover-lift — kart ve buton için subtle elevation. */
+.hover-lift {
+  transition: transform 380ms cubic-bezier(0.21, 1, 0.21, 1),
+              box-shadow 380ms cubic-bezier(0.21, 1, 0.21, 1),
+              border-color 220ms ease;
+  will-change: transform, box-shadow;
+}
+.hover-lift:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 14px 38px -12px rgba(0, 0, 0, 0.55), 0 0 0 1px rgba(212, 146, 58, 0.2);
+}
+@media (prefers-reduced-motion: reduce) {
+  .hover-lift:hover { transform: none; }
+}
+
+/* Page-enter — sayfa ilk yüklenirken hafif fade. */
+@keyframes page-enter {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: none; }
+}
+main {
+  animation: page-enter 420ms cubic-bezier(0.21, 1, 0.21, 1) both;
+}
+@media (prefers-reduced-motion: reduce) {
+  main { animation: none; }
+}
+
+/* Tilt-on-hover — galeri kartları için */
+.tilt-card {
+  transition: transform 500ms cubic-bezier(0.21, 1, 0.21, 1);
+  transform-style: preserve-3d;
+  will-change: transform;
+}
+.tilt-card:hover {
+  transform: perspective(1000px) rotateX(2deg) rotateY(-2deg) translateY(-2px);
+}
+@media (prefers-reduced-motion: reduce) {
+  .tilt-card:hover { transform: none; }
+}
+
+/* Float — atölye/hero illüstrasyon için */
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
+}
+.float-anim {
+  animation: float 4.5s ease-in-out infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .float-anim { animation: none; }
 }
