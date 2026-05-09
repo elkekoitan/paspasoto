@@ -41,6 +41,10 @@ ENV PORT=4321
 # Sipariş JSON'u kalıcı volume içinde kalsın
 ENV DATA_DIR=/data
 
+# su-exec: root start → drop to node:node sonrası, persistent volume'un
+# host'tan farklı UID ile mount edilse bile chown sonrası uygulamayı node user'la çalıştırır.
+RUN apk add --no-cache su-exec
+
 WORKDIR /app
 
 # pnpm deploy çıktısı: package.json + flat node_modules (preact, sharp, vs.)
@@ -49,10 +53,14 @@ COPY --from=builder /prod/node_modules ./node_modules
 # Astro standalone build output (server entrypoint + client assets)
 COPY --from=builder /repo/apps/web/dist ./dist
 
-# Veri klasörü (volume mount noktası)
+# Image içindeki /data ve /app node:node — mount sonrası entrypoint'te tekrar chown
 RUN mkdir -p /data && chown -R node:node /data /app
 
-USER node
+# Entrypoint: root olarak başla → /data ownership'i düzelt → su-exec ile node user'a düş
+COPY --chown=root:root apps/web/docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
+RUN chmod +x /usr/local/bin/docker-entrypoint.sh
+
+# USER node kaldırıldı — entrypoint root olarak başlar, sonra su-exec ile node'a iner.
 
 EXPOSE 4321
 
@@ -60,4 +68,5 @@ EXPOSE 4321
 HEALTHCHECK --interval=30s --timeout=5s --start-period=25s --retries=3 \
   CMD wget -q -O - http://127.0.0.1:4321/ >/dev/null 2>&1 || exit 1
 
+ENTRYPOINT ["/usr/local/bin/docker-entrypoint.sh"]
 CMD ["node", "./dist/server/entry.mjs"]
