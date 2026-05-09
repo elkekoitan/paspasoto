@@ -143,6 +143,13 @@ export type OrderItem = {
   steeringSize?: 'S' | 'M' | 'L'
   steeringPatternSlug?: string
   steeringMaterialSlug?: string
+  /** Sahibinden seviyesi trim/donanım (opsiyonel) — admin'e tam araç kombinasyonu görünür */
+  trimId?: number
+  trimName?: string
+  trimEngine?: string
+  trimFuel?: string
+  trimTransmission?: string
+  trimPackage?: string
 }
 
 export type OrderEvent = {

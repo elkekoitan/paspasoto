@@ -11,12 +11,14 @@ import {
   type Brand,
   type BodyType,
   type VehicleModel,
+  type VehicleTrim,
   type MatColor,
   type BorderColor,
   type HeelPad,
   type LogoAccessory,
   type Product,
 } from '../../lib/catalog'
+import { getTrimsForModel, FUEL_LABEL, TRANSMISSION_LABEL } from '../../lib/catalog-trims'
 import { formatTRY } from '../../lib/format'
 import ClientBrandLogo from '../ui/ClientBrandLogo'
 import VirtualShowroom from './VirtualShowroom'
@@ -95,6 +97,7 @@ export default function Configurator() {
   const [step, setStep] = useState<StepKey>(initialBrand ? (initialModel ? 'summary' : 'model') : 'brand')
   const [brand, setBrand] = useState<Brand | null>(initialBrand)
   const [model, setModel] = useState<VehicleModel | null>(initialModel)
+  const [trim, setTrim] = useState<VehicleTrim | null>(null)
   const [product, setProduct] = useState<Product | null>(
     draft.productSlug ? PRODUCTS.find((p) => p.slug === draft.productSlug) ?? PRODUCTS[1]! : PRODUCTS[1]!,
   )
@@ -274,6 +277,15 @@ export default function Configurator() {
         logoQty,
         category: 'mat' as const,
         qty: 1, unitPrice: totalPrice,
+        // Trim/versiyon (opsiyonel — kullanıcı sahibinden seviyesi seçim yaptıysa)
+        ...(trim ? {
+          trimId: trim.id,
+          trimName: trim.name,
+          trimEngine: trim.engine,
+          trimFuel: trim.fuel,
+          trimTransmission: trim.transmission,
+          trimPackage: trim.package,
+        } : {}),
       }
       const res = await fetch('/api/quote', {
         method: 'POST',
@@ -356,7 +368,7 @@ export default function Configurator() {
 
                 <div class="animate-in slide-in-from-left-4 fade-in duration-500">
                   {step === 'brand' && <BrandStep brands={filteredBrands} selected={brand} onSelect={(b) => { setBrand(b); setModel(null); setStep('model'); }} search={search} onSearchChange={setSearch} />}
-                  {step === 'model' && brand && <ModelStep brand={brand} models={models} selected={model} onSelect={(m) => { setModel(m); setStep('product'); }} onBack={() => setStep('brand')} />}
+                  {step === 'model' && brand && <ModelStep brand={brand} models={models} selected={model} selectedTrim={trim} onSelect={(m, t) => { setModel(m); setTrim(t ?? null); setStep('product'); }} onBack={() => setStep('brand')} />}
                   {step === 'product' && <ProductStep products={PRODUCTS} selected={product} onSelect={(p) => { setProduct(p); setStep('mat'); }} />}
                   {step === 'mat' && <SwatchStep title="Paspas Zemin Rengi" description="Paspasın havuzlu kısmının zemin rengi." colors={MAT_COLORS} selected={matColor?.id} onSelect={(c) => { setMatColor(c); setStep('border'); }} />}
                   {step === 'border' && <SwatchStep title="Kenarlık Rengi" description="Paspasın çevresini saran biye/kenarlık şeridi." colors={BORDER_COLORS} selected={borderColor?.id} onSelect={(c) => { setBorderColor(c); setStep('heel'); }} big={false} />}
@@ -650,13 +662,15 @@ function ModelStep({
   brand,
   models,
   selected,
+  selectedTrim,
   onSelect,
   onBack: _onBack,
 }: {
   brand: Brand
   models: VehicleModel[]
   selected: VehicleModel | null
-  onSelect: (m: VehicleModel) => void
+  selectedTrim: VehicleTrim | null
+  onSelect: (m: VehicleModel, trim?: VehicleTrim) => void
   onBack: () => void
 }) {
   // Cascade state — sahibinden.com tarzı 2 aşamalı seçim
@@ -719,9 +733,120 @@ function ModelStep({
     }
   }
 
+  // Trim seçimi için: önce yıl picker pickedModel'i set eder; trim'i varsa
+  // trim picker görünür, yoksa direkt onSelect çağrılır.
+  const [pickedModel, setPickedModel] = useState<VehicleModel | null>(selected ?? null)
+  const trimsForPicked = useMemo(() => (pickedModel ? getTrimsForModel(pickedModel.id) : []), [pickedModel])
+  const [chosenTrim, setChosenTrim] = useState<VehicleTrim | null>(selectedTrim)
+
   function pickYear(year: number) {
     const gen = pickedGenerations.find((g) => year >= g.yearStart && year <= g.yearEnd)
-    if (gen) onSelect(gen)
+    if (!gen) return
+    const trims = getTrimsForModel(gen.id)
+    if (trims.length === 0) {
+      onSelect(gen)  // trim yok → direkt advance
+    } else {
+      setPickedModel(gen)  // trim picker'a geç
+    }
+  }
+
+  // Tek jenerasyon durumunda da pickModelName trim flow'unu tetiklemeli
+  function pickModelNameWithTrim(name: string) {
+    const gens = models.filter((m) => m.name === name)
+    if (gens.length === 1) {
+      const gen = gens[0]
+      const trims = getTrimsForModel(gen.id)
+      if (trims.length === 0) {
+        onSelect(gen)
+      } else {
+        setPickedModel(gen)
+      }
+    } else {
+      setPickedName(name)
+    }
+  }
+
+  // Trim picker görünür mü? (pickedModel + model'in trim'i var)
+  if (pickedModel && trimsForPicked.length > 0) {
+    return (
+      <div>
+        <header class="mb-5 flex items-start justify-between gap-3">
+          <div>
+            <h2 class="font-display text-xl font-semibold">
+              {brand.name} {pickedModel.name}
+            </h2>
+            <p class="mt-1 text-sm text-[var(--color-text-muted)]">
+              Versiyonu seç (opsiyonel). Atölyemiz tam donanımı görsün diye işaretle.
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={() => { setPickedModel(null); setChosenTrim(null) }}
+            class="px-3 py-1.5 rounded-lg text-xs font-medium bg-[var(--color-surface-2)] hover:bg-[var(--color-border)]/40 whitespace-nowrap"
+          >
+            ← Yıl değiştir
+          </button>
+        </header>
+
+        {/* Mevcut model bilgisi */}
+        <div class="mb-3 px-3 py-2 rounded-lg bg-[var(--color-surface-2)]/60 text-xs text-[var(--color-text-soft)] flex items-center gap-2 flex-wrap">
+          <span class="font-mono text-[var(--color-text)]">{pickedModel.chassisCode}</span>
+          <span>·</span>
+          <span>{pickedModel.yearStart}–{pickedModel.yearEnd}</span>
+          {pickedModel.bodyType && <><span>·</span><span>{BODY_LABEL[pickedModel.bodyType]}</span></>}
+        </div>
+
+        {/* Trim listesi */}
+        <div class="space-y-1.5 max-h-[50vh] overflow-y-auto custom-scrollbar pr-1">
+          {trimsForPicked.map((t) => {
+            const active = chosenTrim?.id === t.id
+            return (
+              <button
+                key={t.id}
+                type="button"
+                onClick={() => setChosenTrim(t)}
+                class={[
+                  'w-full text-left p-3 rounded-xl border transition-all',
+                  active
+                    ? 'border-[var(--color-primary)] bg-[var(--color-primary-soft)]'
+                    : 'border-[var(--color-border)]/40 bg-[var(--color-surface-2)]/40 hover:border-[var(--color-text-muted)]',
+                ].join(' ')}
+              >
+                <div class="flex items-center justify-between gap-2 mb-1">
+                  <span class="font-semibold text-sm">{t.name}</span>
+                  {t.power && <span class="text-[10px] font-mono text-[var(--color-primary)]">{t.power} HP</span>}
+                </div>
+                <div class="flex flex-wrap gap-2 text-[10px] text-[var(--color-text-muted)]">
+                  {t.engine && <span class="font-mono">{t.engine}</span>}
+                  {t.fuel && <span class="px-1.5 py-0.5 rounded bg-[var(--color-surface)]/60">{FUEL_LABEL[t.fuel]}</span>}
+                  {t.transmission && <span class="px-1.5 py-0.5 rounded bg-[var(--color-surface)]/60">{TRANSMISSION_LABEL[t.transmission]}</span>}
+                  {t.package && <span class="px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-300/80">{t.package}</span>}
+                </div>
+              </button>
+            )
+          })}
+        </div>
+
+        {/* Devam / Atla butonları */}
+        <div class="mt-4 grid grid-cols-2 gap-2">
+          <button
+            type="button"
+            onClick={() => onSelect(pickedModel)}
+            class="px-4 py-2.5 rounded-lg text-sm font-medium bg-[var(--color-surface-2)] hover:bg-[var(--color-border)]/40 text-[var(--color-text-soft)]"
+          >
+            Versiyon Atla
+          </button>
+          <button
+            type="button"
+            onClick={() => onSelect(pickedModel, chosenTrim ?? undefined)}
+            disabled={!chosenTrim}
+            class="px-4 py-2.5 rounded-lg text-sm font-semibold bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] text-[var(--color-bg)] disabled:opacity-30"
+          >
+            Devam →
+          </button>
+        </div>
+      </div>
+    )
   }
 
   // Yıl picker görünür mü?
@@ -863,7 +988,7 @@ function ModelStep({
               <button
                 key={u.name}
                 type="button"
-                onClick={() => pickModelName(u.name)}
+                onClick={() => pickModelNameWithTrim(u.name)}
                 class={[
                   'text-left p-4 rounded-xl border transition-all',
                   active

@@ -51,6 +51,55 @@ export type VehicleModel = {
   seats?: 5 | 7
 }
 
+/** Yakıt tipi — sahibinden.com filtre seviyesi */
+export type FuelType =
+  | 'benzin'
+  | 'dizel'
+  | 'lpg'
+  | 'hibrit'      // benzin-elektrik (HEV)
+  | 'phev'        // plug-in hybrid
+  | 'elektrik'    // tam elektrikli
+  | 'cng'
+
+/** Şanzıman tipi */
+export type Transmission =
+  | 'manuel'
+  | 'otomatik'
+  | 'yari-otomatik'
+  | 'cvt'
+  | 'dct'         // dual-clutch (DSG, PDK, S-Tronic)
+
+/** Çekiş tipi */
+export type DriveType = 'fwd' | 'rwd' | 'awd' | '4wd'
+
+/**
+ * VehicleTrim — Marka×Model×Yıl seçimine ek bir alt katman: motor + donanım.
+ * Paspas üretimi için TEKNİK olarak gereksiz (chassis kodu yeter), ama UX
+ * açısından "tam aracımı seçtim" hissi verir + admin'e satılan tam donanım
+ * bilgisi düşer.
+ *
+ * Trim verisi opsiyoneldir — bir model için trim yoksa kullanıcı yıl seçince
+ * direkt mat seçimine geçer. Trim varsa ek bir step (TrimStep) gösterilir.
+ */
+export type VehicleTrim = {
+  id: number
+  modelId: number              // VehicleModel.id referansı
+  /** Trim adı, örn. "1.4 TFSI Sport DSG", "320d xDrive Sport", "1.6 16V" */
+  name: string
+  /** Motor (boyut + teknoloji), örn. "1.4L TFSI", "2.0 TDI", "1.6 MultiAir" */
+  engine?: string
+  /** Beygir gücü (HP) */
+  power?: number
+  fuel?: FuelType
+  transmission?: Transmission
+  drive?: DriveType
+  /** Donanım paketi adı, örn. "Sport", "Premium", "Comfort", "Trend" */
+  package?: string
+  /** Üretim yıl aralığı (model'in genelinden farklıysa) */
+  yearStart?: number
+  yearEnd?: number
+}
+
 export type MatColor = {
   id: number
   slug: string
