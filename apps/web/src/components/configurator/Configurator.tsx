@@ -67,11 +67,15 @@ export type LogoPlacement =
 /** Topukluk konum tercihi */
 export type HeelPosition = 'driver-only' | 'passenger-only' | 'both' | 'none'
 
+/** Logo yönlendirmesi — yatay (default) veya dikey (90° rotated) */
+export type LogoOrientation = 'horizontal' | 'vertical'
+
 /** Bir paspas pozisyonu için logo konfigürasyonu */
 export type MatLogoConfig = {
   position: MatPosition
   brandSlug: string | null   // null = bu paspasta logo yok
   placement: LogoPlacement
+  orientation?: LogoOrientation
 }
 
 type Draft = {
@@ -179,6 +183,8 @@ export default function Configurator() {
     setLogos((prev) => prev.map((l) => (l.position === position ? { ...l, brandSlug } : l)))
   const setPlacementFor = (position: MatPosition, placement: LogoPlacement) =>
     setLogos((prev) => prev.map((l) => (l.position === position ? { ...l, placement } : l)))
+  const setOrientationFor = (position: MatPosition, orientation: LogoOrientation) =>
+    setLogos((prev) => prev.map((l) => (l.position === position ? { ...l, orientation } : l)))
   const applyLogoToAll = (brandSlug: string | null) =>
     setLogos((prev) => prev.map((l) => ({ ...l, brandSlug })))
 
@@ -455,6 +461,7 @@ export default function Configurator() {
                       logos={logos}
                       onSetLogo={setLogoFor}
                       onSetPlacement={setPlacementFor}
+                      onSetOrientation={setOrientationFor}
                       onApplyAll={applyLogoToAll}
                       onContinue={() => setStep('summary')}
                     />
@@ -1437,6 +1444,7 @@ function LogoStep({
   logos,
   onSetLogo,
   onSetPlacement,
+  onSetOrientation,
   onApplyAll,
   onContinue,
 }: {
@@ -1447,6 +1455,7 @@ function LogoStep({
   logos: MatLogoConfig[]
   onSetLogo: (position: MatPosition, brandSlug: string | null) => void
   onSetPlacement: (position: MatPosition, placement: LogoPlacement) => void
+  onSetOrientation: (position: MatPosition, orientation: LogoOrientation) => void
   onApplyAll: (brandSlug: string | null) => void
   onContinue: () => void
 }) {
@@ -1536,7 +1545,7 @@ function LogoStep({
 
               {/* Placement (sadece logo varsa) */}
               {hasLogo && (
-                <div class="mt-2 pt-2 border-t border-white/10">
+                <div class="mt-2 pt-2 border-t border-white/10 space-y-2.5">
                   <div class="flex items-start justify-between gap-3">
                     <div>
                       <div class="text-[10px] uppercase tracking-wider text-white/40 font-semibold mb-1">Logo Konumu</div>
@@ -1548,7 +1557,6 @@ function LogoStep({
                     <div class="shrink-0">
                       <div class="grid grid-cols-3 gap-0.5 p-1.5 rounded-lg bg-white/5 border border-white/10" style="width: 64px; height: 64px;">
                         {PLACEMENT_GRID.map((pl) => {
-                          // Legacy 'top'/'middle'/'bottom' = '*-center' eşdeğeri
                           const currentPlacement = cfg?.placement ?? 'top-center'
                           const normalized = currentPlacement === 'top' ? 'top-center'
                             : currentPlacement === 'middle' ? 'middle-center'
@@ -1572,6 +1580,39 @@ function LogoStep({
                           )
                         })}
                       </div>
+                    </div>
+                  </div>
+
+                  {/* Logo yönü — yatay/dikey toggle */}
+                  <div class="flex items-center justify-between gap-3">
+                    <span class="text-[10px] uppercase tracking-wider text-white/40 font-semibold">Yön</span>
+                    <div class="flex gap-1 p-0.5 rounded-lg bg-white/5 border border-white/10">
+                      {(['horizontal', 'vertical'] as const).map((or) => {
+                        const isActive = (cfg?.orientation ?? 'horizontal') === or
+                        return (
+                          <button
+                            key={or}
+                            type="button"
+                            onClick={() => onSetOrientation(pos, or)}
+                            class={[
+                              'inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-[10px] font-semibold transition-colors',
+                              isActive ? 'bg-[var(--color-primary)] text-[var(--color-bg)]' : 'text-white/60 hover:text-white',
+                            ].join(' ')}
+                          >
+                            {or === 'horizontal' ? (
+                              <>
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="3" y="9" width="18" height="6" rx="1" /></svg>
+                                Yatay
+                              </>
+                            ) : (
+                              <>
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="9" y="3" width="6" height="18" rx="1" /></svg>
+                                Dikey
+                              </>
+                            )}
+                          </button>
+                        )
+                      })}
                     </div>
                   </div>
                 </div>

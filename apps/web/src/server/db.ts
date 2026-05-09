@@ -106,6 +106,9 @@ export type LogoPlacement =
   | 'bottom-left' | 'bottom-center' | 'bottom-right'
   // Legacy (eski 3-yön kayıtları için)
   | 'top' | 'middle' | 'bottom'
+
+/** Logo yönlendirmesi — yatay (uzun kenar yatay) veya dikey (uzun kenar dikey) */
+export type LogoOrientation = 'horizontal' | 'vertical'
 /** Topukluk konum tercihi */
 export type HeelPosition = 'driver-only' | 'passenger-only' | 'both' | 'none'
 
@@ -113,6 +116,8 @@ export type MatLogoConfig = {
   position: MatPosition
   brandSlug: string | null
   placement: LogoPlacement
+  /** Logo yönü: 'horizontal' (varsayılan, yatay logo) veya 'vertical' (dikey döndürülmüş) */
+  orientation?: LogoOrientation
 }
 
 export type OrderItem = {
