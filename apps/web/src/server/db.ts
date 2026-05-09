@@ -93,7 +93,19 @@ export type ProductCategory = 'mat' | 'seat-cover' | 'steering-cover'
 /** Paspas pozisyonu (araç içinde hangi paspas) */
 export type MatPosition = 'driver' | 'passenger' | 'leftRear' | 'rightRear' | 'trunk'
 /** Logo'nun paspas üzerindeki yerleşimi */
-export type LogoPlacement = 'top' | 'middle' | 'bottom'
+/**
+ * Logo placement: 3×3 grid (paspas yüzeyinde 9 pozisyon).
+ * Kısa kod: T=Top, M=Middle, B=Bottom × L=Left, C=Center, R=Right
+ *
+ * Backward compat: eski 'top'/'middle'/'bottom' kayıtları
+ * 'top-center'/'middle-center'/'bottom-center' olarak yorumlanır.
+ */
+export type LogoPlacement =
+  | 'top-left' | 'top-center' | 'top-right'
+  | 'middle-left' | 'middle-center' | 'middle-right'
+  | 'bottom-left' | 'bottom-center' | 'bottom-right'
+  // Legacy (eski 3-yön kayıtları için)
+  | 'top' | 'middle' | 'bottom'
 /** Topukluk konum tercihi */
 export type HeelPosition = 'driver-only' | 'passenger-only' | 'both' | 'none'
 

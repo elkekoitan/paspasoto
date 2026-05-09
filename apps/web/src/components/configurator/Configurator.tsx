@@ -55,7 +55,15 @@ function loadDraft<T>(fallback: T): T {
 /** Paspas pozisyonu — araç içinde hangi paspas */
 export type MatPosition = 'driver' | 'passenger' | 'leftRear' | 'rightRear' | 'trunk'
 /** Logo'nun paspas üzerindeki yerleşimi */
-export type LogoPlacement = 'top' | 'middle' | 'bottom'
+/**
+ * Logo placement 3×3 grid — 9 pozisyon.
+ * Backward compat: eski 'top'/'middle'/'bottom' = '*-center' alias.
+ */
+export type LogoPlacement =
+  | 'top-left' | 'top-center' | 'top-right'
+  | 'middle-left' | 'middle-center' | 'middle-right'
+  | 'bottom-left' | 'bottom-center' | 'bottom-right'
+  | 'top' | 'middle' | 'bottom'  // legacy alias
 /** Topukluk konum tercihi */
 export type HeelPosition = 'driver-only' | 'passenger-only' | 'both' | 'none'
 
@@ -1382,10 +1390,44 @@ const POSITION_LABELS: Record<MatPosition, string> = {
   trunk: 'Bagaj',
 }
 const PLACEMENT_LABELS: Record<LogoPlacement, string> = {
-  top: 'Üst',
+  'top-left': 'Üst Sol',
+  'top-center': 'Üst Orta',
+  'top-right': 'Üst Sağ',
+  'middle-left': 'Orta Sol',
+  'middle-center': 'Orta',
+  'middle-right': 'Orta Sağ',
+  'bottom-left': 'Alt Sol',
+  'bottom-center': 'Alt Orta',
+  'bottom-right': 'Alt Sağ',
+  // Legacy alias (eski draft'lar için)
+  top: 'Üst Orta',
   middle: 'Orta',
-  bottom: 'Alt',
+  bottom: 'Alt Orta',
 }
+
+/** Logo placement → CSS top/left % değerleri (Preview component için) */
+export const PLACEMENT_COORDS: Record<LogoPlacement, { top: string; left: string }> = {
+  'top-left':      { top: '20%', left: '25%' },
+  'top-center':    { top: '20%', left: '50%' },
+  'top-right':     { top: '20%', left: '75%' },
+  'middle-left':   { top: '50%', left: '25%' },
+  'middle-center': { top: '50%', left: '50%' },
+  'middle-right':  { top: '50%', left: '75%' },
+  'bottom-left':   { top: '80%', left: '25%' },
+  'bottom-center': { top: '80%', left: '50%' },
+  'bottom-right':  { top: '80%', left: '75%' },
+  // Legacy
+  top:    { top: '20%', left: '50%' },
+  middle: { top: '50%', left: '50%' },
+  bottom: { top: '80%', left: '50%' },
+}
+
+/** 9-yön grid için sırayla pozisyonlar (UI picker için) */
+const PLACEMENT_GRID: LogoPlacement[] = [
+  'top-left', 'top-center', 'top-right',
+  'middle-left', 'middle-center', 'middle-right',
+  'bottom-left', 'bottom-center', 'bottom-right',
+]
 
 function LogoStep({
   brand,
@@ -1494,25 +1536,43 @@ function LogoStep({
 
               {/* Placement (sadece logo varsa) */}
               {hasLogo && (
-                <div class="mt-2 pt-2 border-t border-white/10 flex items-center gap-2">
-                  <span class="text-[10px] uppercase tracking-wider text-white/40 font-semibold">Konum:</span>
-                  <div class="flex gap-1">
-                    {(['top', 'middle', 'bottom'] as const).map((pl) => {
-                      const isActive = cfg?.placement === pl
-                      return (
-                        <button
-                          key={pl}
-                          type="button"
-                          onClick={() => onSetPlacement(pos, pl)}
-                          class={[
-                            'px-2.5 py-1 rounded-md text-[10px] font-semibold transition-colors',
-                            isActive ? 'bg-white text-black' : 'bg-white/10 text-white/60 hover:bg-white/15',
-                          ].join(' ')}
-                        >
-                          {PLACEMENT_LABELS[pl]}
-                        </button>
-                      )
-                    })}
+                <div class="mt-2 pt-2 border-t border-white/10">
+                  <div class="flex items-start justify-between gap-3">
+                    <div>
+                      <div class="text-[10px] uppercase tracking-wider text-white/40 font-semibold mb-1">Logo Konumu</div>
+                      <div class="text-[11px] text-white/70 font-medium">
+                        {cfg?.placement ? (PLACEMENT_LABELS[cfg.placement] ?? 'Üst Orta') : 'Üst Orta'}
+                      </div>
+                    </div>
+                    {/* 3x3 grid picker — paspas yüzeyini temsil eder */}
+                    <div class="shrink-0">
+                      <div class="grid grid-cols-3 gap-0.5 p-1.5 rounded-lg bg-white/5 border border-white/10" style="width: 64px; height: 64px;">
+                        {PLACEMENT_GRID.map((pl) => {
+                          // Legacy 'top'/'middle'/'bottom' = '*-center' eşdeğeri
+                          const currentPlacement = cfg?.placement ?? 'top-center'
+                          const normalized = currentPlacement === 'top' ? 'top-center'
+                            : currentPlacement === 'middle' ? 'middle-center'
+                            : currentPlacement === 'bottom' ? 'bottom-center'
+                            : currentPlacement
+                          const isActive = normalized === pl
+                          return (
+                            <button
+                              key={pl}
+                              type="button"
+                              onClick={() => onSetPlacement(pos, pl)}
+                              title={PLACEMENT_LABELS[pl]}
+                              aria-label={PLACEMENT_LABELS[pl]}
+                              class={[
+                                'rounded-sm transition-all',
+                                isActive
+                                  ? 'bg-[var(--color-primary)] ring-2 ring-[var(--color-primary)]/40'
+                                  : 'bg-white/10 hover:bg-white/25',
+                              ].join(' ')}
+                            />
+                          )
+                        })}
+                      </div>
+                    </div>
                   </div>
                 </div>
               )}
