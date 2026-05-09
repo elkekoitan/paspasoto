@@ -2,9 +2,15 @@
 title: Veri Modeli
 module: architecture
 status: stable
-last_reviewed: 2026-05-07
-related: [[01-stack]], [[10-modules/orders]], [[10-modules/stock]]
+last_reviewed: 2026-05-10
+related: [[01-stack]], [[10-modules/orders]], [[10-modules/stock]], [[10-modules/configurator]]
 ---
+
+> **2026-05-10 güncellemesi (commit ecc1bed):** `VehicleTrim` tipi eklendi.
+> Order.items[].trim* alanları opsiyonel olarak (trimId, trimName, trimEngine,
+> trimFuel, trimTransmission, trimPackage). Sahibinden seviyesi
+> Marka×Model×Yıl×Versiyon hiyerarşisi için. Detay: [[10-modules/configurator]]
+>
 
 # Veri Modeli
 

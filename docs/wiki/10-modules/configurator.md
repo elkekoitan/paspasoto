@@ -2,31 +2,54 @@
 title: Konfigüratör Modülü
 module: configurator
 status: stable
-last_reviewed: 2026-05-07
-related: [[orders]], [[stock]]
+last_reviewed: 2026-05-10
+related: [[orders]], [[stock]], [[integrations]]
 ---
 
 # Konfigüratör
 
 ## Sorumluluk
-Müşterinin aracına özel paspas konfigüre etmesini sağlayan 7-adımlı interaktif Preact island. Tasarım localStorage'a kaydedilir, sayfa kapanıp açıldığında devam eder. Talep gönderilince DB'ye `kind: 'quote'` olarak düşer.
+Müşterinin aracına özel paspas konfigüre etmesini sağlayan 8-adımlı (sahibinden tarzı) interaktif Preact island. Tasarım localStorage'a kaydedilir. Talep gönderilince DB'ye `kind: 'quote'` olarak düşer.
+
+3 ürün kategorisi: **Paspas** (ana), **Koltuk Kılıfı**, **Direksiyon Kılıfı** — üst nav pill'leri ile geçiş.
 
 ## Kritik dosyalar
-- `apps/web/src/components/configurator/Configurator.tsx` — ana akış (~1500 satır)
-- `apps/web/src/components/configurator/VirtualShowroom.tsx` — 3D-ish glassmorphic background
-- `apps/web/src/components/ui/ClientBrandLogo.tsx` — gerçek brand color logoları
-- `apps/web/src/lib/catalog.ts` — Brand, VehicleModel, MatColor, BorderColor, HeelPad, LOGO_ACCESSORIES, PRODUCTS
-- `apps/web/src/pages/konfigurator/index.astro` — sayfa wrapper
+- `apps/web/src/components/configurator/Configurator.tsx` — paspas akışı (~1900 satır)
+- `apps/web/src/components/configurator/SeatCoverConfigurator.tsx` — koltuk kılıfı
+- `apps/web/src/components/configurator/SteeringCoverConfigurator.tsx` — direksiyon kılıfı
+- `apps/web/src/components/configurator/VirtualShowroom.tsx` — Three.js cinematic backdrop + IMG fallback (commit 380938c)
+- `apps/web/src/components/ui/ClientBrandLogo.tsx` — lokal SVG marka logoları
+- `apps/web/src/lib/catalog.ts` — Brand, VehicleModel, **VehicleTrim**, BodyType, FuelType, Transmission, DriveType, MAT_COLORS, BORDER_COLORS, HEEL_PADS, LOGO_ACCESSORIES, PRODUCTS
+- `apps/web/src/lib/catalog-trims.ts` — **58 trim seed** (popüler 18 model için motor/yakıt/şanzıman/donanım paketi) (commit ecc1bed)
+- `apps/web/src/lib/catalog-seat.ts`, `catalog-steering.ts` — kategori-spesifik katalog
+- `apps/web/src/pages/konfigurator/index.astro` (paspas), `koltuk.astro`, `direksiyon.astro`
 
-## 7 adım
-1. **Marka** — 40 marka grid (gerçek brand color logoları)
-2. **Model** — seçilen markanın 2-11 alt modeli
-3. **Set** — 2'li / 4'lü / 4'lü+bagaj
-4. **Mat zemin rengi** — 10 renk swatch
-5. **Kenarlık** — 15 renk swatch
-6. **Topukluk** — 8 tür + konum (driver-only / passenger-only / both / none)
-7. **Logo per-mat** — her paspasa ayrı amblem + konum (top/middle/bottom)
-8. **Özet** → "Teklif İste" → ad+telefon+il+ilçe+adres → POST /api/quote
+## Cascade seçim akışı (sahibinden.com hiyerarşisi)
+
+```
+1. Marka (40)
+       ↓ filter chip'leri: Sedan/SUV/Hatchback/Crossover/MPV
+2. Model adı (eşsiz, jenerasyon grupları)
+       ↓ tek jenerasyon → atla; çoklu → yıl picker
+3. Yıl (4×6 grid, doğru chassis kodu otomatik)
+       ↓ trim varsa picker; yoksa atla
+4. Versiyon/Trim (motor + HP + yakıt + şanzıman + paket chip'leri)
+       ↓ "Atla" veya "Devam"
+5. Set — 2'li / 4'lü / 4'lü+bagaj
+6. Mat zemin (10 renk)
+7. Kenarlık (15 renk)
+8. Topukluk (8 tür + konum: driver-only / passenger-only / both / none)
+9. Logo per-mat (5 pozisyon × 3 placement)
+10. Özet → "Teklif İste" → POST /api/quote
+```
+
+## Live Preview (commit f77268a)
+
+Configurator JSX'inde sağ tarafa `<Preview />` component'i render edilir:
+- matColor + borderColor + heelPad + product seçili olunca otomatik görünür
+- max-w-[360px] glassmorphic kart, `slide-in-from-right` animasyonlu
+- VirtualShowroom backdrop kalır, Preview üstüne gelir
+- Mobile'da gizli (md+ ekranlarda görünür)
 
 ## State management
 - `useState` per field

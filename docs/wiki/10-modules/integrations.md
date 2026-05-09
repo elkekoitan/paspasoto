@@ -1,12 +1,34 @@
 ---
-title: E-Ticaret Entegrasyonları
+title: E-Ticaret Entegrasyonları + WhatsApp
 module: integrations
-status: trendyol-scaffold
-last_reviewed: 2026-05-07
-related: [[orders]], [[push]]
+status: trendyol-live + whatsapp-via-evolution-api
+last_reviewed: 2026-05-10
+related: [[orders]], [[push]], [[../40-runbooks/evolution-api-setup]]
 ---
 
-# E-Ticaret Entegrasyonları
+> **2026-05-10 güncellemeleri**:
+> - **Trendyol API path migration** (commit 46b99d1): `/sapigw/suppliers/{id}/...` → `/integration/.../sellers/{id}/...` (Trendyol 2024'te eski endpoint'i kapattı)
+> - **subscribedStatuses UPPERCASE** (commit 6005ecf): CREATED/PICKING/INVOICED/SHIPPED/CANCELLED/DELIVERED/RETURNED (eski PascalCase reddediliyor)
+> - **Evolution API WhatsApp** (commit 5b5af11): self-host Coolify gateway + auto-send. Kurulum: [[../40-runbooks/evolution-api-setup]]
+> - Trendyol bağlantı testi: ✅ canlıda `{"ok":true}`. Webhook kayıt için `carmat.com.tr` domain'inin canlı olması bekleniyor (sslip.io URL Trendyol "valid" görmüyor).
+
+# E-Ticaret Entegrasyonları + WhatsApp Otomasyon
+
+## WhatsApp (Evolution API)
+
+`apps/web/src/server/whatsapp-client.ts` — Evolution API REST client.
+
+| productionStatus geçişi | Otomatik mesaj |
+|---|---|
+| `received → in_production` | "Üretime alındı" + takip linki |
+| `in_production → ready` | "Hazır" + kargo no varsa |
+| `ready → delivered` | "Teslim edildi" + memnuniyet ricası |
+
+Env: `EVOLUTION_API_URL`, `EVOLUTION_API_KEY`, `EVOLUTION_INSTANCE_NAME`, `WHATSAPP_AUTO_SEND`.
+
+`AUTO_SEND=false` ise sadece `console.log` (debug). Env tanımsızsa "skipped" döner — akış bozulmaz.
+
+
 
 ## Sorumluluk
 Trendyol, Hepsiburada, WooCommerce gibi platformlardan gelen siparişleri webhook ile otomatik DB'ye yazıp üretime düşürür. Adapter pattern.
