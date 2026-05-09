@@ -101,6 +101,25 @@ const baseUrl = Astro.url.origin
               ⚠ Webhook secret env'de tanımlı değil. Coolify'dan <code class="bg-[var(--color-surface-2)] px-1 rounded">{p.secretEnv}</code> ekleyin ve restart yapın.
             </div>
           )}
+
+          {/* Trendyol API aksiyon butonları */}
+          {p.key === 'trendyol' && (
+            <div class="mt-4 pt-4 border-t border-[var(--color-border)]/40">
+              <div class="text-[10px] uppercase tracking-wider text-[var(--color-text-muted)] font-semibold mb-2">API Aksiyonları</div>
+              <div class="grid grid-cols-3 gap-2">
+                <button data-ty-action="test" class="px-3 py-2 rounded-lg bg-[var(--color-surface-2)] hover:bg-[var(--color-border)]/40 text-[11px] font-semibold transition-colors">
+                  🔌 Bağlantı Testi
+                </button>
+                <button data-ty-action="register-webhook" class="px-3 py-2 rounded-lg bg-[var(--color-primary)]/15 hover:bg-[var(--color-primary)]/25 text-[var(--color-primary)] text-[11px] font-semibold transition-colors border border-[var(--color-primary)]/30">
+                  🔔 Webhook Kaydet
+                </button>
+                <button data-ty-action="sync" class="px-3 py-2 rounded-lg bg-[var(--color-surface-2)] hover:bg-[var(--color-border)]/40 text-[11px] font-semibold transition-colors">
+                  ⬇ Son 24s Çek
+                </button>
+              </div>
+              <div id="ty-action-result" class="mt-2 text-[11px] hidden"></div>
+            </div>
+          )}
         </section>
       ))}
     </div>
@@ -231,6 +250,73 @@ const baseUrl = Astro.url.origin
           btn.textContent = '✓ Kopyalandı'
           setTimeout(() => { btn.textContent = orig }, 1500)
         } catch {}
+      })
+    })
+
+    // Trendyol API aksiyon butonları
+    const resultBox = document.getElementById('ty-action-result')
+    function showResult(html: string, kind: 'ok' | 'err' | 'info' = 'info') {
+      if (!resultBox) return
+      const palette =
+        kind === 'ok'
+          ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-300'
+          : kind === 'err'
+          ? 'bg-red-500/10 border-red-500/30 text-red-300'
+          : 'bg-[var(--color-surface-2)] border-[var(--color-border)]/40 text-[var(--color-text-soft)]'
+      resultBox.className = `mt-2 text-[11px] p-2 rounded-lg border ${palette}`
+      resultBox.classList.remove('hidden')
+      resultBox.innerHTML = html
+    }
+
+    document.querySelectorAll<HTMLButtonElement>('[data-ty-action]').forEach((btn) => {
+      btn.addEventListener('click', async () => {
+        const action = btn.dataset.tyAction
+        const orig = btn.textContent
+        btn.disabled = true
+        btn.textContent = '⏳ Çalışıyor...'
+        showResult('İstek gönderiliyor…', 'info')
+
+        try {
+          if (action === 'test') {
+            const res = await fetch('/api/integrations/trendyol/test', { method: 'POST' })
+            const data = await res.json()
+            if (data.ok) showResult(`✓ ${data.message}`, 'ok')
+            else showResult(`✗ ${data.message}`, 'err')
+          } else if (action === 'register-webhook') {
+            if (!confirm("Trendyol panelinde Carmat webhook'u kaydedilsin mi?\n\nNot: TRENDYOL_WEBHOOK_SECRET env'i tanımlı değilse imzasız webhook olarak kaydolur.")) {
+              btn.disabled = false; btn.textContent = orig; return
+            }
+            const res = await fetch('/api/integrations/trendyol/webhooks', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({}),
+            })
+            const data = await res.json()
+            if (data.ok) {
+              showResult(`✓ Webhook kaydedildi: <code>${data.registeredUrl}</code><br/>id: ${data.webhook?.id ?? '—'}`, 'ok')
+            } else {
+              showResult(`✗ Hata: ${data.error}`, 'err')
+            }
+          } else if (action === 'sync') {
+            const res = await fetch('/api/integrations/trendyol/sync', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ sinceHours: 24 }),
+            })
+            const data = await res.json()
+            if (data.ok) {
+              showResult(`✓ ${data.imported} yeni · ${data.skipped} mevcut · ${data.failed} hata (son ${data.sinceHours}s)`, 'ok')
+              if (data.imported > 0) setTimeout(() => location.reload(), 1500)
+            } else {
+              showResult(`✗ ${data.error}`, 'err')
+            }
+          }
+        } catch (e) {
+          showResult(`✗ Beklenmedik hata: ${(e as Error).message}`, 'err')
+        } finally {
+          btn.disabled = false
+          btn.textContent = orig
+        }
       })
     })
   </script>

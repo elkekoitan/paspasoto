@@ -1,6 +1,7 @@
 import type { APIRoute } from 'astro'
 import { insertOrder, generateOrderNo, generateToken, type Order } from '../../server/db'
 import { sendPush } from '../../server/push'
+import { sendQuoteReceivedMail, sendAdminNewQuoteMail } from '../../server/mail'
 
 export const prerender = false
 
@@ -68,6 +69,27 @@ export const POST: APIRoute = async ({ request }) => {
     url: '/admin/talepler',
     tag: `quote-${order.orderNo}`,
     requireInteraction: true,
+  }).catch(() => {})
+
+  // E-posta — push'tan bağımsız, SMTP_HOST tanımlı değilse "skipped" olur, akışı bozmaz
+  const productSummary = `${firstItem?.brandName ?? ''} ${firstItem?.modelName ?? ''} · ${firstItem?.productName ?? ''}`.trim()
+  // 1) Müşteriye onay maili (e-posta verdiyse)
+  if (order.customer.email) {
+    void sendQuoteReceivedMail({
+      to: order.customer.email,
+      customerName: order.customer.fullName,
+      orderNo: order.orderNo,
+      total: order.total,
+      trackingUrl: `${process.env.PUBLIC_SITE_URL ?? 'https://carmat.com.tr'}/siparis-takip/detay?o=${order.orderNo}&t=${order.accessToken}`,
+    }).catch(() => {})
+  }
+  // 2) Admin'e bildirim maili
+  void sendAdminNewQuoteMail({
+    orderNo: order.orderNo,
+    customerName: order.customer.fullName,
+    customerPhone: order.customer.phone,
+    productSummary: productSummary || 'Konfigürasyon detayı',
+    total: order.total,
   }).catch(() => {})
 
   return new Response(

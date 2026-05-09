@@ -56,16 +56,83 @@ items.some(i => i.brandSlug === 'unmapped') ?
 200 OK
 ```
 
-## Trendyol kurulum (admin için)
-1. partner.trendyol.com → Hesabım → Hesap Bilgileri → Entegrasyon Bilgileri
-2. Cari ID, API Key, Secret al → Coolify env'e ekle
-3. Webhook Yönetimi → Yeni Webhook:
-   - URL: `https://carmat.com.tr/api/integrations/trendyol/webhook`
-   - Olaylar: `OrderCreated`, `OrderStatusChanged`, `OrderPackageCreated`
-   - İmza: HMAC-SHA256
-   - Secret: `TRENDYOL_WEBHOOK_SECRET` env ile aynı
-4. Ürün eşleştirmelerini `trendyol-mapping.ts`'e ekle (V1 manuel, V2 admin UI)
-5. Test sipariş ver → admin panel "Entegrasyonlar" sayfasında görünmeli
+## Trendyol kurulum (production)
+
+### 1) Trendyol panelden bilgileri al
+- partner.trendyol.com → Hesabım → Hesap Bilgileri → **Entegrasyon Bilgileri**
+- 4 değer: Cari ID, Entegrasyon Referans Kodu, API Key, API Secret
+- ⚠️ Ekran görüntüsü/chat ile paylaşma — credential rotate etmek zorunda kalırsın
+
+### 2) Coolify env'e gir (UI veya API ile)
+
+**Yöntem A: Coolify Web UI**
+- Application → Environment Variables sekmesi → "Add"
+
+**Yöntem B: Hazır script ile (önerilen)**
+```powershell
+# PowerShell — sadece bu oturum, hiçbiri diske yazılmaz
+$env:COOLIFY_API_URL  = "http://185.255.95.111:8000"
+$env:COOLIFY_TOKEN    = "<panelden_aldigin_api_token>"
+$env:COOLIFY_APP_UUID = "kw1f0tskisx5pl6i5jw2tzgw"
+$env:TY_SUPPLIER_ID     = "669085"
+$env:TY_API_KEY         = "<rotate_edilmis_yeni_key>"
+$env:TY_API_SECRET      = "<rotate_edilmis_yeni_secret>"
+$env:TY_INTEGRATION_REF = "645c0a65-62f6-4865-bafe-f98455f0b0c9"
+$env:TY_WEBHOOK_SECRET  = [System.Web.Security.Membership]::GeneratePassword(32, 0)  # rastgele üret
+pwsh scripts/coolify-set-env.ps1
+```
+
+Eklenecek env değişkenleri:
+| Key | Açıklama |
+|---|---|
+| `TRENDYOL_SUPPLIER_ID` | Cari ID (sayısal) |
+| `TRENDYOL_API_KEY` | Trendyol API Key |
+| `TRENDYOL_API_SECRET` | Trendyol API Secret |
+| `TRENDYOL_INTEGRATION_REF` | Entegrasyon referans UUID'si |
+| `TRENDYOL_WEBHOOK_SECRET` | Sen üreteceksin (rastgele 32 char) — Trendyol panele de gireceksin |
+| `TRENDYOL_BASE_URL` | `https://apigw.trendyol.com` (default) |
+
+### 3) Coolify Application Redeploy
+
+Env'ler runtime, build-arg değil → restart yeterli:
+- Application → "Redeploy" butonu (build atlanır)
+
+### 4) Webhook'u Trendyol panele kayıt et
+
+**İki seçenek:**
+
+**A) Otomatik (Carmat admin panelinden)**:
+- `/admin/entegrasyonlar` aç
+- "🔌 Bağlantı Testi" → yeşil mi? credentials doğru mu?
+- "🔔 Webhook Kaydet" → Carmat sunucusu Trendyol API'sine `https://carmat.com.tr/api/integrations/trendyol/webhook`'unu kaydeder
+- Webhook secret env'deki `TRENDYOL_WEBHOOK_SECRET` ile aynı olur
+
+**B) Manuel (Trendyol panel)**:
+- partner.trendyol.com → **Webhook Yönetimi** → Yeni Webhook
+- URL: `https://carmat.com.tr/api/integrations/trendyol/webhook`
+- İmza Tipi: **BASIC_AUTHENTICATION** veya **HMAC-SHA256**
+- Username: `carmat`, Password: `<TRENDYOL_WEBHOOK_SECRET ile aynı değer>`
+- Olaylar (subscribedStatuses): `Created`, `Picking`, `Invoiced`, `Shipped`, `Cancelled`, `Delivered`, `Returned`
+
+### 5) Ürün eşleştirmelerini ekle
+`trendyol-mapping.ts`'e Trendyol'da yayınlanan her ürünün barkod/SKU'sunu Carmat ürün konfigürasyonuna eşle (V1 manuel, V2 admin UI). Eşleşmeyen siparişler "unmapped" olarak gelir, admin'e push gönderilir.
+
+### 6) Test
+- Trendyol'dan kendi mağazandan test sipariş ver (örn. 1₺ ürün)
+- 30 sn içinde:
+  - `/admin/entegrasyonlar` → "Son Webhook'lar" tablosunda görünür
+  - Admin'e push bildirim
+  - Sipariş `/admin/orders` listesinde channel="trendyol" badge'i ile görünür
+- Webhook gelmezse "⬇ Son 24s Çek" butonu manuel polling yapar
+
+### 7) Webhook fallback (cron)
+Webhook rate-limit/down durumlarında her saat polling için:
+```
+curl -X POST -H "X-Admin-Token: <session-cookie>" \
+  https://carmat.com.tr/api/integrations/trendyol/sync \
+  -d '{"sinceHours": 1}'
+```
+İdeal olarak Coolify'da scheduled task / cron olarak ekle.
 
 ## Yeni platform ekleme rehberi
 1. `src/server/integrations/<platform>.ts` — adapter implement et (verify + parse)

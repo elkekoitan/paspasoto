@@ -4,6 +4,7 @@ import { requireAdmin } from '../../../server/auth'
 import { sendPush, type PushPayload } from '../../../server/push'
 import { applyMovement, hasOrderConsumed, getStockBySku } from '../../../server/stock'
 import { computeConsumption } from '../../../server/stock-recipes'
+import { sendStatusChangeMail } from '../../../server/mail'
 
 const STATUS_LABEL: Record<string, string> = {
   received: 'Sipariş Alındı',
@@ -101,6 +102,17 @@ export const PATCH: APIRoute = async ({ params, cookies, request }) => {
       tag: `order-${orderNo}-status`,
       requireInteraction: patch.productionStatus === 'ready' || patch.productionStatus === 'delivered',
     } satisfies PushPayload).catch(() => {})
+
+    // Müşteriye e-posta (varsa)
+    if (updated.customer.email) {
+      void sendStatusChangeMail({
+        to: updated.customer.email,
+        customerName: updated.customer.fullName,
+        orderNo: updated.orderNo,
+        status: statusLabel,
+        trackingUrl: `${process.env.PUBLIC_SITE_URL ?? 'https://carmat.com.tr'}/siparis-takip/detay?o=${updated.orderNo}&t=${updated.accessToken}`,
+      }).catch(() => {})
+    }
   }
 
   // 3) Ödeme tamamlandı
