@@ -121,10 +121,20 @@ export default function VirtualShowroom({ imageUrl }: { imageUrl: string }) {
   }, [imageUrl])
 
   return (
-    <div 
-      ref={mountRef} 
+    <div
+      ref={mountRef}
       class="absolute inset-0 w-full h-full cursor-grab active:cursor-grabbing z-0"
     >
+      {/* 2D fallback — Three.js init edilmeden veya texture yüklenmeden önce görünür.
+          Canvas appendChild'den sonra üstüne gelir; canvas saydam değilse IMG gizlenmiş gibi olur. */}
+      <img
+        src={imageUrl}
+        alt=""
+        aria-hidden="true"
+        draggable={false}
+        class="absolute inset-0 w-full h-full object-cover select-none pointer-events-none"
+        style="z-index: 0;"
+      />
       <div class="absolute bottom-6 left-1/2 -translate-x-1/2 px-4 py-2 rounded-full bg-black/60 backdrop-blur-xl text-[10px] text-white font-bold tracking-widest uppercase ring-1 ring-white/20 pointer-events-none flex items-center gap-2 z-20 shadow-[0_0_20px_rgba(255,255,255,0.1)]">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M5 9l5-5 5 5M5 15l5 5 5-5M2 12h20" /></svg>
         3D İnceleme: Sürükle ve Yakınlaş
