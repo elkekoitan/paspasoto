@@ -705,52 +705,123 @@ function BrandStep({
   search: string
   onSearchChange: (s: string) => void
 }) {
+  // Popüler markaları üstte göster (search aktif değilse)
+  const popular = brands.filter((b) => b.popular)
+  const others = brands.filter((b) => !b.popular)
+  const showSections = search.trim() === ''
+
   return (
     <div>
       <header class="mb-5">
         <h2 class="font-display text-xl font-semibold">Aracının markası</h2>
         <p class="mt-1 text-sm text-[var(--color-text-muted)]">
-          Listede yoksa <a href="https://wa.me/905545417561" class="text-[var(--color-primary)] underline-offset-2 hover:underline">WhatsApp'tan</a> iletin.
+          Markanı seç — Türkiye'de satılan {brands.length} marka. Listede yoksa{' '}
+          <a href="https://wa.me/905545417561" class="text-[var(--color-primary)] underline-offset-2 hover:underline">WhatsApp'tan</a> iletin.
         </p>
       </header>
 
-      <input
-        type="search"
-        placeholder="Marka ara..."
-        value={search}
-        onInput={(e) => onSearchChange((e.target as HTMLInputElement).value)}
-        class="w-full mb-5 px-4 py-2.5 rounded-lg bg-[var(--color-surface-2)] border border-[var(--color-border)] focus:border-[var(--color-primary)] outline-none text-sm"
-      />
+      <div class="relative mb-5">
+        <svg class="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-white/40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="11" cy="11" r="8" /><path d="m21 21-4.35-4.35" />
+        </svg>
+        <input
+          type="search"
+          placeholder="Marka ara... (BMW, Tesla, Renault...)"
+          value={search}
+          onInput={(e) => onSearchChange((e.target as HTMLInputElement).value)}
+          class="w-full pl-10 pr-4 py-2.5 rounded-lg bg-[var(--color-surface-2)] border border-[var(--color-border)] focus:border-[var(--color-primary)] outline-none text-sm"
+        />
+      </div>
 
-      <div class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-2.5">
-        {brands.map((b) => {
-          const active = selected?.id === b.id
-          return (
-            <button
-              key={b.id}
-              type="button"
-              onClick={() => onSelect(b)}
-              class={[
-                'aspect-[4/3] rounded-xl border transition-all flex flex-col items-center justify-center gap-1.5 px-2 py-2.5',
-                active
-                  ? 'border-[var(--color-primary)] bg-[var(--color-primary-soft)] shadow-[var(--shadow-glow)] -translate-y-0.5'
-                  : 'border-[var(--color-border)]/60 bg-[var(--color-surface-2)] hover:border-[var(--color-text-muted)] hover:-translate-y-0.5',
-              ].join(' ')}
-            >
+      {showSections && popular.length > 0 && (
+        <div class="mb-5">
+          <div class="flex items-center gap-2 mb-2">
+            <span class="text-[10px] uppercase tracking-[0.2em] text-[var(--color-primary)] font-bold">⭐ Popüler</span>
+            <div class="flex-1 h-px bg-gradient-to-r from-[var(--color-primary)]/30 to-transparent"></div>
+          </div>
+          <BrandGrid brands={popular} selected={selected} onSelect={onSelect} />
+        </div>
+      )}
+
+      {showSections && others.length > 0 && (
+        <div>
+          <div class="flex items-center gap-2 mb-2">
+            <span class="text-[10px] uppercase tracking-[0.2em] text-white/40 font-bold">Diğer Markalar</span>
+            <div class="flex-1 h-px bg-white/10"></div>
+          </div>
+          <BrandGrid brands={others} selected={selected} onSelect={onSelect} />
+        </div>
+      )}
+
+      {!showSections && (
+        <BrandGrid brands={brands} selected={selected} onSelect={onSelect} />
+      )}
+
+      {brands.length === 0 && (
+        <div class="p-6 rounded-lg bg-[var(--color-surface-2)] text-sm text-[var(--color-text-muted)] text-center">
+          "{search}" araması için marka bulunamadı.
+        </div>
+      )}
+    </div>
+  )
+}
+
+/** Marka kart grid'i — premium kart tasarımı: brand color radial gradient bg + büyük logo */
+function BrandGrid({
+  brands,
+  selected,
+  onSelect,
+}: {
+  brands: Brand[]
+  selected: Brand | null
+  onSelect: (b: Brand) => void
+}) {
+  return (
+    <div class="grid grid-cols-3 sm:grid-cols-4 gap-2">
+      {brands.map((b) => {
+        const active = selected?.id === b.id
+        const brandColor = b.color || '#444'
+        return (
+          <button
+            key={b.id}
+            type="button"
+            onClick={() => onSelect(b)}
+            class={[
+              'aspect-square rounded-2xl border-2 transition-all relative overflow-hidden group',
+              active
+                ? 'border-[var(--color-primary)] shadow-[var(--shadow-glow)] -translate-y-1 scale-[1.02]'
+                : 'border-white/10 hover:border-white/30 hover:-translate-y-0.5',
+            ].join(' ')}
+            aria-label={b.name}
+          >
+            {/* Brand color radial gradient background */}
+            <div
+              class={['absolute inset-0 transition-opacity', active ? 'opacity-25' : 'opacity-10 group-hover:opacity-20'].join(' ')}
+              style={`background: radial-gradient(circle at 50% 30%, ${brandColor}, transparent 70%);`}
+            />
+            {/* Glassmorphic overlay */}
+            <div class="absolute inset-0 bg-gradient-to-br from-white/5 to-transparent pointer-events-none" />
+            {/* Active indicator (köşe rozet) */}
+            {active && (
+              <div class="absolute top-1.5 right-1.5 size-5 grid place-items-center rounded-full bg-[var(--color-primary)] text-[var(--color-bg)] z-10">
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12" /></svg>
+              </div>
+            )}
+            <div class="relative h-full flex flex-col items-center justify-center gap-1.5 p-2 z-10">
               <ClientBrandLogo
                 iconSlug={b.iconSlug}
                 name={b.name}
-                size={36}
-                color={b.color}
+                size={48}
+                color="#fff"
                 logoUrl={b.logoUrl}
               />
-              <span class={['font-display font-semibold text-[11px] sm:text-xs leading-none truncate w-full text-center', active ? 'text-[var(--color-text)]' : 'text-[var(--color-text-soft)]'].join(' ')}>
+              <span class={['font-display font-semibold text-[11px] sm:text-xs leading-none truncate w-full text-center', active ? 'text-white' : 'text-white/80'].join(' ')}>
                 {b.name}
               </span>
-            </button>
-          )
-        })}
-      </div>
+            </div>
+          </button>
+        )
+      })}
     </div>
   )
 }
