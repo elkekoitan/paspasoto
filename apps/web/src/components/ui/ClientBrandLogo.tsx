@@ -75,6 +75,7 @@ export default function ClientBrandLogo({
   name,
   size = 36,
   color,
+  logoUrl,
   className = '',
 }: {
   iconSlug?: string
@@ -82,8 +83,22 @@ export default function ClientBrandLogo({
   size?: number
   /** Marka rengi override (varsayılan: simple-icons hex). */
   color?: string
+  logoUrl?: string
   className?: string
 }) {
+  if (logoUrl) {
+    return (
+      <img 
+        src={logoUrl} 
+        alt={name} 
+        width={size} 
+        height={size} 
+        class={`object-contain ${className}`}
+        style={`width: ${size}px; height: ${size}px;`}
+      />
+    )
+  }
+
   const icon = iconSlug ? REGISTRY[iconSlug] : undefined
   const fill = color ?? (icon ? `#${icon.hex}` : 'currentColor')
 

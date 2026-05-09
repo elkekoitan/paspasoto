@@ -87,7 +87,25 @@ export const PAYMENT_METHOD_LABELS: Record<PaymentMethod, string> = {
   taksit: 'Parçalı / Taksit',
 }
 
+/** Ürün kategorisi — paspas / koltuk kılıfı / direksiyon kılıfı */
+export type ProductCategory = 'mat' | 'seat-cover' | 'steering-cover'
+
+/** Paspas pozisyonu (araç içinde hangi paspas) */
+export type MatPosition = 'driver' | 'passenger' | 'leftRear' | 'rightRear' | 'trunk'
+/** Logo'nun paspas üzerindeki yerleşimi */
+export type LogoPlacement = 'top' | 'middle' | 'bottom'
+/** Topukluk konum tercihi */
+export type HeelPosition = 'driver-only' | 'passenger-only' | 'both' | 'none'
+
+export type MatLogoConfig = {
+  position: MatPosition
+  brandSlug: string | null
+  placement: LogoPlacement
+}
+
 export type OrderItem = {
+  /** Default 'mat' (geriye dönük uyumluluk) */
+  category?: ProductCategory
   brandSlug: string
   brandName: string
   modelSlug: string
@@ -105,11 +123,26 @@ export type OrderItem = {
   heelSlug: string
   heelName: string
   heelSwatchUrl: string
+  /** Eski şema (backward compat). Yeni kayıtlar heelPosition kullanır. */
   heelPadPassenger: boolean
+  /** Yeni şema: topukluk konum tercihi */
+  heelPosition?: HeelPosition
+  /** Eski şema (backward compat). İlk dolu logos[] entry'sinin brandSlug'ı yansır. */
   logoBrandSlug: string | null
+  /** Eski şema: aktif logo sayısı */
   logoQty: number
+  /** Yeni şema: her paspas pozisyonu için ayrı logo + konum */
+  logos?: MatLogoConfig[]
   qty: number
   unitPrice: number
+  /** Koltuk kılıfı için (category='seat-cover'): malzeme/renk/araç tipi */
+  seatMaterialSlug?: string
+  seatColorSlug?: string
+  seatFitmentBrand?: string
+  /** Direksiyon kılıfı için (category='steering-cover'): boyut/desen/malzeme */
+  steeringSize?: 'S' | 'M' | 'L'
+  steeringPatternSlug?: string
+  steeringMaterialSlug?: string
 }
 
 export type OrderEvent = {
@@ -128,11 +161,30 @@ export type OrderEvent = {
  */
 export type OrderKind = 'order' | 'quote'
 
+/** Sipariş kanalı — nereden geldi */
+export type Channel =
+  | 'manual'         // admin panelden manuel
+  | 'configurator'   // müşteri konfigüratörden
+  | 'physical_store' // dükkanda elden
+  | 'trendyol'
+  | 'hepsiburada'
+  | 'woocommerce'
+  | 'shopify'
+  | 'n11'
+
 export type Order = {
   orderNo: string
   accessToken: string
   /** Default 'order' (geriye dönük uyumluluk için undefined da 'order' kabul edilir) */
   kind?: OrderKind
+  /** Sipariş kaynağı kanalı (default 'manual') */
+  channel?: Channel
+  /** Dış platform referansı (Trendyol vs.) */
+  externalRef?: {
+    platform: Channel
+    id: string
+    rawPayload?: unknown
+  }
   customer: { fullName: string; phone: string; email?: string }
   shippingAddress: {
     fullName: string

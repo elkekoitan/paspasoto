@@ -3,7 +3,7 @@ import '../styles/globals.css'
 
 interface Props {
   title?: string
-  current?: 'dashboard' | 'orders' | 'new' | 'quotes'
+  current?: 'dashboard' | 'orders' | 'new' | 'quotes' | 'stock'
 }
 const { title = 'Yönetim', current = 'dashboard' } = Astro.props
 
@@ -11,13 +11,16 @@ const NAV = [
   { key: 'dashboard', href: '/admin', label: 'Gösterge', icon: 'M3 12l9-9 9 9M5 10v10h4v-6h6v6h4V10' },
   { key: 'quotes', href: '/admin/talepler', label: 'Talepler', icon: 'M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z', badge: 'quotes' as const },
   { key: 'orders', href: '/admin/orders', label: 'Siparişler', icon: 'M9 11l3 3 8-8M3 12a9 9 0 1 0 18 0 9 9 0 0 0-18 0z' },
+  { key: 'stock', href: '/admin/stok', label: 'Stok', icon: 'M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z M3.27 6.96 12 12.01l8.73-5.05 M12 22.08V12', badge: 'stock' as const },
   { key: 'new', href: '/admin/orders/new', label: 'Yeni Sipariş', icon: 'M12 5v14M5 12h14' },
 ]
 
 // Talepler badge — bekleyen ön talep sayısı
 import { listOrders } from '../server/db'
+import { getCriticalItems } from '../server/stock'
 const allOrders = listOrders()
 const pendingQuotes = allOrders.filter((o) => o.kind === 'quote' && o.productionStatus === 'received').length
+const criticalStockCount = (() => { try { return getCriticalItems().length } catch { return 0 } })()
 ---
 
 <!doctype html>
@@ -27,7 +30,7 @@ const pendingQuotes = allOrders.filter((o) => o.kind === 'quote' && o.production
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <meta name="theme-color" content="#0B0B0F" />
     <meta name="robots" content="noindex,nofollow" />
-    <title>{title} · Carmat Yönetim</title>
+    <title>{title} · PaspasOto Yönetim</title>
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="apple-touch-icon" href="/icons/icon-192.png" />
     <link rel="manifest" href="/admin-manifest.webmanifest" />
@@ -94,7 +97,7 @@ const pendingQuotes = allOrders.filter((o) => o.kind === 'quote' && o.production
     {/* MOBILE TOP BAR — sadece logo + sayfa başlığı (hamburger yok, bottom nav var) */}
     <header class="md:hidden sticky top-0 z-30 flex items-center justify-center gap-3 px-4 h-12 bg-[var(--color-surface)]/85 border-b border-[var(--color-border)]/40 backdrop-blur-md">
       <a href="/admin" class="flex items-center gap-2">
-        <img src="/logo.png" alt="Carmat" class="h-6 w-auto" />
+        <img src="/images/paspasoto_logo_1778184847608.png" alt="PaspasOto" class="h-8 w-auto object-contain" />
         <span class="text-[10px] uppercase tracking-[0.18em] text-[var(--color-text-muted)] font-semibold">Yönetim</span>
       </a>
     </header>
@@ -108,7 +111,7 @@ const pendingQuotes = allOrders.filter((o) => o.kind === 'quote' && o.production
         {/* Logo + close button */}
         <div class="flex items-center justify-between p-5 border-b border-[var(--color-border)]/60">
           <a href="/admin" class="flex items-center gap-3">
-            <img src="/logo.png" alt="Carmat" class="h-8 w-auto" />
+            <img src="/images/paspasoto_logo_1778184847608.png" alt="PaspasOto" class="h-10 w-auto object-contain drop-shadow-[0_0_10px_rgba(255,255,255,0.05)]" />
             <div class="text-[10px] uppercase tracking-[0.2em] text-[var(--color-text-muted)] font-semibold">Yönetim</div>
           </a>
           <button id="adminNavClose" type="button" aria-label="Menüyü kapat" class="md:hidden size-8 grid place-items-center rounded-lg hover:bg-[var(--color-surface-2)]">
@@ -148,6 +151,9 @@ const pendingQuotes = allOrders.filter((o) => o.kind === 'quote' && o.production
                     <span class="flex-1">{n.label}</span>
                     {n.badge === 'quotes' && pendingQuotes > 0 && (
                       <span class="px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-500 text-black">{pendingQuotes}</span>
+                    )}
+                    {n.badge === 'stock' && criticalStockCount > 0 && (
+                      <span class="px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-red-500 text-white">{criticalStockCount}</span>
                     )}
                   </a>
                 </li>
@@ -198,10 +204,10 @@ const pendingQuotes = allOrders.filter((o) => o.kind === 'quote' && o.production
     >
       <div class="grid grid-cols-5 gap-1 px-2 pt-2 pb-1">
         {([
-          { key: 'dashboard', href: '/admin', label: 'Gösterge', icon: 'M3 12l9-9 9 9M5 10v10h4v-6h6v6h4V10' },
-          { key: 'quotes', href: '/admin/talepler', label: 'Talepler', icon: 'M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z', badge: pendingQuotes },
-          { key: 'new', href: '/admin/orders/new', label: 'Yeni', icon: 'M12 5v14M5 12h14', isFab: true },
+          { key: 'quotes', href: '/admin/talepler', label: 'Talepler', icon: 'M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z', badge: pendingQuotes, badgeColor: 'amber' as const },
           { key: 'orders', href: '/admin/orders', label: 'Siparişler', icon: 'M9 11l3 3 8-8M3 12a9 9 0 1 0 18 0 9 9 0 0 0-18 0z' },
+          { key: 'new', href: '/admin/orders/new', label: 'Yeni', icon: 'M12 5v14M5 12h14', isFab: true },
+          { key: 'stock', href: '/admin/stok', label: 'Stok', icon: 'M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z', badge: criticalStockCount, badgeColor: 'red' as const },
           { key: 'menu', href: '#', label: 'Menü', icon: 'M3 6h18M3 12h18M3 18h18', isMenu: true },
         ] as const).map((it) => {
           const active = current === it.key
@@ -234,7 +240,10 @@ const pendingQuotes = allOrders.filter((o) => o.kind === 'quote' && o.production
               <span class={['size-9 grid place-items-center rounded-xl', active ? 'bg-[var(--color-primary-soft)]' : ''].join(' ')}>
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d={it.icon} /></svg>
                 {'badge' in it && it.badge && it.badge > 0 && (
-                  <span class="absolute top-0.5 right-2 size-4 grid place-items-center rounded-full text-[9px] font-bold bg-amber-500 text-black ring-2 ring-[var(--color-surface)]">{it.badge}</span>
+                  <span class={[
+                    'absolute top-0.5 right-2 size-4 grid place-items-center rounded-full text-[9px] font-bold ring-2 ring-[var(--color-surface)]',
+                    it.badgeColor === 'red' ? 'bg-red-500 text-white' : 'bg-amber-500 text-black',
+                  ].join(' ')}>{it.badge}</span>
                 )}
               </span>
               <span class="text-[10px] font-semibold tracking-tight">{it.label}</span>
@@ -249,6 +258,10 @@ const pendingQuotes = allOrders.filter((o) => o.kind === 'quote' && o.production
       <div data-close="menu" class="absolute inset-0 bg-black/60 backdrop-blur-sm"></div>
       <div class="absolute bottom-0 left-0 right-0 bg-[var(--color-surface)] rounded-t-3xl border-t border-[var(--color-border)] p-5 pb-[calc(20px+env(safe-area-inset-bottom))] space-y-2">
         <div class="size-12 h-1.5 bg-[var(--color-border)] rounded-full mx-auto mb-3"></div>
+        <a href="/admin" class="flex items-center gap-3 px-3 py-3 rounded-xl text-sm font-semibold bg-[var(--color-surface-2)] hover:bg-[var(--color-border)]/40">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12l9-9 9 9M5 10v10h4v-6h6v6h4V10" /></svg>
+          Gösterge Paneli (Analiz)
+        </a>
         <a href="/" class="flex items-center gap-3 px-3 py-3 rounded-xl bg-gradient-to-br from-[var(--color-primary-soft)] to-[var(--color-surface-2)] border border-[var(--color-primary)]/30 text-[var(--color-primary)] font-semibold">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12l9-9 9 9M5 10v10h14V10" /></svg>
           Müşteri Anasayfası ↗

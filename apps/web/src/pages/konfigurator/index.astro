@@ -1,32 +1,49 @@
 ---
-export const prerender = true
-import Base from '@layouts/Base.astro'
+export const prerender = false
 import Configurator from '@components/configurator/Configurator.tsx'
+import '../../styles/globals.css'
 ---
 
-<Base
-  title="Paspasınızı Tasarlayın — Konfigüratör"
-  description="Marka, model, paspas rengi, kenarlık, topukluk ve amblem seç. 7 adımda paspasınızı tasarlayın, canlı önizleyin ve siparişinizi oluşturmaya başlayın."
->
-  <section class="container-page pt-8 pb-20">
-    <div class="mb-8 flex items-end justify-between flex-wrap gap-4">
-      <div>
-        <p class="text-xs uppercase tracking-[0.2em] text-[var(--color-primary)] font-semibold">Konfigüratör</p>
-        <h1 class="mt-2 font-display text-3xl md:text-5xl font-semibold tracking-tight leading-[1.05]">
-          Paspasınızı <span class="text-gradient-amber">tasarlayın</span>.
-        </h1>
-        <p class="mt-3 text-[var(--color-text-soft)] max-w-xl">
-          7 adım, canlı önizleme. Aracınıza özel kombinasyonu siz tasarlayın — atölyemiz üretime başlasın.
-        </p>
-      </div>
-      <a
-        href="/galeri"
-        class="hidden sm:inline-flex items-center gap-1.5 text-sm font-medium text-[var(--color-text-soft)] hover:text-[var(--color-primary)] transition-colors"
-      >
-        İlham almak için müşteri galerisi →
-      </a>
-    </div>
+<!doctype html>
+<html lang="tr" class="dark">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <title>Paspasınızı Tasarlayın — Konfigüratör | PaspasOto</title>
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+    <style>
+      body, html {
+        margin: 0;
+        padding: 0;
+        width: 100%;
+        height: 100%;
+        overflow: hidden; /* Prevent scrolling, fully immersive */
+        background: #000;
+        color: #fff;
+        font-family: 'Inter', sans-serif;
+      }
+      /* Hide standard scrollbars */
+      ::-webkit-scrollbar { width: 0px; background: transparent; }
+    </style>
+  </head>
+  <body>
+    <main class="relative w-full h-[100dvh] overflow-hidden">
+      {/* Top transparent minimal nav */}
+      <nav class="absolute top-0 inset-x-0 z-50 p-6 flex items-center justify-between pointer-events-none">
+        <a href="/" class="pointer-events-auto hover:scale-105 transition-transform origin-left">
+          <img src="/images/paspasoto_logo_1778184847608.png" alt="PaspasOto" class="h-10 md:h-12 w-auto object-contain drop-shadow-[0_4px_12px_rgba(0,0,0,0.8)]" />
+        </a>
+        <div class="pointer-events-auto">
+          <a href="/" class="px-5 py-2.5 rounded-full bg-white/10 hover:bg-white/20 backdrop-blur-md border border-white/20 text-white text-xs font-semibold tracking-wider uppercase transition-all shadow-lg hover:shadow-white/10">
+            Çıkış Yap
+          </a>
+        </div>
+      </nav>
 
-    <Configurator client:load />
-  </section>
-</Base>
+      {/* Cinematic Configurator */}
+      <Configurator client:load />
+    </main>
+  </body>
+</html>

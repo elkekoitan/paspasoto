@@ -2,6 +2,8 @@ import type { APIRoute } from 'astro'
 import { getByOrderNo, updateOrder, deleteOrder, type OrderStatus, type PaymentStatus } from '../../../server/db'
 import { requireAdmin } from '../../../server/auth'
 import { sendPush, type PushPayload } from '../../../server/push'
+import { applyMovement, hasOrderConsumed, getStockBySku } from '../../../server/stock'
+import { computeConsumption } from '../../../server/stock-recipes'
 
 const STATUS_LABEL: Record<string, string> = {
   received: 'Sipariş Alındı',
@@ -119,6 +121,44 @@ export const PATCH: APIRoute = async ({ params, cookies, request }) => {
       url: trackUrl,
       tag: `order-${orderNo}-cargo`,
     } satisfies PushPayload).catch(() => {})
+  }
+
+  // 5) Stok tüketimi — sipariş in_production'a yeni geçtiyse hammadde düşür + kritik kontrol
+  if (
+    patch.productionStatus === 'in_production' &&
+    before?.productionStatus !== 'in_production' &&
+    !hasOrderConsumed(orderNo)
+  ) {
+    try {
+      const entries = computeConsumption(updated)
+      const criticalNow: Array<{ sku: string; label: string; qty: number; unit: string }> = []
+      for (const e of entries) {
+        await applyMovement({
+          sku: e.sku,
+          delta: e.delta,
+          reason: 'order_consume',
+          orderNo,
+          actor: 'system',
+          note: e.label,
+        })
+        const after = getStockBySku(e.sku)
+        if (after && after.qty <= after.criticalThreshold) {
+          criticalNow.push({ sku: after.sku, label: after.label, qty: after.qty, unit: after.unit })
+        }
+      }
+      // Kritik stok push'u — admin'e
+      for (const c of criticalNow) {
+        void sendPush('admin', {
+          title: '⚠ Kritik Stok',
+          body: `${c.label}: ${c.qty.toFixed(c.unit === 'piece' ? 0 : 2)}${c.unit === 'meter' ? 'm' : c.unit === 'kg' ? 'kg' : ''} kaldı`,
+          url: '/admin/stok',
+          tag: `stock-critical-${c.sku}`,
+          requireInteraction: true,
+        } satisfies PushPayload).catch(() => {})
+      }
+    } catch (err) {
+      console.warn('[stock] consume hatası', err)
+    }
   }
 
   return new Response(JSON.stringify(updated), {

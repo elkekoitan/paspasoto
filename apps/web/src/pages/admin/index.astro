@@ -121,57 +121,58 @@ const paidPercent = totalRevenue ? Math.round((paidRevenue / totalRevenue) * 100
 
 <AdminLayout title="Gösterge" current="dashboard">
   <div class="p-6 md:p-10 max-w-7xl mx-auto">
-    <header class="flex items-end justify-between gap-4 mb-8 flex-wrap">
+    <header class="flex items-end justify-between gap-4 mb-8 flex-wrap animate-in fade-in slide-in-from-top-4 duration-700">
       <div>
-        <p class="text-xs uppercase tracking-[0.2em] text-[var(--color-primary)] font-semibold">
-          Atölye Yönetim
+        <p class="text-[10px] uppercase tracking-[0.25em] text-[var(--color-primary)] font-bold drop-shadow-[0_0_8px_rgba(var(--color-primary-rgb),0.5)]">
+          PaspasOto Yönetim Sistemi
         </p>
-        <h1 class="mt-2 font-display text-3xl font-semibold">Gösterge Paneli</h1>
-        <p class="mt-1.5 text-sm text-[var(--color-text-soft)]">
-          Bu ay {last30.length} sipariş · {formatTRY(revenueLast30)} ciro · {repeatCustomers} tekrar eden müşteri
+        <h1 class="mt-2 font-display text-4xl font-bold tracking-tight bg-gradient-to-r from-white to-white/60 bg-clip-text text-transparent">Gösterge Paneli</h1>
+        <p class="mt-2 text-sm text-[var(--color-text-soft)] font-medium">
+          Bu ay <span class="text-white font-semibold">{last30.length}</span> sipariş · <span class="text-white font-semibold">{formatTRY(revenueLast30)}</span> ciro · <span class="text-[var(--color-primary)]">{repeatCustomers}</span> sadık müşteri
         </p>
       </div>
       <a
         href="/admin/orders/new"
-        class="inline-flex items-center gap-2 px-5 py-3 rounded-xl text-sm font-semibold bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] text-[var(--color-bg)] transition-all"
+        class="inline-flex items-center gap-2 px-6 py-3 rounded-xl text-sm font-bold bg-gradient-to-r from-[var(--color-primary)] to-[var(--color-primary-hover)] text-[var(--color-bg)] transition-all hover:scale-105 hover:shadow-[0_0_20px_rgba(var(--color-primary-rgb),0.4)]"
       >
-        + Yeni Sipariş
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+        Yeni Sipariş
       </a>
     </header>
 
     {/* KPI Row — tıklanınca filtreli sipariş listesine */}
-    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-      <a href="/admin/orders" class="p-5 rounded-2xl bg-[var(--color-surface)] border border-[var(--color-border)]/60 hover:border-[var(--color-primary)]/40 hover:-translate-y-0.5 transition-all group">
-        <div class="text-[10px] uppercase tracking-[0.2em] text-[var(--color-text-muted)] font-semibold flex items-center justify-between">
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-5 mb-8">
+      <a href="/admin/orders" class="p-6 rounded-2xl bg-[var(--color-surface)] border border-[var(--color-border)]/60 hover:border-[var(--color-primary)]/50 hover:-translate-y-1 shadow-lg hover:shadow-[0_10px_30px_rgba(0,0,0,0.5)] transition-all duration-300 group animate-in fade-in slide-in-from-bottom-4 duration-700" style="animation-fill-mode: backwards; animation-delay: 100ms;">
+        <div class="text-[10px] uppercase tracking-[0.2em] text-[var(--color-text-muted)] font-bold flex items-center justify-between">
           Toplam Sipariş
-          <span class="text-[var(--color-text-muted)] group-hover:text-[var(--color-primary)] transition-colors">→</span>
+          <span class="text-[var(--color-text-muted)] group-hover:text-[var(--color-primary)] transition-colors opacity-0 group-hover:opacity-100 group-hover:translate-x-1 duration-300">→</span>
         </div>
-        <div class="mt-2 font-display text-3xl font-semibold tabular-nums">{orders.length}</div>
-        <div class="mt-1 text-xs text-[var(--color-text-muted)]">Son 7 gün: {last7.length}</div>
+        <div class="mt-3 font-display text-4xl font-bold tabular-nums tracking-tight">{orders.length}</div>
+        <div class="mt-1.5 text-xs text-[var(--color-text-soft)] font-medium">Son 7 gün: <span class="text-white">{last7.length}</span></div>
       </a>
-      <a href="/admin/orders?filter=production" class="p-5 rounded-2xl bg-[var(--color-surface)] border border-[var(--color-border)]/60 hover:border-amber-500/40 hover:-translate-y-0.5 transition-all group">
-        <div class="text-[10px] uppercase tracking-[0.2em] text-[var(--color-text-muted)] font-semibold flex items-center justify-between">
+      <a href="/admin/orders?filter=production" class="p-6 rounded-2xl bg-[var(--color-surface)] border border-[var(--color-border)]/60 hover:border-amber-500/50 hover:-translate-y-1 shadow-lg hover:shadow-[0_10px_30px_rgba(245,158,11,0.15)] transition-all duration-300 group animate-in fade-in slide-in-from-bottom-4 duration-700" style="animation-fill-mode: backwards; animation-delay: 200ms;">
+        <div class="text-[10px] uppercase tracking-[0.2em] text-[var(--color-text-muted)] font-bold flex items-center justify-between">
           Üretimde
-          <span class="text-[var(--color-text-muted)] group-hover:text-amber-400 transition-colors">→</span>
+          <span class="text-[var(--color-text-muted)] group-hover:text-amber-400 transition-colors opacity-0 group-hover:opacity-100 group-hover:translate-x-1 duration-300">→</span>
         </div>
-        <div class="mt-2 font-display text-3xl font-semibold tabular-nums">{inProductionCount}</div>
-        <div class="mt-1 text-xs text-[var(--color-text-muted)]">Hazır: {readyCount} · Teslim: {deliveredCount}</div>
+        <div class="mt-3 font-display text-4xl font-bold tabular-nums tracking-tight text-amber-50">{inProductionCount}</div>
+        <div class="mt-1.5 text-xs text-[var(--color-text-soft)] font-medium">Hazır: <span class="text-white">{readyCount}</span> · Teslim: <span class="text-white">{deliveredCount}</span></div>
       </a>
-      <a href="/admin/orders?filter=unpaid" class="p-5 rounded-2xl bg-[var(--color-surface)] border border-[var(--color-border)]/60 hover:border-blue-500/40 hover:-translate-y-0.5 transition-all group">
-        <div class="text-[10px] uppercase tracking-[0.2em] text-[var(--color-text-muted)] font-semibold flex items-center justify-between">
+      <a href="/admin/orders?filter=unpaid" class="p-6 rounded-2xl bg-[var(--color-surface)] border border-[var(--color-border)]/60 hover:border-blue-500/50 hover:-translate-y-1 shadow-lg hover:shadow-[0_10px_30px_rgba(59,130,246,0.15)] transition-all duration-300 group animate-in fade-in slide-in-from-bottom-4 duration-700" style="animation-fill-mode: backwards; animation-delay: 300ms;">
+        <div class="text-[10px] uppercase tracking-[0.2em] text-[var(--color-text-muted)] font-bold flex items-center justify-between">
           Ödeme Bekliyor
-          <span class="text-[var(--color-text-muted)] group-hover:text-blue-400 transition-colors">→</span>
+          <span class="text-[var(--color-text-muted)] group-hover:text-blue-400 transition-colors opacity-0 group-hover:opacity-100 group-hover:translate-x-1 duration-300">→</span>
         </div>
-        <div class="mt-2 font-display text-3xl font-semibold tabular-nums">{awaitingPaymentCount}</div>
-        <div class="mt-1 text-xs text-[var(--color-text-muted)]">Açık: {formatTRY(remainingRevenue)}</div>
+        <div class="mt-3 font-display text-4xl font-bold tabular-nums tracking-tight text-blue-50">{awaitingPaymentCount}</div>
+        <div class="mt-1.5 text-xs text-[var(--color-text-soft)] font-medium">Açık: <span class="text-white">{formatTRY(remainingRevenue)}</span></div>
       </a>
-      <a href="/admin/orders?sort=total-desc" class="p-5 rounded-2xl bg-[var(--color-surface)] border border-[var(--color-border)]/60 hover:border-emerald-500/40 hover:-translate-y-0.5 transition-all group">
-        <div class="text-[10px] uppercase tracking-[0.2em] text-[var(--color-text-muted)] font-semibold flex items-center justify-between">
-          Ciro
-          <span class="text-[var(--color-text-muted)] group-hover:text-emerald-400 transition-colors">→</span>
+      <a href="/admin/orders?sort=total-desc" class="p-6 rounded-2xl bg-[var(--color-surface)] border border-[var(--color-border)]/60 hover:border-emerald-500/50 hover:-translate-y-1 shadow-lg hover:shadow-[0_10px_30px_rgba(16,185,129,0.15)] transition-all duration-300 group animate-in fade-in slide-in-from-bottom-4 duration-700" style="animation-fill-mode: backwards; animation-delay: 400ms;">
+        <div class="text-[10px] uppercase tracking-[0.2em] text-[var(--color-text-muted)] font-bold flex items-center justify-between">
+          Toplam Ciro
+          <span class="text-[var(--color-text-muted)] group-hover:text-emerald-400 transition-colors opacity-0 group-hover:opacity-100 group-hover:translate-x-1 duration-300">→</span>
         </div>
-        <div class="mt-2 font-display text-3xl font-semibold tabular-nums">{formatTRY(totalRevenue)}</div>
-        <div class="mt-1 text-xs text-[var(--color-text-muted)]">Tahsil: {formatTRY(paidRevenue)} (%{paidPercent})</div>
+        <div class="mt-3 font-display text-3xl md:text-4xl font-bold tabular-nums tracking-tight text-emerald-50">{formatTRY(totalRevenue)}</div>
+        <div class="mt-1.5 text-xs text-[var(--color-text-soft)] font-medium">Tahsilat: <span class="text-white">{formatTRY(paidRevenue)}</span> <span class="text-emerald-400">(%{paidPercent})</span></div>
       </a>
     </div>
 
@@ -207,7 +208,7 @@ const paidPercent = totalRevenue ? Math.round((paidRevenue / totalRevenue) * 100
     </div>
 
     {/* Analiz panelleri */}
-    <div class="grid lg:grid-cols-2 gap-5 mb-10">
+    <div class="grid lg:grid-cols-2 gap-6 mb-12 animate-in fade-in slide-in-from-bottom-8 duration-1000 delay-500" style="animation-fill-mode: backwards;">
       {/* Top Brands */}
       <section class="p-5 rounded-2xl bg-[var(--color-surface)] border border-[var(--color-border)]/60">
         <header class="mb-4">
@@ -359,7 +360,7 @@ const paidPercent = totalRevenue ? Math.round((paidRevenue / totalRevenue) * 100
     </div>
 
     {/* Son siparişler */}
-    <div class="rounded-2xl bg-[var(--color-surface)] border border-[var(--color-border)]/60 overflow-hidden">
+    <div class="rounded-2xl bg-[var(--color-surface)] border border-[var(--color-border)]/60 overflow-hidden shadow-xl animate-in fade-in slide-in-from-bottom-4 duration-1000 delay-700" style="animation-fill-mode: backwards;">
       <div class="flex items-center justify-between p-5 border-b border-[var(--color-border)]/60">
         <h2 class="font-display text-lg font-semibold">Son Siparişler</h2>
         <a href="/admin/orders" class="text-xs text-[var(--color-text-muted)] hover:text-[var(--color-primary)]">

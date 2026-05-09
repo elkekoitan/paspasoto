@@ -1,0 +1,213 @@
+---
+export const prerender = false
+import AdminLayout from '@layouts/AdminLayout.astro'
+import { getSession } from '../../../server/auth'
+import { listStock, listMovements, type StockKind } from '../../../server/stock'
+import { formatDateTime } from '@lib/format'
+
+if (!getSession(Astro.cookies)) return Astro.redirect('/admin/login')
+
+const stock = listStock()
+const recentMovements = listMovements().slice(0, 30)
+
+const KIND_LABELS: Record<StockKind, { label: string; icon: string; color: string }> = {
+  mat_base: { label: 'Paspas Tabanı', icon: '🟦', color: 'text-blue-400' },
+  border_trim: { label: 'Kenarlık Biye', icon: '🎀', color: 'text-amber-400' },
+  heel_pad: { label: 'Topukluk Pedi', icon: '👟', color: 'text-emerald-400' },
+  logo_plate: { label: 'Marka Amblemi', icon: '🏷', color: 'text-violet-400' },
+  seat_fabric: { label: 'Koltuk Kumaşı', icon: '🪑', color: 'text-rose-400' },
+  steering_grip: { label: 'Direksiyon Kılıfı', icon: '🎯', color: 'text-cyan-400' },
+  packaging: { label: 'Paketleme', icon: '📦', color: 'text-orange-400' },
+  thread: { label: 'İplik', icon: '🧵', color: 'text-pink-400' },
+}
+
+const REASON_LABELS: Record<string, string> = {
+  order_consume: 'Sipariş tüketim',
+  manual_in: 'Mal alımı',
+  manual_out: 'Manuel çıkış',
+  fire: 'Fire',
+  count_fix: 'Sayım düzeltme',
+}
+
+// Filtre: kind seçici
+const selectedKind = (Astro.url.searchParams.get('kind') ?? '') as StockKind | ''
+const filtered = selectedKind ? stock.filter((s) => s.kind === selectedKind) : stock
+// Pre-compute kritik SKU'lar (Astro JSX parser <= operatörü ile takılıyor → Set lookup ile bypass)
+const criticalSkus = new Set(stock.filter((s) => s.qty <= s.criticalThreshold).map((s) => s.sku))
+const isCriticalSku = (sku: string) => criticalSkus.has(sku)
+
+const critical = stock.filter((s) => s.qty <= s.criticalThreshold)
+const totalSku = stock.length
+const totalCritical = critical.length
+
+// Group by kind for sekme sayıları
+const kindCounts = new Map<StockKind, number>()
+const kindCritical = new Map<StockKind, number>()
+for (const s of stock) {
+  kindCounts.set(s.kind, (kindCounts.get(s.kind) ?? 0) + 1)
+  if (s.qty <= s.criticalThreshold) kindCritical.set(s.kind, (kindCritical.get(s.kind) ?? 0) + 1)
+}
+const KIND_ORDER: StockKind[] = ['mat_base', 'border_trim', 'heel_pad', 'logo_plate', 'seat_fabric', 'steering_grip', 'packaging', 'thread']
+---
+
+<AdminLayout title="Stok" current="stock">
+  <div class="p-4 md:p-10 max-w-7xl mx-auto">
+    <header class="flex items-end justify-between gap-4 mb-6 flex-wrap">
+      <div>
+        <p class="text-xs uppercase tracking-[0.2em] text-[var(--color-primary)] font-semibold">Hammadde Yönetimi</p>
+        <h1 class="mt-2 font-display text-3xl font-semibold">Stok</h1>
+        <p class="mt-1.5 text-sm text-[var(--color-text-soft)]">
+          {totalSku} SKU · {totalCritical > 0 ? <span class="text-red-400 font-semibold">{totalCritical} kritik</span> : <span class="text-emerald-400">Tüm stoklar yeterli</span>}
+        </p>
+      </div>
+    </header>
+
+    {/* Kritik banner */}
+    {critical.length > 0 && (
+      <div class="mb-6 p-4 rounded-2xl bg-red-500/10 border border-red-500/30">
+        <div class="flex items-start gap-3">
+          <span class="text-2xl">⚠</span>
+          <div class="flex-1">
+            <div class="font-semibold text-red-400">Kritik Stok ({critical.length})</div>
+            <p class="text-xs text-[var(--color-text-soft)] mt-1">Aşağıdaki kalemler için yeniden sipariş verilmeli:</p>
+            <div class="mt-2 flex flex-wrap gap-1.5">
+              {critical.slice(0, 8).map((c) => (
+                <a href={`/admin/stok/${encodeURIComponent(c.sku)}`} class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-red-500/20 text-red-300 border border-red-500/30 hover:bg-red-500/30">
+                  {c.label}: {c.qty}{c.unit === 'meter' ? 'm' : c.unit === 'kg' ? 'kg' : ''}
+                </a>
+              ))}
+              {critical.length > 8 && <span class="text-[10px] text-[var(--color-text-muted)]">+{critical.length - 8}</span>}
+            </div>
+          </div>
+        </div>
+      </div>
+    )}
+
+    {/* Kind filtre sekmeleri */}
+    <div class="mb-5 flex flex-wrap gap-2">
+      <a href="/admin/stok" class={['inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium border transition-colors', !selectedKind ? 'border-[var(--color-primary)] bg-[var(--color-primary-soft)] text-[var(--color-primary)]' : 'border-[var(--color-border)] text-[var(--color-text-soft)] hover:text-[var(--color-text)]'].join(' ')}>
+        Tümü <span class="text-[10px] opacity-60">({totalSku})</span>
+        {totalCritical > 0 && <span class="size-4 grid place-items-center rounded-full text-[9px] font-bold bg-red-500 text-white">{totalCritical}</span>}
+      </a>
+      {KIND_ORDER.map((k) => {
+        const cfg = KIND_LABELS[k]
+        const cnt = kindCounts.get(k) ?? 0
+        const crit = kindCritical.get(k) ?? 0
+        if (cnt === 0) return null
+        return (
+          <a href={`/admin/stok?kind=${k}`} class={['inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium border transition-colors', selectedKind === k ? 'border-[var(--color-primary)] bg-[var(--color-primary-soft)] text-[var(--color-primary)]' : 'border-[var(--color-border)] text-[var(--color-text-soft)] hover:text-[var(--color-text)]'].join(' ')}>
+            <span>{cfg.icon}</span>
+            {cfg.label}
+            <span class="text-[10px] opacity-60">({cnt})</span>
+            {crit > 0 && <span class="size-4 grid place-items-center rounded-full text-[9px] font-bold bg-red-500 text-white">{crit}</span>}
+          </a>
+        )
+      })}
+    </div>
+
+    {/* SKU tablosu */}
+    <div class="rounded-2xl bg-[var(--color-surface)] border border-[var(--color-border)]/60 overflow-hidden">
+      {filtered.length === 0 ? (
+        <div class="p-12 text-center text-[var(--color-text-muted)]">
+          <p class="mb-3">Bu kategoride SKU yok.</p>
+          <p class="text-xs">İlk seed için: <code class="text-[var(--color-primary)] bg-[var(--color-surface-2)] px-1.5 py-0.5 rounded text-[10px]">node scripts/seed-stock.mjs</code></p>
+        </div>
+      ) : (
+        <div class="overflow-x-auto">
+          <table class="w-full text-sm">
+            <thead class="text-[10px] uppercase tracking-wider text-[var(--color-text-muted)] border-b border-[var(--color-border)]/40">
+              <tr>
+                <th class="px-4 py-3 text-left font-semibold">SKU</th>
+                <th class="px-4 py-3 text-left font-semibold">Kalem</th>
+                <th class="px-4 py-3 text-right font-semibold">Mevcut</th>
+                <th class="px-4 py-3 text-right font-semibold">Kritik</th>
+                <th class="px-4 py-3 text-right font-semibold">Önerilen Sipariş</th>
+                <th class="px-4 py-3 text-left font-semibold">Son Güncelleme</th>
+                <th class="px-4 py-3 text-right font-semibold">Durum</th>
+              </tr>
+            </thead>
+            <tbody>
+              {filtered.map((s) => {
+                const isCritical = isCriticalSku(s.sku)
+                const cfg = KIND_LABELS[s.kind]
+                return (
+                  <tr class={[
+                    'border-b border-[var(--color-border)]/30 hover:bg-[var(--color-surface-2)]/40 transition-colors',
+                    isCritical && 'bg-red-500/5',
+                  ].filter(Boolean).join(' ')}>
+                    <td class="px-4 py-3">
+                      <a href={`/admin/stok/${encodeURIComponent(s.sku)}`} class="font-mono text-[10px] text-[var(--color-primary)] hover:underline">{s.sku}</a>
+                    </td>
+                    <td class="px-4 py-3">
+                      <div class="flex items-center gap-2">
+                        <span>{cfg.icon}</span>
+                        <span class="font-medium">{s.label}</span>
+                      </div>
+                    </td>
+                    <td class={['px-4 py-3 text-right font-bold tabular-nums', isCritical ? 'text-red-400' : 'text-[var(--color-text)]'].join(' ')}>
+                      {s.qty.toFixed(s.unit === 'piece' ? 0 : 2)}{' '}
+                      <span class="text-[10px] text-[var(--color-text-muted)] font-normal">{s.unit === 'meter' ? 'm' : s.unit === 'kg' ? 'kg' : 'ad'}</span>
+                    </td>
+                    <td class="px-4 py-3 text-right tabular-nums text-[var(--color-text-muted)] text-xs">{s.criticalThreshold}</td>
+                    <td class="px-4 py-3 text-right tabular-nums text-[var(--color-text-muted)] text-xs">{s.reorderQty ?? '—'}</td>
+                    <td class="px-4 py-3 text-xs text-[var(--color-text-muted)]">{formatDateTime(s.lastUpdated)}</td>
+                    <td class="px-4 py-3 text-right">
+                      {isCritical ? (
+                        <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-red-500/15 text-red-400 border border-red-500/30">KRİTİK</span>
+                      ) : (
+                        <span class="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">YETERLİ</span>
+                      )}
+                    </td>
+                  </tr>
+                )
+              })}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </div>
+
+    {/* Son hareketler */}
+    <div class="mt-8">
+      <h2 class="font-display text-lg font-semibold mb-3">Son Hareketler</h2>
+      {recentMovements.length === 0 ? (
+        <p class="text-xs text-[var(--color-text-muted)]">Henüz stok hareketi yok.</p>
+      ) : (
+        <div class="rounded-2xl bg-[var(--color-surface)] border border-[var(--color-border)]/60 overflow-hidden">
+          <div class="overflow-x-auto">
+            <table class="w-full text-sm">
+              <thead class="text-[10px] uppercase tracking-wider text-[var(--color-text-muted)] border-b border-[var(--color-border)]/40">
+                <tr>
+                  <th class="px-4 py-3 text-left font-semibold">Tarih</th>
+                  <th class="px-4 py-3 text-left font-semibold">SKU</th>
+                  <th class="px-4 py-3 text-left font-semibold">Sebep</th>
+                  <th class="px-4 py-3 text-left font-semibold">Sipariş</th>
+                  <th class="px-4 py-3 text-right font-semibold">Hareket</th>
+                  <th class="px-4 py-3 text-left font-semibold">Not</th>
+                </tr>
+              </thead>
+              <tbody>
+                {recentMovements.map((m) => (
+                  <tr class="border-b border-[var(--color-border)]/30 hover:bg-[var(--color-surface-2)]/40">
+                    <td class="px-4 py-3 text-xs text-[var(--color-text-muted)] whitespace-nowrap">{formatDateTime(m.at)}</td>
+                    <td class="px-4 py-3 font-mono text-[10px] text-[var(--color-primary)]">{m.sku}</td>
+                    <td class="px-4 py-3 text-xs">{REASON_LABELS[m.reason] ?? m.reason}</td>
+                    <td class="px-4 py-3">
+                      {m.orderNo ? (
+                        <a href={`/admin/orders/${m.orderNo}`} class="font-mono text-[10px] text-[var(--color-primary)] hover:underline">{m.orderNo}</a>
+                      ) : <span class="text-[10px] text-[var(--color-text-muted)]">—</span>}
+                    </td>
+                    <td class={['px-4 py-3 text-right font-semibold tabular-nums', m.delta < 0 ? 'text-red-400' : 'text-emerald-400'].join(' ')}>
+                      {m.delta > 0 ? `+${m.delta.toFixed(2)}` : m.delta.toFixed(2)}
+                    </td>
+                    <td class="px-4 py-3 text-xs text-[var(--color-text-soft)] truncate max-w-xs">{m.note ?? '—'}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+    </div>
+  </div>
+</AdminLayout>

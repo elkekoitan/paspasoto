@@ -17,6 +17,7 @@ import {
 } from '../../lib/catalog'
 import { formatTRY } from '../../lib/format'
 import ClientBrandLogo from '../ui/ClientBrandLogo'
+import VirtualShowroom from './VirtualShowroom'
 
 type StepKey = 'brand' | 'model' | 'product' | 'mat' | 'border' | 'heel' | 'logo' | 'summary'
 const STEPS: { key: StepKey; label: string }[] = [
@@ -34,7 +35,7 @@ const STEPS: { key: StepKey; label: string }[] = [
  * Konfigüratör tasarımı localStorage'a kaydedilir — kullanıcı sayfayı kapatıp
  * tekrar açtığında kaldığı yerden devam eder. "Tasarımı sıfırla" butonu ile temizler.
  */
-const STATE_KEY = 'carmat-config-draft-v2'
+const STATE_KEY = 'carmat-config-draft-v3'
 
 function loadDraft<T>(fallback: T): T {
   if (typeof window === 'undefined') return fallback
@@ -47,6 +48,20 @@ function loadDraft<T>(fallback: T): T {
   }
 }
 
+/** Paspas pozisyonu — araç içinde hangi paspas */
+export type MatPosition = 'driver' | 'passenger' | 'leftRear' | 'rightRear' | 'trunk'
+/** Logo'nun paspas üzerindeki yerleşimi */
+export type LogoPlacement = 'top' | 'middle' | 'bottom'
+/** Topukluk konum tercihi */
+export type HeelPosition = 'driver-only' | 'passenger-only' | 'both' | 'none'
+
+/** Bir paspas pozisyonu için logo konfigürasyonu */
+export type MatLogoConfig = {
+  position: MatPosition
+  brandSlug: string | null   // null = bu paspasta logo yok
+  placement: LogoPlacement
+}
+
 type Draft = {
   brandSlug?: string | null
   modelSlug?: string | null
@@ -54,9 +69,16 @@ type Draft = {
   matSlug?: string
   borderSlug?: string
   heelSlug?: string
-  heelPadPassenger?: boolean
-  logoBrandSlug?: string | null
-  logoChosen?: boolean
+  heelPosition?: HeelPosition
+  logos?: MatLogoConfig[]
+}
+
+/** Set parts → o set için pozisyon listesi */
+function positionsFor(parts: number, includesTrunk: boolean): MatPosition[] {
+  const out: MatPosition[] = ['driver', 'passenger']
+  if (parts >= 4) out.push('leftRear', 'rightRear')
+  if (includesTrunk) out.push('trunk')
+  return out
 }
 
 export default function Configurator() {
@@ -83,12 +105,21 @@ export default function Configurator() {
   const [heelPad, setHeelPad] = useState<HeelPad | null>(
     draft.heelSlug ? HEEL_PADS.find((h) => h.slug === draft.heelSlug) ?? HEEL_PADS[0]! : HEEL_PADS[0]!,
   )
-  const [heelPadPassenger, setHeelPadPassenger] = useState<boolean>(!!draft.heelPadPassenger)
-  const [logoAccessory, setLogoAccessory] = useState<LogoAccessory | null>(
-    draft.logoBrandSlug !== undefined
-      ? LOGO_ACCESSORIES.find((l) => l.brandSlug === draft.logoBrandSlug) ?? null
-      : null,
+  // Topukluk konumu: sürücü / yolcu / her ikisi / yok
+  const [heelPosition, setHeelPosition] = useState<HeelPosition>(
+    (draft.heelPosition as HeelPosition) ?? 'driver-only',
   )
+  // Per-mat logos: 5 pozisyon için ayrı seçim + placement
+  const initialLogos: MatLogoConfig[] =
+    draft.logos && Array.isArray(draft.logos)
+      ? draft.logos
+      : (['driver', 'passenger', 'leftRear', 'rightRear', 'trunk'] as MatPosition[]).map((p) => ({
+          position: p,
+          brandSlug: null,
+          placement: 'top',
+        }))
+  const [logos, setLogos] = useState<MatLogoConfig[]>(initialLogos)
+
   const [search, setSearch] = useState('')
   // Kullanıcıya draft'tan devam ediyoruz uyarısı
   const [showRestoredHint, setShowRestoredHint] = useState(!!initialBrand)
@@ -103,12 +134,11 @@ export default function Configurator() {
       matSlug: matColor?.slug,
       borderSlug: borderColor?.slug,
       heelSlug: heelPad?.slug,
-      heelPadPassenger,
-      logoBrandSlug: logoAccessory?.brandSlug ?? null,
-      logoChosen: logoAccessory !== null,
+      heelPosition,
+      logos,
     }
     try { localStorage.setItem(STATE_KEY, JSON.stringify(next)) } catch {}
-  }, [brand, model, product, matColor, borderColor, heelPad, heelPadPassenger, logoAccessory])
+  }, [brand, model, product, matColor, borderColor, heelPad, heelPosition, logos])
 
   function resetDraft() {
     if (!confirm('Tüm seçimleriniz silinip baştan başlanacak. Emin misiniz?')) return
@@ -116,13 +146,28 @@ export default function Configurator() {
     window.location.reload()
   }
 
-  // Marka değişince model + amblem otomatik öneri
+  // Marka değişince — daha önce hiç logo seçilmemişse tüm paspaslar için
+  // o markayı otomatik öner (sürücü+yolcu için, arka+bagaj için boş bırak)
   useEffect(() => {
-    if (brand) {
-      const suggested = LOGO_ACCESSORIES.find((l) => l.brandSlug === brand.slug)
-      if (suggested) setLogoAccessory(suggested)
-    }
+    if (!brand) return
+    const hasAnyLogo = logos.some((l) => l.brandSlug !== null)
+    if (hasAnyLogo) return
+    setLogos((prev) =>
+      prev.map((l) =>
+        l.position === 'driver' || l.position === 'passenger'
+          ? { ...l, brandSlug: brand.slug }
+          : l,
+      ),
+    )
   }, [brand?.slug])
+
+  // Helpers
+  const setLogoFor = (position: MatPosition, brandSlug: string | null) =>
+    setLogos((prev) => prev.map((l) => (l.position === position ? { ...l, brandSlug } : l)))
+  const setPlacementFor = (position: MatPosition, placement: LogoPlacement) =>
+    setLogos((prev) => prev.map((l) => (l.position === position ? { ...l, placement } : l)))
+  const applyLogoToAll = (brandSlug: string | null) =>
+    setLogos((prev) => prev.map((l) => ({ ...l, brandSlug })))
 
   const models = useMemo(
     () => VEHICLE_MODELS.filter((m) => m.brandSlug === brand?.slug),
@@ -138,12 +183,16 @@ export default function Configurator() {
   const totalPrice = useMemo(() => {
     let total = product?.basePrice ?? 0
     total += heelPad?.pricePremium ?? 0
-    if (heelPadPassenger) total += 100
-    if (logoAccessory && logoAccessory.brandSlug !== null) {
-      total += logoAccessory.price * (product?.parts ?? 0)
-    }
+    // Topukluk: 'both' = +100₺ (yolcu paspasına ek), 'passenger-only' = +0 (yer değişimi)
+    if (heelPosition === 'both') total += 100
+    // Logo: her aktif (brandSlug != null) pozisyon için +150₺
+    const activePositions = positionsFor(product?.parts ?? 0, !!product?.includesTrunk)
+    const logoCount = logos.filter(
+      (l) => l.brandSlug !== null && activePositions.includes(l.position),
+    ).length
+    total += logoCount * 150
     return total
-  }, [product, heelPad, heelPadPassenger, logoAccessory])
+  }, [product, heelPad, heelPosition, logos])
 
   function next() {
     const i = STEPS.findIndex((s) => s.key === step)
@@ -199,6 +248,14 @@ export default function Configurator() {
     }
     setSubmittingQuote(true)
     try {
+      // Aktif paspas pozisyonları için logo'ları filtrele
+      const activePositions = positionsFor(product.parts, product.includesTrunk)
+      const activeLogos = logos.filter((l) => activePositions.includes(l.position))
+      const logoQty = activeLogos.filter((l) => l.brandSlug !== null).length
+      // Geriye dönük uyumluluk: logoBrandSlug ilk dolu logo'yu yansıtır
+      const firstLogoBrand = activeLogos.find((l) => l.brandSlug !== null)?.brandSlug ?? null
+      const heelPassengerLegacy = heelPosition === 'both' || heelPosition === 'passenger-only'
+
       const item = {
         brandSlug: brand.slug, brandName: brand.name,
         modelSlug: model.slug, modelName: model.name, modelChassis: model.chassisCode,
@@ -206,9 +263,14 @@ export default function Configurator() {
         matSlug: matColor.slug, matName: matColor.name, matSwatchUrl: matColor.swatchUrl,
         borderSlug: borderColor.slug, borderName: borderColor.name, borderSwatchUrl: borderColor.swatchUrl,
         heelSlug: heelPad.slug, heelName: heelPad.name, heelSwatchUrl: heelPad.swatchUrl,
-        heelPadPassenger,
-        logoBrandSlug: logoAccessory?.brandSlug ?? null,
-        logoQty: logoAccessory && logoAccessory.brandSlug ? product.parts : 0,
+        // Yeni şema:
+        heelPosition,
+        logos: activeLogos,
+        // Geriye dönük uyumluluk (eski tracker/admin parser'ları için):
+        heelPadPassenger: heelPassengerLegacy,
+        logoBrandSlug: firstLogoBrand,
+        logoQty,
+        category: 'mat' as const,
         qty: 1, unitPrice: totalPrice,
       }
       const res = await fetch('/api/quote', {
@@ -243,299 +305,205 @@ export default function Configurator() {
     }
   }
 
+  const bgImage = matColor?.showroomUrl || '/images/showroom_black_red_1778185224584.png'
+
   return (
-    <div class="grid lg:grid-cols-[minmax(0,1fr)_minmax(0,420px)] gap-6 lg:gap-10">
-      {/* Sol: Adım içerikleri */}
-      <div class="order-2 lg:order-1">
-        {showRestoredHint && (
-          <div class="mb-4 p-3 rounded-xl bg-[var(--color-primary-soft)] border border-[var(--color-primary)]/30 flex items-center gap-3 text-sm">
-            <span class="size-7 grid place-items-center rounded-full bg-[var(--color-primary)] text-[var(--color-bg)] shrink-0">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 12l2 2 4-4 M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-            </span>
-            <div class="flex-1 text-[var(--color-text-soft)]">
-              <span class="text-[var(--color-text)] font-medium">Önceki tasarımınız yüklendi.</span> Kaldığınız yerden devam edebilirsiniz.
-            </div>
-            <button onClick={() => setShowRestoredHint(false)} class="text-[10px] text-[var(--color-text-muted)] hover:text-[var(--color-text)]">Tamam</button>
-          </div>
-        )}
-        <div class="flex items-center justify-between gap-3 mb-2">
-          <div class="flex-1 min-w-0">
-            <StepperBar step={step} onJump={(k) => setStep(k)} canJump={(k) => isStepReachable(k, { brand, model, product, matColor, borderColor, heelPad })} />
-          </div>
-          <button
-            onClick={resetDraft}
-            class="hidden sm:inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[11px] font-medium text-[var(--color-text-muted)] hover:text-[var(--color-danger)] hover:bg-[var(--color-surface-2)] transition-colors shrink-0"
-            title="Tüm seçimleri sil ve baştan başla"
-          >
-            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2m3 0v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6h14z" /></svg>
-            Sıfırla
-          </button>
-        </div>
+    <div class="absolute inset-0 w-full h-full text-white overflow-hidden bg-[#0b0b0f] font-sans">
+      {/* 3D WebGL Showroom Environment */}
+      <VirtualShowroom imageUrl={bgImage} />
 
-        <div class="mt-6 rounded-2xl bg-[var(--color-surface)] border border-[var(--color-border)]/60 p-5 md:p-7">
-          {step === 'brand' && (
-            <BrandStep
-              brands={filteredBrands}
-              selected={brand}
-              onSelect={(b) => {
-                setBrand(b)
-                setModel(null)
-                setStep('model')
-              }}
-              search={search}
-              onSearchChange={setSearch}
-            />
-          )}
+      {/* Gradients for UI readability */}
+      <div class="absolute inset-0 z-0 bg-gradient-to-t from-black/90 via-transparent to-transparent pointer-events-none"></div>
+      <div class="absolute inset-0 z-0 bg-gradient-to-r from-black/80 via-black/10 to-transparent pointer-events-none"></div>
 
-          {step === 'model' && brand && (
-            <ModelStep
-              brand={brand}
-              models={models}
-              selected={model}
-              onSelect={(m) => {
-                setModel(m)
-                setStep('product')
-              }}
-              onBack={() => setStep('brand')}
-            />
-          )}
+      {/* Floating HUD UI */}
+      <div class="absolute inset-0 z-10 flex flex-col md:flex-row p-4 md:p-8 pointer-events-none">
+        
+        {/* Left Side: Configuration Steps */}
+        <div class="w-full md:w-[460px] h-full flex flex-col justify-end md:justify-center pointer-events-auto mt-16 md:mt-0">
+           {/* Glassmorphic Panel */}
+           <div class="bg-black/40 backdrop-blur-3xl border border-white/10 rounded-3xl shadow-[0_0_50px_rgba(0,0,0,0.8)] overflow-hidden relative flex flex-col max-h-[85vh]">
+              <div class="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent pointer-events-none"></div>
+              
+              <div class="p-6 md:p-8 flex-1 overflow-y-auto custom-scrollbar relative z-10">
+                {showRestoredHint && (
+                  <div class="mb-5 p-3 rounded-xl bg-amber-500/20 border border-amber-500/30 flex items-center gap-3 text-sm backdrop-blur-md">
+                    <span class="size-7 grid place-items-center rounded-full bg-amber-500 text-black shrink-0">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 12l2 2 4-4 M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                    </span>
+                    <div class="flex-1 text-white/80 text-xs">
+                      <span class="text-white font-medium">Tasarımınız yüklendi.</span> Kaldığınız yerden devam edebilirsiniz.
+                    </div>
+                    <button onClick={() => setShowRestoredHint(false)} class="text-[10px] text-white/50 hover:text-white">Kapat</button>
+                  </div>
+                )}
+                
+                <div class="flex items-center justify-between gap-3 mb-4">
+                  <div class="flex-1 min-w-0">
+                    <StepperBar step={step} onJump={(k) => setStep(k)} canJump={(k) => isStepReachable(k, { brand, model, product, matColor, borderColor, heelPad })} />
+                  </div>
+                  <button
+                    onClick={resetDraft}
+                    class="hidden sm:inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[11px] font-medium text-white/50 hover:text-red-400 hover:bg-white/10 transition-colors shrink-0"
+                    title="Tüm seçimleri sil ve baştan başla"
+                  >
+                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2m3 0v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6h14z" /></svg>
+                    Sıfırla
+                  </button>
+                </div>
 
-          {step === 'product' && (
-            <ProductStep
-              products={PRODUCTS}
-              selected={product}
-              onSelect={(p) => {
-                setProduct(p)
-                setStep('mat')
-              }}
-            />
-          )}
+                <div class="animate-in slide-in-from-left-4 fade-in duration-500">
+                  {step === 'brand' && <BrandStep brands={filteredBrands} selected={brand} onSelect={(b) => { setBrand(b); setModel(null); setStep('model'); }} search={search} onSearchChange={setSearch} />}
+                  {step === 'model' && brand && <ModelStep brand={brand} models={models} selected={model} onSelect={(m) => { setModel(m); setStep('product'); }} onBack={() => setStep('brand')} />}
+                  {step === 'product' && <ProductStep products={PRODUCTS} selected={product} onSelect={(p) => { setProduct(p); setStep('mat'); }} />}
+                  {step === 'mat' && <SwatchStep title="Paspas Zemin Rengi" description="Paspasın havuzlu kısmının zemin rengi." colors={MAT_COLORS} selected={matColor?.id} onSelect={(c) => { setMatColor(c); setStep('border'); }} />}
+                  {step === 'border' && <SwatchStep title="Kenarlık Rengi" description="Paspasın çevresini saran biye/kenarlık şeridi." colors={BORDER_COLORS} selected={borderColor?.id} onSelect={(c) => { setBorderColor(c); setStep('heel'); }} big={false} />}
+                  {step === 'heel' && <HeelPadStep pads={HEEL_PADS} selected={heelPad} onSelect={setHeelPad} heelPosition={heelPosition} onPositionChange={setHeelPosition} onContinue={() => setStep('logo')} />}
+                  {step === 'logo' && (
+                    <LogoStep
+                      brand={brand}
+                      product={product!}
+                      matColor={matColor!}
+                      borderColor={borderColor!}
+                      logos={logos}
+                      onSetLogo={setLogoFor}
+                      onSetPlacement={setPlacementFor}
+                      onApplyAll={applyLogoToAll}
+                      onContinue={() => setStep('summary')}
+                    />
+                  )}
+                  {step === 'summary' && (
+                    <SummaryStep
+                      brand={brand!}
+                      model={model!}
+                      product={product!}
+                      matColor={matColor!}
+                      borderColor={borderColor!}
+                      heelPad={heelPad!}
+                      heelPosition={heelPosition}
+                      logos={logos}
+                      total={totalPrice}
+                      onAddToCart={() => handleAddToCart()}
+                    />
+                  )}
+                </div>
+              </div>
 
-          {step === 'mat' && (
-            <SwatchStep
-              title="Paspas Zemin Rengi"
-              description="Paspasın havuzlu kısmının zemin rengi."
-              colors={MAT_COLORS}
-              selected={matColor?.id}
-              onSelect={(c) => {
-                setMatColor(c)
-                setStep('border')
-              }}
-            />
-          )}
-
-          {step === 'border' && (
-            <SwatchStep
-              title="Kenarlık Rengi"
-              description="Paspasın çevresini saran biye/kenarlık şeridi."
-              colors={BORDER_COLORS}
-              selected={borderColor?.id}
-              onSelect={(c) => {
-                setBorderColor(c)
-                setStep('heel')
-              }}
-              big={false}
-            />
-          )}
-
-          {step === 'heel' && (
-            <HeelPadStep
-              pads={HEEL_PADS}
-              selected={heelPad}
-              onSelect={setHeelPad}
-              passenger={heelPadPassenger}
-              onTogglePassenger={() => setHeelPadPassenger((v) => !v)}
-              onContinue={() => setStep('logo')}
-            />
-          )}
-
-          {step === 'logo' && (
-            <LogoStep
-              brand={brand}
-              accessories={LOGO_ACCESSORIES.filter(
-                (l) => l.brandSlug === brand?.slug || l.brandSlug === null,
+              {/* Footer nav inside the panel */}
+              {step !== 'summary' && (
+                <div class="mt-auto p-6 border-t border-white/10 bg-black/20 flex items-center justify-between relative z-10">
+                  <button type="button" onClick={prev} disabled={step === 'brand'} class="px-5 py-2.5 rounded-xl text-sm font-medium text-white/70 hover:text-white hover:bg-white/10 disabled:opacity-30 transition-colors backdrop-blur-md">
+                    ← Geri
+                  </button>
+                  <button type="button" onClick={next} disabled={!canNext} class="px-6 py-2.5 rounded-xl text-sm font-bold bg-white text-black hover:bg-white/90 disabled:opacity-30 transition-colors shadow-[0_0_20px_rgba(255,255,255,0.4)]">
+                    Devam →
+                  </button>
+                </div>
               )}
-              selected={logoAccessory}
-              onSelect={setLogoAccessory}
-              onContinue={() => setStep('summary')}
-            />
-          )}
-
-          {step === 'summary' && (
-            <SummaryStep
-              brand={brand!}
-              model={model!}
-              product={product!}
-              matColor={matColor!}
-              borderColor={borderColor!}
-              heelPad={heelPad!}
-              heelPadPassenger={heelPadPassenger}
-              logoAccessory={logoAccessory}
-              total={totalPrice}
-              onAddToCart={() => handleAddToCart()}
-            />
-          )}
+           </div>
         </div>
 
-        {/* Footer nav */}
-        {step !== 'summary' && (
-          <div class="mt-5 flex items-center justify-between">
-            <button
-              type="button"
-              onClick={prev}
-              disabled={step === 'brand'}
-              class="px-4 py-2.5 rounded-lg text-sm font-medium border border-[var(--color-border)] text-[var(--color-text-soft)] hover:text-[var(--color-text)] hover:bg-[var(--color-surface)] disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
-            >
-              ← Geri
-            </button>
-            <button
-              type="button"
-              onClick={next}
-              disabled={!canNext}
-              class="px-5 py-2.5 rounded-lg text-sm font-semibold bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] text-[var(--color-bg)] disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
-            >
-              Devam →
-            </button>
-          </div>
-        )}
+        {/* Right Side: Price & Summary HUD */}
+        <div class="hidden md:flex flex-col justify-end items-end flex-1 pb-10 pointer-events-auto">
+           <div class="text-right animate-in slide-in-from-right-8 fade-in duration-1000 delay-300">
+             <div class="text-[11px] uppercase tracking-[0.4em] text-white/50 font-bold mb-2 drop-shadow-md">Canlı Konfigürasyon</div>
+             <div class="text-7xl font-display font-semibold tabular-nums tracking-tighter drop-shadow-[0_5px_15px_rgba(0,0,0,0.8)] text-white">{formatTRY(totalPrice)}</div>
+             <div class="flex items-center justify-end gap-3 mt-5 flex-wrap max-w-lg">
+               {logos.some((l) => l.brandSlug !== null) && brand && (
+                 <div class="size-11 rounded-full bg-black/40 backdrop-blur-md grid place-items-center ring-1 ring-white/20 shadow-xl">
+                   <ClientBrandLogo iconSlug={brand.iconSlug} name={brand.name} size={24} color="#fff" />
+                 </div>
+               )}
+               {brand && model && (
+                 <div class="px-4 py-2 rounded-full bg-black/40 backdrop-blur-md text-xs font-semibold ring-1 ring-white/20 shadow-xl text-white/90">
+                   {brand.name} {model.name}
+                 </div>
+               )}
+               {matColor && (
+                 <div class="px-4 py-2 rounded-full bg-black/40 backdrop-blur-md text-xs font-semibold ring-1 ring-white/20 shadow-xl text-white/90 flex items-center gap-2">
+                   <span class="size-3 rounded-full" style={`background-color: ${matColor.hex};`}></span>
+                   {matColor.name} + {borderColor?.name} Kenarlık
+                 </div>
+               )}
+             </div>
+           </div>
+        </div>
       </div>
-
-      {/* Sağ: Sticky Preview */}
-      <aside class="order-1 lg:order-2 lg:sticky lg:top-20 self-start">
-        <Preview
-          matColor={matColor}
-          borderColor={borderColor}
-          heelPad={heelPad}
-          heelPadPassenger={heelPadPassenger}
-          logoAccessory={logoAccessory}
-          brand={brand}
-          model={model}
-          product={product}
-          total={totalPrice}
-          onAddToCart={() => handleAddToCart()}
-        />
-      </aside>
 
       {/* Müşteri ad/telefon mini form — Teklif Al butonuna basınca açılır */}
       {showContactForm && (
-        <div class="fixed inset-0 z-50 grid place-items-center p-4 bg-black/70 backdrop-blur-sm" onClick={(e) => { if (e.target === e.currentTarget) setShowContactForm(false) }}>
-          <div class="w-full max-w-md rounded-2xl bg-[var(--color-surface)] border border-[var(--color-border)]/60 shadow-2xl overflow-hidden">
-            <div class="p-5 border-b border-[var(--color-border)]/60 flex items-start justify-between gap-3">
+        <div class="fixed inset-0 z-[100] grid place-items-center p-4 bg-black/80 backdrop-blur-md pointer-events-auto" onClick={(e) => { if (e.target === e.currentTarget) setShowContactForm(false) }}>
+          <div class="w-full max-w-md rounded-3xl bg-[var(--color-surface)] border border-white/10 shadow-[0_0_50px_rgba(0,0,0,0.8)] overflow-hidden">
+            <div class="p-6 border-b border-white/5 flex items-start justify-between gap-3">
               <div>
-                <h3 class="font-display text-lg font-semibold">Teklif İste</h3>
-                <p class="mt-1 text-xs text-[var(--color-text-muted)] leading-snug">
+                <h3 class="font-display text-xl font-semibold text-white">Teklif İste</h3>
+                <p class="mt-1.5 text-xs text-white/60 leading-snug">
                   Konfigürasyonunuz atölyemize iletilir. Fiyat onaylanınca size WhatsApp'tan teklifi gönderir, sipariş onayınızla üretime başlarız.
                 </p>
               </div>
-              <button type="button" onClick={() => setShowContactForm(false)} class="size-7 grid place-items-center rounded-lg hover:bg-[var(--color-surface-2)]">
+              <button type="button" onClick={() => setShowContactForm(false)} class="size-8 grid place-items-center rounded-xl bg-white/5 hover:bg-white/10 text-white transition-colors">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12" /></svg>
               </button>
             </div>
             {quoteResult ? (
-              <div class="p-6 space-y-4 text-center">
-                <div class="size-16 rounded-full bg-emerald-500/15 grid place-items-center mx-auto">
-                  <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5" /></svg>
+              <div class="p-8 space-y-5 text-center">
+                <div class="size-20 rounded-full bg-emerald-500/20 grid place-items-center mx-auto ring-1 ring-emerald-500/50">
+                  <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5" /></svg>
                 </div>
                 <div>
-                  <div class="font-display text-lg font-semibold">Talebiniz alındı!</div>
-                  <p class="mt-1.5 text-sm text-[var(--color-text-soft)] leading-relaxed">
-                    Atölye ekibimiz konfigürasyonunuzu inceleyip <span class="text-[var(--color-primary)] font-semibold">WhatsApp'tan tarafınıza teklifi iletecek</span>.
+                  <div class="font-display text-2xl font-semibold text-white">Talebiniz Alındı!</div>
+                  <p class="mt-2 text-sm text-white/70 leading-relaxed">
+                    Atölye ekibimiz konfigürasyonunuzu inceleyip <span class="text-white font-semibold">WhatsApp'tan tarafınıza teklifi iletecek</span>.
                   </p>
-                  <p class="mt-3 text-xs text-[var(--color-text-muted)]">
-                    Talep No: <span class="font-mono text-[var(--color-text)] font-semibold">{quoteResult.orderNo}</span>
-                  </p>
-                  <p class="mt-1 text-[10px] text-[var(--color-text-muted)]">
-                    Bu numarayla <a href="/siparis-takip" class="text-[var(--color-primary)] hover:underline">sipariş takip</a> sayfasından ilerlemeyi izleyebilirsiniz.
-                  </p>
+                  <div class="mt-6 p-4 rounded-xl bg-white/5 border border-white/10 inline-block">
+                    <p class="text-xs text-white/50 mb-1">Talep No</p>
+                    <p class="font-mono text-white text-lg font-semibold">{quoteResult.orderNo}</p>
+                  </div>
                 </div>
-                <button onClick={() => { setShowContactForm(false); setQuoteResult(null); setContactName(''); setContactPhone(''); setContactCity(''); setContactDistrict(''); setContactAddress('') }} class="w-full px-4 py-2.5 rounded-lg text-sm font-semibold bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] text-[var(--color-bg)]">
-                  Tamam
+                <button onClick={() => { setShowContactForm(false); setQuoteResult(null); setContactName(''); setContactPhone(''); setContactCity(''); setContactDistrict(''); setContactAddress(''); resetDraft(); }} class="w-full px-5 py-3.5 rounded-xl text-sm font-semibold bg-white hover:bg-white/90 text-black transition-all">
+                  Kapat ve Yeni Tasarıma Başla
                 </button>
               </div>
             ) : (
-              <form onSubmit={submitQuote} class="p-5 space-y-3 max-h-[80vh] overflow-y-auto">
-                <p class="text-xs text-[var(--color-text-soft)] bg-[var(--color-surface-2)]/60 rounded-lg px-3 py-2 leading-relaxed">
-                  Size özel teklifimizi hazırlayabilmemiz için lütfen bilgilerinizi tam olarak girin. Kargo bölgesine ve teslimat tipine göre net fiyat hesaplanır.
-                </p>
-
+              <form onSubmit={submitQuote} class="p-6 space-y-4 max-h-[75vh] overflow-y-auto custom-scrollbar">
                 {/* Müşteri */}
-                <div class="grid grid-cols-2 gap-2">
+                <div class="grid grid-cols-2 gap-3">
                   <div class="col-span-2">
-                    <label class="block text-xs font-medium text-[var(--color-text-soft)] mb-1">Ad Soyad <span class="text-[var(--color-danger)]">*</span></label>
-                    <input
-                      type="text"
-                      value={contactName}
-                      onInput={(e) => setContactName((e.target as HTMLInputElement).value)}
-                      required
-                      placeholder="Mehmet Yılmaz"
-                      class="w-full px-3 py-2.5 rounded-lg bg-[var(--color-surface-2)] border border-[var(--color-border)] focus:border-[var(--color-primary)] outline-none text-sm"
-                    />
+                    <label class="block text-xs font-medium text-white/70 mb-1.5">Ad Soyad</label>
+                    <input type="text" value={contactName} onInput={(e) => setContactName((e.target as HTMLInputElement).value)} required placeholder="Örn: Mehmet Yılmaz" class="w-full px-4 py-3 rounded-xl bg-black/40 border border-white/10 focus:border-white/30 text-white placeholder:text-white/30 outline-none text-sm transition-colors" />
                   </div>
                   <div class="col-span-2">
-                    <label class="block text-xs font-medium text-[var(--color-text-soft)] mb-1">Telefon (WhatsApp olan) <span class="text-[var(--color-danger)]">*</span></label>
-                    <input
-                      type="tel"
-                      value={contactPhone}
-                      onInput={(e) => setContactPhone((e.target as HTMLInputElement).value)}
-                      required
-                      placeholder="0532 123 45 67"
-                      class="w-full px-3 py-2.5 rounded-lg bg-[var(--color-surface-2)] border border-[var(--color-border)] focus:border-[var(--color-primary)] outline-none text-sm font-mono"
-                    />
+                    <label class="block text-xs font-medium text-white/70 mb-1.5">Telefon (WhatsApp olan)</label>
+                    <input type="tel" value={contactPhone} onInput={(e) => setContactPhone((e.target as HTMLInputElement).value)} required placeholder="Örn: 0532 123 45 67" class="w-full px-4 py-3 rounded-xl bg-black/40 border border-white/10 focus:border-white/30 text-white placeholder:text-white/30 outline-none text-sm font-mono transition-colors" />
                   </div>
                 </div>
 
                 {/* Adres */}
-                <div class="pt-3 border-t border-[var(--color-border)]/40">
-                  <div class="text-[10px] uppercase tracking-wider text-[var(--color-text-muted)] font-semibold mb-2">Teslimat Adresi</div>
-                  <div class="grid grid-cols-2 gap-2">
+                <div class="pt-4 border-t border-white/10">
+                  <div class="text-[10px] uppercase tracking-wider text-white/50 font-bold mb-3">Teslimat Adresi</div>
+                  <div class="grid grid-cols-2 gap-3">
                     <div>
-                      <label class="block text-xs font-medium text-[var(--color-text-soft)] mb-1">İl <span class="text-[var(--color-danger)]">*</span></label>
-                      <select
-                        value={contactCity}
-                        onChange={(e) => setContactCity((e.target as HTMLSelectElement).value)}
-                        required
-                        class="w-full px-3 py-2.5 rounded-lg bg-[var(--color-surface-2)] border border-[var(--color-border)] focus:border-[var(--color-primary)] outline-none text-sm"
-                      >
-                        <option value="">Seçin...</option>
-                        {TR_CITIES.map((c) => <option value={c}>{c}</option>)}
+                      <label class="block text-xs font-medium text-white/70 mb-1.5">İl</label>
+                      <select value={contactCity} onChange={(e) => setContactCity((e.target as HTMLSelectElement).value)} required class="w-full px-4 py-3 rounded-xl bg-black/40 border border-white/10 focus:border-white/30 text-white outline-none text-sm appearance-none transition-colors">
+                        <option value="" class="bg-gray-900">Seçin...</option>
+                        {TR_CITIES.map((c) => <option value={c} class="bg-gray-900">{c}</option>)}
                       </select>
                     </div>
                     <div>
-                      <label class="block text-xs font-medium text-[var(--color-text-soft)] mb-1">İlçe <span class="text-[var(--color-danger)]">*</span></label>
-                      <input
-                        type="text"
-                        value={contactDistrict}
-                        onInput={(e) => setContactDistrict((e.target as HTMLInputElement).value)}
-                        required
-                        placeholder="Selçuklu"
-                        class="w-full px-3 py-2.5 rounded-lg bg-[var(--color-surface-2)] border border-[var(--color-border)] focus:border-[var(--color-primary)] outline-none text-sm"
-                      />
+                      <label class="block text-xs font-medium text-white/70 mb-1.5">İlçe</label>
+                      <input type="text" value={contactDistrict} onInput={(e) => setContactDistrict((e.target as HTMLInputElement).value)} required placeholder="Örn: Selçuklu" class="w-full px-4 py-3 rounded-xl bg-black/40 border border-white/10 focus:border-white/30 text-white placeholder:text-white/30 outline-none text-sm transition-colors" />
                     </div>
                     <div class="col-span-2">
-                      <label class="block text-xs font-medium text-[var(--color-text-soft)] mb-1">Açık Adres <span class="text-[var(--color-danger)]">*</span></label>
-                      <textarea
-                        value={contactAddress}
-                        onInput={(e) => setContactAddress((e.target as HTMLTextAreaElement).value)}
-                        required
-                        rows={2}
-                        placeholder="Mahalle, cadde, sokak, bina no, daire no"
-                        class="w-full px-3 py-2.5 rounded-lg bg-[var(--color-surface-2)] border border-[var(--color-border)] focus:border-[var(--color-primary)] outline-none text-sm resize-none"
-                      ></textarea>
+                      <label class="block text-xs font-medium text-white/70 mb-1.5">Açık Adres</label>
+                      <textarea value={contactAddress} onInput={(e) => setContactAddress((e.target as HTMLTextAreaElement).value)} required rows={2} placeholder="Mahalle, cadde, sokak, bina vb." class="w-full px-4 py-3 rounded-xl bg-black/40 border border-white/10 focus:border-white/30 text-white placeholder:text-white/30 outline-none text-sm resize-none custom-scrollbar transition-colors"></textarea>
                     </div>
                   </div>
                 </div>
 
-                <button
-                  type="submit"
-                  disabled={submittingQuote}
-                  class="w-full mt-2 px-4 py-3 rounded-xl text-sm font-semibold bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] text-[var(--color-bg)] transition-all disabled:opacity-60"
-                >
-                  {submittingQuote ? 'Gönderiliyor...' : 'Size Özel Teklifimizi Gönder →'}
+                <button type="submit" disabled={submittingQuote} class="w-full mt-4 px-5 py-3.5 rounded-xl text-sm font-bold bg-white hover:bg-white/90 text-black transition-all shadow-[0_0_20px_rgba(255,255,255,0.2)] disabled:opacity-50 flex items-center justify-center gap-2">
+                  {submittingQuote ? 'Gönderiliyor...' : 'Teklifimi Hazırla ve Gönder'}
+                  {!submittingQuote && <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>}
                 </button>
-                <p class="text-[10px] text-[var(--color-text-muted)] text-center leading-snug">
-                  Bilgileriniz atölyemize ulaşır. Net fiyatımızı WhatsApp'tan tarafınıza göndereceğiz.<br/>
-                  Bilgileriniz sadece sipariş ve teslimat için kullanılır.
-                </p>
               </form>
             )}
           </div>
@@ -662,6 +630,7 @@ function BrandStep({
                 name={b.name}
                 size={36}
                 color={b.color}
+                logoUrl={b.logoUrl}
               />
               <span class={['font-display font-semibold text-[11px] sm:text-xs leading-none truncate w-full text-center', active ? 'text-[var(--color-text)]' : 'text-[var(--color-text-soft)]'].join(' ')}>
                 {b.name}
@@ -782,7 +751,7 @@ function ProductStep({
   )
 }
 
-/* -------------------- Generic Swatch Step (gerçek dokulu) -------------------- */
+/* -------------------- Generic Swatch Step (Photorealistic CSS) -------------------- */
 function SwatchStep({
   title,
   description,
@@ -793,9 +762,9 @@ function SwatchStep({
 }: {
   title: string
   description?: string
-  colors: { id: number; name: string; hex: string; swatchUrl: string }[]
+  colors: { id: number; name: string; hex: string; threadHex?: string; swatchUrl: string }[]
   selected: number | undefined
-  onSelect: (c: { id: number; name: string; hex: string; swatchUrl: string }) => void
+  onSelect: (c: any) => void
   big?: boolean
 }) {
   return (
@@ -807,6 +776,20 @@ function SwatchStep({
       <div class={big ? 'grid grid-cols-2 sm:grid-cols-5 gap-3' : 'grid grid-cols-3 sm:grid-cols-5 gap-2.5'}>
         {colors.map((c) => {
           const active = selected === c.id
+          const hasDiamond = !!c.threadHex
+          // Pure CSS photorealistic diamond stitching pattern
+          const style = hasDiamond ? {
+            backgroundColor: c.hex,
+            backgroundImage: `linear-gradient(115deg, transparent 75%, ${c.threadHex} 75%, ${c.threadHex} 76%, transparent 76%), linear-gradient(245deg, transparent 75%, ${c.threadHex} 75%, ${c.threadHex} 76%, transparent 76%)`,
+            backgroundSize: '24px 48px',
+            backgroundPosition: 'center',
+            boxShadow: 'inset 0 0 20px rgba(0,0,0,0.8)'
+          } : {
+            backgroundColor: c.hex,
+            backgroundImage: `repeating-linear-gradient(45deg, transparent, transparent 2px, rgba(0,0,0,0.2) 2px, rgba(0,0,0,0.2) 4px)`,
+            boxShadow: 'inset 0 0 10px rgba(0,0,0,0.5)'
+          }
+
           return (
             <button
               key={c.id}
@@ -819,12 +802,12 @@ function SwatchStep({
                 class={[
                   'aspect-[4/3] w-full rounded-xl ring-2 transition-all relative overflow-hidden',
                   active
-                    ? 'ring-[var(--color-primary)] scale-105 shadow-[var(--shadow-glow)]'
-                    : 'ring-[var(--color-border)] hover:ring-[var(--color-text-muted)]',
+                    ? 'ring-white scale-105 shadow-[0_0_15px_rgba(255,255,255,0.4)] z-10'
+                    : 'ring-white/10 hover:ring-white/30',
                 ].join(' ')}
               >
-                <img src={c.swatchUrl} alt="" class="size-full object-cover group-hover:scale-110 transition-transform duration-700" loading="lazy" />
-                <div class="absolute inset-0 bg-gradient-to-tr from-black/10 via-transparent to-white/5 pointer-events-none" />
+                <div class="size-full transition-transform duration-700 group-hover:scale-110" style={style}></div>
+                <div class="absolute inset-0 bg-gradient-to-tr from-black/40 via-transparent to-white/10 pointer-events-none" />
                 {active && (
                   <span class="absolute inset-0 flex items-center justify-center bg-black/30 backdrop-blur-[1px]">
                     <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" class="drop-shadow">
@@ -833,7 +816,7 @@ function SwatchStep({
                   </span>
                 )}
               </div>
-              <span class={['text-[11px] truncate w-full text-center', active ? 'text-[var(--color-text)] font-medium' : 'text-[var(--color-text-muted)] group-hover:text-[var(--color-text-soft)]'].join(' ')}>
+              <span class={['text-[11px] truncate w-full text-center', active ? 'text-white font-medium' : 'text-white/50 group-hover:text-white/80'].join(' ')}>
                 {c.name}
               </span>
             </button>
@@ -844,20 +827,20 @@ function SwatchStep({
   )
 }
 
-/* -------------------- Heel Pad Step -------------------- */
+/* -------------------- Heel Pad Step (Photorealistic CSS) -------------------- */
 function HeelPadStep({
   pads,
   selected,
   onSelect,
-  passenger,
-  onTogglePassenger,
+  heelPosition,
+  onPositionChange,
   onContinue,
 }: {
   pads: HeelPad[]
   selected: HeelPad | null
   onSelect: (p: HeelPad) => void
-  passenger: boolean
-  onTogglePassenger: () => void
+  heelPosition: HeelPosition
+  onPositionChange: (p: HeelPosition) => void
   onContinue: () => void
 }) {
   return (
@@ -872,6 +855,32 @@ function HeelPadStep({
       <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
         {pads.map((p) => {
           const active = selected?.id === p.id
+          
+          let patternStyle = {}
+          if (p.slug.includes('karbon')) {
+            patternStyle = {
+              backgroundColor: p.textureHex,
+              backgroundImage: 'linear-gradient(45deg, rgba(0,0,0,0.2) 25%, transparent 25%, transparent 75%, rgba(0,0,0,0.2) 75%, rgba(0,0,0,0.2)), linear-gradient(45deg, rgba(0,0,0,0.2) 25%, transparent 25%, transparent 75%, rgba(0,0,0,0.2) 75%, rgba(0,0,0,0.2))',
+              backgroundSize: '10px 10px',
+              backgroundPosition: '0 0, 5px 5px',
+              boxShadow: 'inset 0 0 15px rgba(0,0,0,0.8)'
+            }
+          } else if (p.slug.includes('noktali')) {
+            patternStyle = {
+              backgroundColor: p.textureHex,
+              backgroundImage: 'radial-gradient(rgba(0,0,0,0.4) 15%, transparent 16%), radial-gradient(rgba(255,255,255,0.1) 15%, transparent 16%)',
+              backgroundSize: '8px 8px',
+              backgroundPosition: '0 0, 4px 4px',
+              boxShadow: 'inset 0 0 15px rgba(0,0,0,0.8)'
+            }
+          } else {
+             patternStyle = {
+               backgroundColor: p.textureHex,
+               backgroundImage: 'repeating-linear-gradient(45deg, transparent, transparent 2px, rgba(255,255,255,0.05) 2px, rgba(255,255,255,0.05) 4px)',
+               boxShadow: 'inset 0 0 15px rgba(0,0,0,0.8)'
+             }
+          }
+
           return (
             <button
               key={p.id}
@@ -884,19 +893,19 @@ function HeelPadStep({
                 class={[
                   'aspect-[4/3] w-full rounded-xl ring-2 transition-all relative overflow-hidden',
                   active
-                    ? 'ring-[var(--color-primary)] scale-[1.03] shadow-[var(--shadow-glow)]'
-                    : 'ring-[var(--color-border)] hover:ring-[var(--color-text-muted)]',
+                    ? 'ring-white scale-105 shadow-[0_0_15px_rgba(255,255,255,0.4)] z-10'
+                    : 'ring-white/10 hover:ring-white/30',
                 ].join(' ')}
               >
-                <img src={p.swatchUrl} alt="" class="size-full object-cover group-hover:scale-110 transition-transform duration-700" loading="lazy" />
-                <div class="absolute inset-0 bg-gradient-to-tr from-black/10 via-transparent to-white/5 pointer-events-none" />
+                <div class="size-full transition-transform duration-700 group-hover:scale-110" style={patternStyle}></div>
+                <div class="absolute inset-0 bg-gradient-to-tr from-black/40 via-transparent to-white/10 pointer-events-none" />
                 {p.isStandard && (
-                  <span class="absolute top-1.5 right-1.5 px-2 py-0.5 text-[9px] rounded-full bg-[var(--color-success)]/90 text-white font-semibold uppercase tracking-wider">
+                  <span class="absolute top-1.5 right-1.5 px-2 py-0.5 text-[9px] rounded-full bg-emerald-500/90 text-white font-semibold uppercase tracking-wider">
                     Standart
                   </span>
                 )}
                 {!p.isStandard && p.pricePremium > 0 && (
-                  <span class="absolute top-1.5 right-1.5 px-2 py-0.5 text-[9px] rounded-full bg-[var(--color-bg)]/80 backdrop-blur text-[var(--color-primary)] font-semibold">
+                  <span class="absolute top-1.5 right-1.5 px-2 py-0.5 text-[9px] rounded-full bg-black/80 backdrop-blur text-white font-semibold ring-1 ring-white/20">
                     +{formatTRY(p.pricePremium)}
                   </span>
                 )}
@@ -908,7 +917,7 @@ function HeelPadStep({
                   </span>
                 )}
               </div>
-              <span class={['text-[11px] truncate text-center w-full', active ? 'text-[var(--color-text)] font-medium' : 'text-[var(--color-text-muted)]'].join(' ')}>
+              <span class={['text-[11px] truncate text-center w-full', active ? 'text-white font-medium' : 'text-white/50 group-hover:text-white/80'].join(' ')}>
                 {p.name}
               </span>
             </button>
@@ -916,24 +925,44 @@ function HeelPadStep({
         })}
       </div>
 
-      <label class="mt-6 flex items-center gap-3 p-4 rounded-xl border border-[var(--color-border)]/60 hover:border-[var(--color-text-muted)] cursor-pointer transition-colors">
-        <input
-          type="checkbox"
-          checked={passenger}
-          onChange={onTogglePassenger}
-          class="size-5 accent-[var(--color-primary)]"
-        />
-        <div class="flex-1">
-          <div class="text-sm font-medium">Yolcu paspasına da topukluk ekle</div>
-          <div class="text-xs text-[var(--color-text-muted)]">+{formatTRY(100)}</div>
+      {/* Konum: sürücü / yolcu / ikisi / yok */}
+      <div class="mt-6">
+        <div class="text-[10px] uppercase tracking-[0.2em] text-white/50 font-bold mb-2">Topukluk Konumu</div>
+        <div class="grid grid-cols-2 gap-2">
+          {([
+            { v: 'driver-only', label: 'Sadece Sürücü', desc: 'Standart', extra: 0 },
+            { v: 'passenger-only', label: 'Sadece Yolcu', desc: 'Yer değiştirir', extra: 0 },
+            { v: 'both', label: 'Her İkisi', desc: '+₺100', extra: 100 },
+            { v: 'none', label: 'İstemiyorum', desc: 'Düz paspas', extra: 0 },
+          ] as const).map((opt) => {
+            const active = heelPosition === opt.v
+            return (
+              <button
+                key={opt.v}
+                type="button"
+                onClick={() => onPositionChange(opt.v)}
+                class={[
+                  'p-3 rounded-xl border text-left transition-all',
+                  active
+                    ? 'border-white bg-white/15 ring-2 ring-white/30'
+                    : 'border-white/10 bg-white/5 hover:border-white/30',
+                ].join(' ')}
+              >
+                <div class="text-sm font-semibold">{opt.label}</div>
+                <div class={['text-[10px] mt-0.5', opt.extra > 0 ? 'text-amber-400' : 'text-white/50'].join(' ')}>
+                  {opt.desc}
+                </div>
+              </button>
+            )
+          })}
         </div>
-      </label>
+      </div>
 
       <button
         type="button"
         onClick={onContinue}
         disabled={!selected}
-        class="mt-5 w-full px-5 py-2.5 rounded-lg text-sm font-semibold bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] text-[var(--color-bg)] disabled:opacity-30 transition-colors"
+        class="mt-5 w-full px-5 py-2.5 rounded-lg text-sm font-semibold bg-white text-black hover:bg-white/90 disabled:opacity-30 transition-colors"
       >
         Devam et →
       </button>
@@ -941,65 +970,150 @@ function HeelPadStep({
   )
 }
 
-/* -------------------- Logo step -------------------- */
+/* -------------------- Logo step (per-mat picker) -------------------- */
+const POSITION_LABELS: Record<MatPosition, string> = {
+  driver: 'Sürücü',
+  passenger: 'Yolcu',
+  leftRear: 'Sol Arka',
+  rightRear: 'Sağ Arka',
+  trunk: 'Bagaj',
+}
+const PLACEMENT_LABELS: Record<LogoPlacement, string> = {
+  top: 'Üst',
+  middle: 'Orta',
+  bottom: 'Alt',
+}
+
 function LogoStep({
   brand,
-  accessories,
-  selected,
-  onSelect,
+  product,
+  matColor,
+  borderColor,
+  logos,
+  onSetLogo,
+  onSetPlacement,
+  onApplyAll,
   onContinue,
 }: {
   brand: Brand | null
-  accessories: LogoAccessory[]
-  selected: LogoAccessory | null
-  onSelect: (l: LogoAccessory | null) => void
+  product: Product
+  matColor: MatColor
+  borderColor: BorderColor
+  logos: MatLogoConfig[]
+  onSetLogo: (position: MatPosition, brandSlug: string | null) => void
+  onSetPlacement: (position: MatPosition, placement: LogoPlacement) => void
+  onApplyAll: (brandSlug: string | null) => void
   onContinue: () => void
 }) {
+  const activePositions = positionsFor(product.parts, product.includesTrunk)
+  const activeCount = logos.filter((l) => l.brandSlug !== null && activePositions.includes(l.position)).length
+  const totalLogoCost = activeCount * 150
+
   return (
     <div>
       <header class="mb-5">
-        <h2 class="font-display text-2xl font-semibold">Marka ambleminizi seçin</h2>
-        <p class="mt-2 text-sm text-[var(--color-text-muted)]">
-          Paspasın üst kısmına metal/plastik plaka olarak monte edilir.{' '}
-          {brand && (
-            <span class="text-[var(--color-text-soft)]">
-              {brand.name} ambleminiz otomatik önerildi.
-            </span>
-          )}
+        <h2 class="font-display text-2xl font-semibold">Marka Amblemleri</h2>
+        <p class="mt-2 text-sm text-white/60">
+          Her paspasa ayrı amblem ve konum seçebilirsiniz. Paslanmaz çelik 3D plaka olarak monte edilir.
         </p>
       </header>
 
-      <div class="grid sm:grid-cols-2 gap-3">
-        {accessories.map((a) => {
-          const active = selected?.id === a.id
-          const isDecline = a.brandSlug === null
+      {/* Hızlı işlem barı */}
+      <div class="mb-4 flex items-center gap-2 flex-wrap">
+        {brand && (
+          <button
+            type="button"
+            onClick={() => onApplyAll(brand.slug)}
+            class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-semibold bg-white/10 hover:bg-white/15 text-white border border-white/20"
+          >
+            ⚡ Tüm Paspaslara {brand.name}
+          </button>
+        )}
+        <button
+          type="button"
+          onClick={() => onApplyAll(null)}
+          class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-semibold bg-white/5 hover:bg-white/10 text-white/70 border border-white/10"
+        >
+          🚫 Hiçbirine Logo Yok
+        </button>
+        <span class="ml-auto text-[10px] text-white/50">
+          {activeCount} amblem · {totalLogoCost > 0 ? `+${formatTRY(totalLogoCost)}` : 'Ücretsiz'}
+        </span>
+      </div>
+
+      {/* Her aktif pozisyon için ayrı kart */}
+      <div class="space-y-2">
+        {activePositions.map((pos) => {
+          const cfg = logos.find((l) => l.position === pos)
+          const hasLogo = cfg?.brandSlug != null
           return (
-            <button
-              key={a.id}
-              type="button"
-              onClick={() => onSelect(a)}
+            <div
+              key={pos}
               class={[
-                'group text-left p-5 rounded-2xl border transition-all flex items-center justify-between gap-3',
-                active
-                  ? 'border-[var(--color-primary)] bg-[var(--color-primary-soft)] shadow-[var(--shadow-glow)]'
-                  : 'border-[var(--color-border)]/60 bg-[var(--color-surface-2)] hover:border-[var(--color-text-muted)] hover:-translate-y-0.5',
+                'p-3 rounded-xl border transition-all',
+                hasLogo ? 'border-white/30 bg-white/5' : 'border-white/10 bg-black/30',
               ].join(' ')}
             >
-              <div>
-                <div class="font-semibold text-[var(--color-text)]">
-                  {isDecline ? 'İstemiyorum' : `${brand?.name ?? a.name.split(' ')[0]} Logosu`}
+              <div class="flex items-center gap-3">
+                {/* Mini paspas önizleme */}
+                <div class="size-12 shrink-0 rounded-lg overflow-hidden ring-1 ring-white/15 relative">
+                  <img src={borderColor.swatchUrl} alt="" class="absolute inset-0 size-full object-cover" />
+                  <div class="absolute inset-[14%] rounded-sm overflow-hidden">
+                    <img src={matColor.swatchUrl} alt="" class="size-full object-cover" />
+                  </div>
+                  {hasLogo && brand && (
+                    <div class="absolute inset-0 grid place-items-center">
+                      <div class="size-5 grid place-items-center rounded-full bg-black/60 backdrop-blur ring-1 ring-white/30">
+                        <ClientBrandLogo iconSlug={brand.iconSlug} name={brand.name} size={10} color="#fff" />
+                      </div>
+                    </div>
+                  )}
                 </div>
-                <div class="mt-1 text-xs text-[var(--color-text-muted)]">
-                  {isDecline ? 'Logosuz, sade görünüm' : 'Marka amblemi paspas üzerine sabitlenir'}
+                {/* Pozisyon adı */}
+                <div class="flex-1 min-w-0">
+                  <div class="text-sm font-semibold text-white">{POSITION_LABELS[pos]}</div>
+                  <div class="text-[10px] text-white/50">
+                    {hasLogo ? `${brand?.name ?? cfg?.brandSlug} amblem` : 'Logo yok'}
+                  </div>
                 </div>
-                <div class={['mt-2 text-sm font-semibold', isDecline ? 'text-[var(--color-text-muted)]' : 'text-[var(--color-primary)]'].join(' ')}>
-                  {isDecline ? 'Ücretsiz' : `+${formatTRY(a.price)} / adet`}
-                </div>
+                {/* Toggle */}
+                <button
+                  type="button"
+                  onClick={() => onSetLogo(pos, hasLogo ? null : (brand?.slug ?? null))}
+                  class={[
+                    'px-3 py-1.5 rounded-lg text-[11px] font-bold transition-colors',
+                    hasLogo ? 'bg-amber-500 text-black' : 'bg-white/10 text-white/70 hover:bg-white/15',
+                  ].join(' ')}
+                >
+                  {hasLogo ? '✓ Eklendi' : '+ Ekle'}
+                </button>
               </div>
-              <div class={['size-12 grid place-items-center rounded-xl font-display font-bold text-lg shrink-0 transition-colors', isDecline ? 'bg-[var(--color-surface)] text-[var(--color-text-muted)]' : 'bg-[var(--color-bg)] text-[var(--color-primary)] group-hover:bg-[var(--color-primary)] group-hover:text-[var(--color-bg)]'].join(' ')}>
-                {isDecline ? '—' : (brand?.name?.[0] ?? '⊕')}
-              </div>
-            </button>
+
+              {/* Placement (sadece logo varsa) */}
+              {hasLogo && (
+                <div class="mt-2 pt-2 border-t border-white/10 flex items-center gap-2">
+                  <span class="text-[10px] uppercase tracking-wider text-white/40 font-semibold">Konum:</span>
+                  <div class="flex gap-1">
+                    {(['top', 'middle', 'bottom'] as const).map((pl) => {
+                      const isActive = cfg?.placement === pl
+                      return (
+                        <button
+                          key={pl}
+                          type="button"
+                          onClick={() => onSetPlacement(pos, pl)}
+                          class={[
+                            'px-2.5 py-1 rounded-md text-[10px] font-semibold transition-colors',
+                            isActive ? 'bg-white text-black' : 'bg-white/10 text-white/60 hover:bg-white/15',
+                          ].join(' ')}
+                        >
+                          {PLACEMENT_LABELS[pl]}
+                        </button>
+                      )
+                    })}
+                  </div>
+                </div>
+              )}
+            </div>
           )
         })}
       </div>
@@ -1007,7 +1121,7 @@ function LogoStep({
       <button
         type="button"
         onClick={onContinue}
-        class="mt-6 w-full px-5 py-3 rounded-xl text-sm font-semibold bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] text-[var(--color-bg)] transition-all hover:shadow-[var(--shadow-glow)]"
+        class="mt-6 w-full px-5 py-3 rounded-xl text-sm font-semibold bg-white hover:bg-white/90 text-black transition-all hover:shadow-[0_0_20px_rgba(255,255,255,0.4)]"
       >
         Sipariş özetini gör →
       </button>
@@ -1016,6 +1130,13 @@ function LogoStep({
 }
 
 /* -------------------- Summary step -------------------- */
+const HEEL_LABEL: Record<HeelPosition, string> = {
+  'driver-only': 'Sadece sürücü',
+  'passenger-only': 'Sadece yolcu',
+  both: 'Sürücü + yolcu',
+  none: 'Topukluk yok',
+}
+
 function SummaryStep({
   brand,
   model,
@@ -1023,8 +1144,8 @@ function SummaryStep({
   matColor,
   borderColor,
   heelPad,
-  heelPadPassenger,
-  logoAccessory,
+  heelPosition,
+  logos,
   total,
   onAddToCart,
 }: {
@@ -1034,16 +1155,25 @@ function SummaryStep({
   matColor: MatColor
   borderColor: BorderColor
   heelPad: HeelPad
-  heelPadPassenger: boolean
-  logoAccessory: LogoAccessory | null
+  heelPosition: HeelPosition
+  logos: MatLogoConfig[]
   total: number
   onAddToCart: () => void
 }) {
+  const activePositions = positionsFor(product.parts, product.includesTrunk)
+  const activeLogos = logos.filter((l) => l.brandSlug !== null && activePositions.includes(l.position))
+  const logoSummary =
+    activeLogos.length === 0
+      ? 'Eklenmedi'
+      : activeLogos.length === activePositions.length
+      ? `Tüm paspaslar (${activePositions.length})`
+      : activeLogos.map((l) => POSITION_LABELS[l.position]).join(', ')
+
   return (
     <div>
       <header class="mb-5">
         <h2 class="font-display text-2xl font-semibold">Paspasınız hazır.</h2>
-        <p class="mt-2 text-sm text-[var(--color-text-muted)]">
+        <p class="mt-2 text-sm text-white/60">
           Aşağıdaki kombinasyonu onayla, atölyemiz aynı gün üretime başlasın.
         </p>
       </header>
@@ -1055,20 +1185,10 @@ function SummaryStep({
         <Row label="Kenarlık" value={borderColor.name} swatchUrl={borderColor.swatchUrl} />
         <Row
           label="Topukluk"
-          value={
-            heelPad.name +
-            (heelPadPassenger ? ' · sürücü + yolcu' : ' · sadece sürücü')
-          }
+          value={`${heelPad.name} · ${HEEL_LABEL[heelPosition]}`}
           swatchUrl={heelPad.swatchUrl}
         />
-        <Row
-          label="Amblem"
-          value={
-            logoAccessory && logoAccessory.brandSlug !== null
-              ? `${brand.name} × ${product.parts}`
-              : 'Eklenmedi'
-          }
-        />
+        <Row label="Amblem" value={logoSummary} />
       </dl>
 
       <div class="mt-6 pt-5 border-t border-[var(--color-border)]/60 flex items-center justify-between gap-4">
@@ -1150,13 +1270,14 @@ function Preview({
   const showTrunk = product?.includesTrunk ?? false
   const showRear = (product?.parts ?? 0) >= 4
   const showLogo = logoAccessory && logoAccessory.brandSlug !== null
+  const photorealisticImage = matColor?.previewUrl
 
   return (
-    <div class="rounded-2xl bg-[var(--color-surface)] border border-[var(--color-border)]/60 overflow-hidden shadow-2xl shadow-black/40">
+    <div class="rounded-2xl bg-[var(--color-surface)] border border-[var(--color-border)]/60 overflow-hidden shadow-2xl shadow-black/40 group">
       <div class="relative aspect-[3/4] overflow-hidden">
         {/* Zemin sahne */}
         <div
-          class="absolute inset-0"
+          class="absolute inset-0 transition-opacity duration-1000"
           style="background:
             radial-gradient(ellipse 80% 60% at 50% 30%, #1a1a22, #0b0b0f 85%);"
         />
@@ -1305,69 +1426,95 @@ function Preview({
           </rect>
         </svg>
 
-        {/* Paspas slot'ları — viewBox 0..600 ile birebir orantılı */}
-        <div class="absolute inset-x-2 top-2 bottom-2 mx-auto pointer-events-none">
-          <div class="relative h-full w-full" style="aspect-ratio: 400/600;">
-            {/* Sürücü ön — koltuğun ayak ucu */}
-            <MatSlot
-              x="14%" y="53%" w="22%" h="10%" rotate="0deg"
-              matColor={matColor} borderColor={borderColor}
-              heelPad={heelPad}
-              showLogo={!!showLogo}
-              brand={brand}
-              label="SÜRÜCÜ"
-            />
-            {/* Yolcu ön */}
-            <MatSlot
-              x="64%" y="53%" w="22%" h="10%" rotate="0deg"
-              matColor={matColor} borderColor={borderColor}
-              heelPad={heelPadPassenger ? heelPad : null}
-              showLogo={!!showLogo}
-              brand={brand}
-              label="YOLCU"
-            />
-            {/* Sol arka */}
-            {showRear && (
-              <MatSlot
-                x="14%" y="67%" w="22%" h="9%" rotate="0deg"
-                matColor={matColor} borderColor={borderColor}
-                heelPad={null}
-                showLogo={!!showLogo}
-                brand={brand}
-                label=""
-              />
-            )}
-            {/* Sağ arka */}
-            {showRear && (
-              <MatSlot
-                x="64%" y="67%" w="22%" h="9%" rotate="0deg"
-                matColor={matColor} borderColor={borderColor}
-                heelPad={null}
-                showLogo={!!showLogo}
-                brand={brand}
-                label=""
-              />
-            )}
-            {showRear && (
-              <div class="absolute" style="left: 50%; top: 71%; transform: translate(-50%, -50%);">
-                <span class="text-[8px] font-semibold tracking-[0.3em] text-[var(--color-text-muted)] bg-[var(--color-bg)]/70 px-2 py-0.5 rounded">
-                  ARKA SIRA
-                </span>
-              </div>
-            )}
-            {/* Bagaj */}
-            {showTrunk && (
-              <MatSlot
-                x="29%" y="83%" w="42%" h="9%" rotate="0deg"
-                matColor={matColor} borderColor={borderColor}
-                heelPad={null}
-                showLogo={false}
-                brand={brand}
-                label="BAGAJ"
-              />
-            )}
+        {photorealisticImage ? (
+          <div class="absolute inset-x-2 top-2 bottom-2 mx-auto pointer-events-none flex items-center justify-center animate-in fade-in zoom-in duration-1000">
+             <div class="relative w-full h-full rounded-xl overflow-hidden ring-1 ring-white/10 shadow-[0_0_40px_rgba(0,0,0,0.8)]">
+                <img src={photorealisticImage} alt="Gerçekçi Paspas Önizlemesi" class="absolute inset-0 size-full object-cover scale-105 group-hover:scale-110 transition-transform duration-1000" />
+                <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent"></div>
+                
+                {/* Dynamically overlay the chosen brand logo if selected */}
+                {showLogo && brand && (
+                  <div class="absolute bottom-6 left-1/2 -translate-x-1/2 size-16 grid place-items-center rounded-full bg-black/40 backdrop-blur-md ring-1 ring-white/30 shadow-[0_4px_20px_rgba(0,0,0,0.6)] animate-in slide-in-from-bottom-4 fade-in duration-700">
+                    <ClientBrandLogo
+                      iconSlug={brand.iconSlug}
+                      name={brand.name}
+                      size={32}
+                      color="#ffffff"
+                    />
+                  </div>
+                )}
+                
+                <div class="absolute top-4 left-0 w-full text-center pointer-events-none">
+                   <span class="inline-block px-3 py-1 bg-black/50 backdrop-blur-sm rounded-full text-[10px] font-semibold text-white/90 tracking-[0.2em] uppercase border border-white/10">
+                     Foto-Realistik Önizleme
+                   </span>
+                </div>
+             </div>
           </div>
-        </div>
+        ) : (
+          <div class="absolute inset-x-2 top-2 bottom-2 mx-auto pointer-events-none">
+            <div class="relative h-full w-full" style="aspect-ratio: 400/600;">
+              {/* Sürücü ön — koltuğun ayak ucu */}
+              <MatSlot
+                x="14%" y="53%" w="22%" h="10%" rotate="0deg"
+                matColor={matColor} borderColor={borderColor}
+                heelPad={heelPad}
+                showLogo={!!showLogo}
+                brand={brand}
+                label="SÜRÜCÜ"
+              />
+              {/* Yolcu ön */}
+              <MatSlot
+                x="64%" y="53%" w="22%" h="10%" rotate="0deg"
+                matColor={matColor} borderColor={borderColor}
+                heelPad={heelPadPassenger ? heelPad : null}
+                showLogo={!!showLogo}
+                brand={brand}
+                label="YOLCU"
+              />
+              {/* Sol arka */}
+              {showRear && (
+                <MatSlot
+                  x="14%" y="67%" w="22%" h="9%" rotate="0deg"
+                  matColor={matColor} borderColor={borderColor}
+                  heelPad={null}
+                  showLogo={!!showLogo}
+                  brand={brand}
+                  label=""
+                />
+              )}
+              {/* Sağ arka */}
+              {showRear && (
+                <MatSlot
+                  x="64%" y="67%" w="22%" h="9%" rotate="0deg"
+                  matColor={matColor} borderColor={borderColor}
+                  heelPad={null}
+                  showLogo={!!showLogo}
+                  brand={brand}
+                  label=""
+                />
+              )}
+              {showRear && (
+                <div class="absolute" style="left: 50%; top: 71%; transform: translate(-50%, -50%);">
+                  <span class="text-[8px] font-semibold tracking-[0.3em] text-[var(--color-text-muted)] bg-[var(--color-bg)]/70 px-2 py-0.5 rounded">
+                    ARKA SIRA
+                  </span>
+                </div>
+              )}
+              {/* Bagaj */}
+              {showTrunk && (
+                <MatSlot
+                  x="29%" y="83%" w="42%" h="9%" rotate="0deg"
+                  matColor={matColor} borderColor={borderColor}
+                  heelPad={null}
+                  showLogo={false}
+                  brand={brand}
+                  label="BAGAJ"
+                />
+              )}
+            </div>
+          </div>
+        )}
 
         {/* Üst rozetler */}
         <div class="absolute top-3 left-3 px-2.5 py-1 rounded-full bg-[var(--color-bg)]/70 backdrop-blur-md ring-1 ring-white/10 text-[10px] uppercase tracking-[0.18em] text-[var(--color-text-muted)] font-semibold flex items-center gap-1.5">

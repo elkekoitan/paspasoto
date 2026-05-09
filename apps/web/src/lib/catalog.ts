@@ -10,10 +10,9 @@ export type Brand = {
   slug: string
   name: string
   popular: boolean
-  /** simple-icons slug (BrandLogo bileşeniyle gerçek SVG render edilir) */
   iconSlug?: string
-  /** Brand color (simple-icons'tan, override olarak da kullanılabilir) */
   color?: string
+  logoUrl?: string
 }
 
 export type VehicleModel = {
@@ -31,7 +30,10 @@ export type MatColor = {
   slug: string
   name: string
   hex: string
+  threadHex: string // Color of the diamond stitching thread
   swatchUrl: string
+  previewUrl?: string
+  showroomUrl?: string
 }
 
 export type BorderColor = MatColor
@@ -63,39 +65,39 @@ export type Product = {
 }
 
 export const BRANDS: Brand[] = [
-  { id: 1, slug: 'audi', name: 'Audi', popular: true, iconSlug: 'audi', color: '#BB0A30' },
-  { id: 2, slug: 'bmw', name: 'BMW', popular: true, iconSlug: 'bmw', color: '#0066B1' },
-  { id: 3, slug: 'mercedes', name: 'Mercedes-Benz', popular: true, color: '#A4AAAE' },
-  { id: 4, slug: 'volkswagen', name: 'Volkswagen', popular: true, iconSlug: 'volkswagen', color: '#151F5D' },
-  { id: 5, slug: 'skoda', name: 'Škoda', popular: true, iconSlug: 'skoda', color: '#4BA82E' },
-  { id: 6, slug: 'hyundai', name: 'Hyundai', popular: true, iconSlug: 'hyundai', color: '#002C5F' },
-  { id: 7, slug: 'ford', name: 'Ford', popular: true, iconSlug: 'ford', color: '#003478' },
-  { id: 8, slug: 'peugeot', name: 'Peugeot', popular: true, iconSlug: 'peugeot', color: '#00A3E0' },
-  { id: 9, slug: 'renault', name: 'Renault', popular: true, iconSlug: 'renault', color: '#FFCC00' },
-  { id: 10, slug: 'fiat', name: 'Fiat', popular: true, iconSlug: 'fiat', color: '#A6192E' },
-  { id: 11, slug: 'toyota', name: 'Toyota', popular: true, iconSlug: 'toyota', color: '#EB0A1E' },
-  { id: 12, slug: 'honda', name: 'Honda', popular: true, iconSlug: 'honda', color: '#E40521' },
-  { id: 13, slug: 'opel', name: 'Opel', popular: true, iconSlug: 'opel', color: '#F7FF14' },
-  { id: 14, slug: 'volvo', name: 'Volvo', popular: false, iconSlug: 'volvo', color: '#003057' },
-  { id: 15, slug: 'citroen', name: 'Citroën', popular: true, iconSlug: 'citroen', color: '#7A1F1F' },
-  { id: 16, slug: 'seat', name: 'Seat', popular: false, iconSlug: 'seat', color: '#C49A57' },
-  { id: 17, slug: 'dacia', name: 'Dacia', popular: true, iconSlug: 'dacia', color: '#646B52' },
-  { id: 18, slug: 'kia', name: 'Kia', popular: true, iconSlug: 'kia', color: '#05141F' },
-  { id: 19, slug: 'nissan', name: 'Nissan', popular: true, iconSlug: 'nissan', color: '#C3002F' },
-  { id: 20, slug: 'mazda', name: 'Mazda', popular: false, iconSlug: 'mazda', color: '#101010' },
-  { id: 21, slug: 'mini', name: 'MINI', popular: false, iconSlug: 'mini', color: '#000000' },
-  { id: 22, slug: 'porsche', name: 'Porsche', popular: false, iconSlug: 'porsche', color: '#D5001C' },
-  { id: 23, slug: 'lexus', name: 'Lexus', popular: false, color: '#1A1A1A' },
-  { id: 24, slug: 'tesla', name: 'Tesla', popular: true, iconSlug: 'tesla', color: '#CC0000' },
-  { id: 25, slug: 'subaru', name: 'Subaru', popular: false, iconSlug: 'subaru', color: '#0041AA' },
-  { id: 26, slug: 'mitsubishi', name: 'Mitsubishi', popular: false, iconSlug: 'mitsubishi', color: '#E60012' },
-  { id: 27, slug: 'suzuki', name: 'Suzuki', popular: false, iconSlug: 'suzuki', color: '#CD1424' },
-  { id: 28, slug: 'jeep', name: 'Jeep', popular: false, iconSlug: 'jeep', color: '#374B49' },
-  { id: 29, slug: 'landrover', name: 'Land Rover', popular: false, color: '#005A2B' },
-  { id: 30, slug: 'jaguar', name: 'Jaguar', popular: false, color: '#222B33' },
-  { id: 31, slug: 'chevrolet', name: 'Chevrolet', popular: false, iconSlug: 'chevrolet', color: '#FFCC00' },
-  { id: 32, slug: 'mg', name: 'MG', popular: true, color: '#E10A2D' },
-  { id: 33, slug: 'cupra', name: 'Cupra', popular: false, color: '#C8612A' },
+  { id: 1, slug: 'audi', name: 'Audi', popular: true, iconSlug: 'audi', color: '#BB0A30', logoUrl: 'https://logo.clearbit.com/audi.com' },
+  { id: 2, slug: 'bmw', name: 'BMW', popular: true, iconSlug: 'bmw', color: '#0066B1', logoUrl: 'https://logo.clearbit.com/bmw.com' },
+  { id: 3, slug: 'mercedes', name: 'Mercedes-Benz', popular: true, color: '#A4AAAE', logoUrl: 'https://logo.clearbit.com/mercedes-benz.com' },
+  { id: 4, slug: 'volkswagen', name: 'Volkswagen', popular: true, iconSlug: 'volkswagen', color: '#151F5D', logoUrl: 'https://logo.clearbit.com/vw.com' },
+  { id: 5, slug: 'skoda', name: 'Škoda', popular: true, iconSlug: 'skoda', color: '#4BA82E', logoUrl: 'https://logo.clearbit.com/skoda-auto.com' },
+  { id: 6, slug: 'hyundai', name: 'Hyundai', popular: true, iconSlug: 'hyundai', color: '#002C5F', logoUrl: 'https://logo.clearbit.com/hyundai.com' },
+  { id: 7, slug: 'ford', name: 'Ford', popular: true, iconSlug: 'ford', color: '#003478', logoUrl: 'https://logo.clearbit.com/ford.com' },
+  { id: 8, slug: 'peugeot', name: 'Peugeot', popular: true, iconSlug: 'peugeot', color: '#00A3E0', logoUrl: 'https://logo.clearbit.com/peugeot.com' },
+  { id: 9, slug: 'renault', name: 'Renault', popular: true, iconSlug: 'renault', color: '#FFCC00', logoUrl: 'https://logo.clearbit.com/renault.com' },
+  { id: 10, slug: 'fiat', name: 'Fiat', popular: true, iconSlug: 'fiat', color: '#A6192E', logoUrl: 'https://logo.clearbit.com/fiat.com' },
+  { id: 11, slug: 'toyota', name: 'Toyota', popular: true, iconSlug: 'toyota', color: '#EB0A1E', logoUrl: 'https://logo.clearbit.com/toyota.com' },
+  { id: 12, slug: 'honda', name: 'Honda', popular: true, iconSlug: 'honda', color: '#E40521', logoUrl: 'https://logo.clearbit.com/honda.com' },
+  { id: 13, slug: 'opel', name: 'Opel', popular: true, iconSlug: 'opel', color: '#F7FF14', logoUrl: 'https://logo.clearbit.com/opel.com' },
+  { id: 14, slug: 'volvo', name: 'Volvo', popular: false, iconSlug: 'volvo', color: '#003057', logoUrl: 'https://logo.clearbit.com/volvocars.com' },
+  { id: 15, slug: 'citroen', name: 'Citroën', popular: true, iconSlug: 'citroen', color: '#7A1F1F', logoUrl: 'https://logo.clearbit.com/citroen.com' },
+  { id: 16, slug: 'seat', name: 'Seat', popular: false, iconSlug: 'seat', color: '#C49A57', logoUrl: 'https://logo.clearbit.com/seat.com' },
+  { id: 17, slug: 'dacia', name: 'Dacia', popular: true, iconSlug: 'dacia', color: '#646B52', logoUrl: 'https://logo.clearbit.com/dacia.com' },
+  { id: 18, slug: 'kia', name: 'Kia', popular: true, iconSlug: 'kia', color: '#05141F', logoUrl: 'https://logo.clearbit.com/kia.com' },
+  { id: 19, slug: 'nissan', name: 'Nissan', popular: true, iconSlug: 'nissan', color: '#C3002F', logoUrl: 'https://logo.clearbit.com/nissan.com' },
+  { id: 20, slug: 'mazda', name: 'Mazda', popular: false, iconSlug: 'mazda', color: '#101010', logoUrl: 'https://logo.clearbit.com/mazda.com' },
+  { id: 21, slug: 'mini', name: 'MINI', popular: false, iconSlug: 'mini', color: '#000000', logoUrl: 'https://logo.clearbit.com/mini.com' },
+  { id: 22, slug: 'porsche', name: 'Porsche', popular: false, iconSlug: 'porsche', color: '#D5001C', logoUrl: 'https://logo.clearbit.com/porsche.com' },
+  { id: 23, slug: 'lexus', name: 'Lexus', popular: false, color: '#1A1A1A', logoUrl: 'https://logo.clearbit.com/lexus.com' },
+  { id: 24, slug: 'tesla', name: 'Tesla', popular: true, iconSlug: 'tesla', color: '#CC0000', logoUrl: 'https://logo.clearbit.com/tesla.com' },
+  { id: 25, slug: 'subaru', name: 'Subaru', popular: false, iconSlug: 'subaru', color: '#0041AA', logoUrl: 'https://logo.clearbit.com/subaru.com' },
+  { id: 26, slug: 'mitsubishi', name: 'Mitsubishi', popular: false, iconSlug: 'mitsubishi', color: '#E60012', logoUrl: 'https://logo.clearbit.com/mitsubishicars.com' },
+  { id: 27, slug: 'suzuki', name: 'Suzuki', popular: false, iconSlug: 'suzuki', color: '#CD1424', logoUrl: 'https://logo.clearbit.com/globalsuzuki.com' },
+  { id: 28, slug: 'jeep', name: 'Jeep', popular: false, iconSlug: 'jeep', color: '#374B49', logoUrl: 'https://logo.clearbit.com/jeep.com' },
+  { id: 29, slug: 'landrover', name: 'Land Rover', popular: false, color: '#005A2B', logoUrl: 'https://logo.clearbit.com/landrover.com' },
+  { id: 30, slug: 'jaguar', name: 'Jaguar', popular: false, color: '#222B33', logoUrl: 'https://logo.clearbit.com/jaguar.com' },
+  { id: 31, slug: 'chevrolet', name: 'Chevrolet', popular: false, iconSlug: 'chevrolet', color: '#FFCC00', logoUrl: 'https://logo.clearbit.com/chevrolet.com' },
+  { id: 32, slug: 'mg', name: 'MG', popular: true, color: '#E10A2D', logoUrl: 'https://logo.clearbit.com/mgmotor.eu' },
+  { id: 33, slug: 'cupra', name: 'Cupra', popular: false, color: '#C8612A', logoUrl: 'https://logo.clearbit.com/cupraofficial.com' },
   { id: 34, slug: 'byd', name: 'BYD', popular: true, color: '#003366' },
   { id: 35, slug: 'togg', name: 'TOGG', popular: true, color: '#0061A8' },
   { id: 36, slug: 'iveco', name: 'Iveco', popular: false, iconSlug: 'iveco', color: '#003D80' },
@@ -233,16 +235,16 @@ export const VEHICLE_MODELS: VehicleModel[] = [
 const SWATCH = '/assets/swatches'
 
 export const MAT_COLORS: MatColor[] = [
-  { id: 1, slug: 'siyah', name: 'Siyah', hex: '#0f0f12', swatchUrl: `${SWATCH}/mat-siyah.webp` },
-  { id: 2, slug: 'gri', name: 'Gri', hex: '#5a5a60', swatchUrl: `${SWATCH}/mat-gri.webp` },
-  { id: 3, slug: 'fume', name: 'Füme', hex: '#3a3a40', swatchUrl: `${SWATCH}/mat-fume.webp` },
-  { id: 4, slug: 'mavi', name: 'Mavi', hex: '#1e3a8a', swatchUrl: `${SWATCH}/mat-mavi.webp` },
-  { id: 5, slug: 'taba', name: 'Taba', hex: '#8a5a3a', swatchUrl: `${SWATCH}/mat-taba.webp` },
-  { id: 6, slug: 'kirmizi', name: 'Kırmızı', hex: '#9b1c1c', swatchUrl: `${SWATCH}/mat-kirmizi.webp` },
-  { id: 7, slug: 'kahve', name: 'Kahve', hex: '#4a2a1a', swatchUrl: `${SWATCH}/mat-kahve.webp` },
-  { id: 8, slug: 'bordo', name: 'Bordo', hex: '#6b1f2e', swatchUrl: `${SWATCH}/mat-bordo.webp` },
-  { id: 9, slug: 'bej', name: 'Bej', hex: '#d6c5a8', swatchUrl: `${SWATCH}/mat-bej.webp` },
-  { id: 10, slug: 'turuncu-taba', name: 'Turuncu Taba', hex: '#c87632', swatchUrl: `${SWATCH}/mat-turuncu-taba.webp` },
+  { id: 1, slug: 'siyah', name: 'Siyah', hex: '#111', threadHex: '#333', swatchUrl: `${SWATCH}/mat-siyah.webp`, previewUrl: '/images/paspas_black_red_1778184832541.png', showroomUrl: '/images/showroom_black_red_1778185224584.png' },
+  { id: 2, slug: 'gri', name: 'Gri', hex: '#444', threadHex: '#888', swatchUrl: `${SWATCH}/mat-gri.webp`, previewUrl: '/images/paspas_grey_silver_1778184888798.png', showroomUrl: '/images/showroom_grey_silver_1778185251036.png' },
+  { id: 3, slug: 'fume', name: 'Füme', hex: '#2A2A2A', threadHex: '#555', swatchUrl: `${SWATCH}/mat-fume.webp` },
+  { id: 4, slug: 'mavi', name: 'Mavi', hex: '#1A2B4C', threadHex: '#3A5B8C', swatchUrl: `${SWATCH}/mat-mavi.webp` },
+  { id: 5, slug: 'taba', name: 'Taba', hex: '#633B22', threadHex: '#A36B42', swatchUrl: `${SWATCH}/mat-taba.webp` },
+  { id: 6, slug: 'kirmizi', name: 'Kırmızı', hex: '#6B1111', threadHex: '#AB2121', swatchUrl: `${SWATCH}/mat-kirmizi.webp` },
+  { id: 7, slug: 'kahve', name: 'Kahve', hex: '#312117', threadHex: '#513127', swatchUrl: `${SWATCH}/mat-kahve.webp` },
+  { id: 8, slug: 'bordo', name: 'Bordo', hex: '#42111A', threadHex: '#72212A', swatchUrl: `${SWATCH}/mat-bordo.webp` },
+  { id: 9, slug: 'bej', name: 'Bej', hex: '#C2B294', threadHex: '#E2D2B4', swatchUrl: `${SWATCH}/mat-bej.webp`, previewUrl: '/images/paspas_beige_gold_1778184872532.png', showroomUrl: '/images/showroom_beige_gold_1778185237879.png' },
+  { id: 10, slug: 'turuncu-taba', name: 'Turuncu Taba', hex: '#A35322', threadHex: '#D38342', swatchUrl: `${SWATCH}/mat-turuncu-taba.webp` },
 ]
 
 export const BORDER_COLORS: BorderColor[] = [

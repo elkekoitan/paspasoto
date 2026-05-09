@@ -19,6 +19,7 @@
     "@nanostores/preact": "^0.5.0",
     "@preact/signals": "^2.0.0",
     "@tailwindcss/vite": "^4.0.0",
+    "@types/three": "^0.184.1",
     "@vite-pwa/astro": "^0.5.0",
     "astro": "^5.0.0",
     "clsx": "^2.1.0",
@@ -30,6 +31,7 @@
     "simple-icons": "^16.18.1",
     "tailwind-merge": "^2.5.0",
     "tailwindcss": "^4.0.0",
+    "three": "^0.184.0",
     "web-push": "^3.6.7",
     "workbox-precaching": "^7.4.1",
     "zod": "^3.23.0"
