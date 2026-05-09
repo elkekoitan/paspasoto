@@ -7,7 +7,9 @@ import {
   HEEL_PADS,
   LOGO_ACCESSORIES,
   PRODUCTS,
+  BODY_LABEL,
   type Brand,
+  type BodyType,
   type VehicleModel,
   type MatColor,
   type BorderColor,
@@ -411,7 +413,7 @@ export default function Configurator() {
              <div class="flex items-center justify-end gap-3 mt-5 flex-wrap max-w-lg">
                {logos.some((l) => l.brandSlug !== null) && brand && (
                  <div class="size-11 rounded-full bg-black/40 backdrop-blur-md grid place-items-center ring-1 ring-white/20 shadow-xl">
-                   <ClientBrandLogo iconSlug={brand.iconSlug} name={brand.name} size={24} color="#fff" />
+                   <ClientBrandLogo iconSlug={brand.iconSlug} logoUrl={brand.logoUrl} name={brand.name} size={24} color="#fff" />
                  </div>
                )}
                {brand && model && (
@@ -657,27 +659,211 @@ function ModelStep({
   onSelect: (m: VehicleModel) => void
   onBack: () => void
 }) {
+  // Cascade state — sahibinden.com tarzı 2 aşamalı seçim
+  const [bodyFilter, setBodyFilter] = useState<BodyType | 'all'>('all')
+  const [pickedName, setPickedName] = useState<string | null>(selected?.name ?? null)
+
+  // Filtre uygulanmış model listesi
+  const filtered = useMemo(
+    () => models.filter((m) => bodyFilter === 'all' || m.bodyType === bodyFilter),
+    [models, bodyFilter],
+  )
+
+  // Body type chip listesi (sadece markada mevcut olanlar)
+  const availableBodies = useMemo(() => {
+    const set = new Set<BodyType>()
+    for (const m of models) if (m.bodyType) set.add(m.bodyType)
+    return Array.from(set)
+  }, [models])
+
+  // Eşsiz model isimleri — grupla (BMW 3 Serisi tek kart, F30 + G20 ayrı satır)
+  const uniqueModels = useMemo(() => {
+    const map = new Map<string, VehicleModel[]>()
+    for (const m of filtered) {
+      const list = map.get(m.name) ?? []
+      list.push(m)
+      map.set(m.name, list)
+    }
+    return Array.from(map.entries())
+      .map(([name, gens]) => ({
+        name,
+        bodyType: gens[0]?.bodyType,
+        generations: gens.sort((a, b) => a.yearStart - b.yearStart),
+      }))
+      .sort((a, b) => a.name.localeCompare(b.name, 'tr'))
+  }, [filtered])
+
+  // Seçili model adının jenerasyonları — yıl picker için
+  const pickedGenerations = useMemo(
+    () => (pickedName ? models.filter((m) => m.name === pickedName).sort((a, b) => a.yearStart - b.yearStart) : []),
+    [models, pickedName],
+  )
+
+  // Yıl listesi — min/max aralığında
+  const yearOptions = useMemo(() => {
+    if (!pickedGenerations.length) return []
+    const min = Math.min(...pickedGenerations.map((g) => g.yearStart))
+    const max = Math.max(...pickedGenerations.map((g) => g.yearEnd))
+    const years: number[] = []
+    for (let y = max; y >= min; y--) years.push(y)
+    return years
+  }, [pickedGenerations])
+
+  function pickModelName(name: string) {
+    const gens = models.filter((m) => m.name === name)
+    if (gens.length === 1) {
+      // Tek jenerasyon → yıl picker'a gerek yok
+      onSelect(gens[0])
+    } else {
+      setPickedName(name)
+    }
+  }
+
+  function pickYear(year: number) {
+    const gen = pickedGenerations.find((g) => year >= g.yearStart && year <= g.yearEnd)
+    if (gen) onSelect(gen)
+  }
+
+  // Yıl picker görünür mü?
+  if (pickedName && pickedGenerations.length > 1) {
+    return (
+      <div>
+        <header class="mb-5 flex items-start justify-between gap-3">
+          <div>
+            <h2 class="font-display text-xl font-semibold">
+              {brand.name} {pickedName}
+            </h2>
+            <p class="mt-1 text-sm text-[var(--color-text-muted)]">
+              Aracının üretim yılını seç. Doğru jenerasyon otomatik seçilecek.
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={() => setPickedName(null)}
+            class="px-3 py-1.5 rounded-lg text-xs font-medium bg-[var(--color-surface-2)] hover:bg-[var(--color-border)]/40 whitespace-nowrap"
+          >
+            ← Model değiştir
+          </button>
+        </header>
+
+        {/* Jenerasyon timeline — yıl aralığı görsel */}
+        <div class="mb-4 space-y-1.5">
+          {pickedGenerations.map((g, i) => (
+            <div
+              key={g.id}
+              class={[
+                'flex items-center gap-3 px-3 py-2 rounded-lg text-xs',
+                selected?.id === g.id
+                  ? 'bg-[var(--color-primary-soft)] border border-[var(--color-primary)]/40'
+                  : 'bg-[var(--color-surface-2)]/60',
+              ].join(' ')}
+            >
+              <span class="size-5 grid place-items-center rounded-full bg-[var(--color-primary)] text-[var(--color-bg)] text-[10px] font-bold">
+                {i + 1}
+              </span>
+              <span class="font-mono text-[var(--color-text)]">{g.chassisCode}</span>
+              <span class="text-[var(--color-text-muted)]">{g.yearStart}-{g.yearEnd}</span>
+              {g.bodyType && (
+                <span class="ml-auto px-2 py-0.5 rounded-full text-[10px] bg-[var(--color-surface)]/60 text-[var(--color-text-soft)]">
+                  {BODY_LABEL[g.bodyType]}
+                </span>
+              )}
+            </div>
+          ))}
+        </div>
+
+        {/* Yıl grid */}
+        <div class="grid grid-cols-4 sm:grid-cols-6 gap-1.5">
+          {yearOptions.map((y) => {
+            const matchingGen = pickedGenerations.find((g) => y >= g.yearStart && y <= g.yearEnd)
+            const active = selected && y >= selected.yearStart && y <= selected.yearEnd
+            return (
+              <button
+                key={y}
+                type="button"
+                onClick={() => pickYear(y)}
+                disabled={!matchingGen}
+                class={[
+                  'px-3 py-2.5 rounded-lg text-sm font-semibold transition-colors',
+                  active
+                    ? 'bg-[var(--color-primary)] text-[var(--color-bg)]'
+                    : matchingGen
+                    ? 'bg-[var(--color-surface-2)] hover:bg-[var(--color-border)]/40 text-[var(--color-text)]'
+                    : 'bg-[var(--color-surface-2)]/40 text-[var(--color-text-muted)]/50 cursor-not-allowed',
+                ].join(' ')}
+              >
+                {y}
+              </button>
+            )
+          })}
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div>
       <header class="mb-5">
         <h2 class="font-display text-xl font-semibold">{brand.name} model</h2>
         <p class="mt-1 text-sm text-[var(--color-text-muted)]">
-          Aracının kasa kodu ve yıl aralığını seç. Modelin yoksa bizimle iletişime geçin.
+          Aracının modelini seç. Birden fazla jenerasyon varsa yıl seçimi gelecek.
         </p>
       </header>
+
+      {/* Body type filtre chip'leri */}
+      {availableBodies.length > 1 && (
+        <div class="mb-4 flex flex-wrap gap-1.5">
+          <button
+            type="button"
+            onClick={() => setBodyFilter('all')}
+            class={[
+              'px-3 py-1.5 rounded-full text-[11px] font-semibold transition-colors',
+              bodyFilter === 'all'
+                ? 'bg-[var(--color-primary)] text-[var(--color-bg)]'
+                : 'bg-[var(--color-surface-2)] text-[var(--color-text-soft)] hover:bg-[var(--color-border)]/40',
+            ].join(' ')}
+          >
+            Tümü ({models.length})
+          </button>
+          {availableBodies.map((b) => {
+            const count = models.filter((m) => m.bodyType === b).length
+            const active = bodyFilter === b
+            return (
+              <button
+                key={b}
+                type="button"
+                onClick={() => setBodyFilter(active ? 'all' : b)}
+                class={[
+                  'px-3 py-1.5 rounded-full text-[11px] font-semibold transition-colors',
+                  active
+                    ? 'bg-[var(--color-primary)] text-[var(--color-bg)]'
+                    : 'bg-[var(--color-surface-2)] text-[var(--color-text-soft)] hover:bg-[var(--color-border)]/40',
+                ].join(' ')}
+              >
+                {BODY_LABEL[b]} ({count})
+              </button>
+            )
+          })}
+        </div>
+      )}
+
       {models.length === 0 ? (
         <div class="p-6 rounded-lg bg-[var(--color-surface-2)] text-sm text-[var(--color-text-muted)] text-center">
-          Bu marka için henüz model verisi yüklenmemiş — gerçek katalog Strapi'den gelecek.
+          Bu marka için henüz model verisi yüklenmemiş.
+        </div>
+      ) : uniqueModels.length === 0 ? (
+        <div class="p-6 rounded-lg bg-[var(--color-surface-2)] text-sm text-[var(--color-text-muted)] text-center">
+          Bu kasa tipinde model bulunamadı. Filtreyi temizle.
         </div>
       ) : (
         <div class="grid sm:grid-cols-2 gap-2.5">
-          {models.map((m) => {
-            const active = selected?.id === m.id
+          {uniqueModels.map((u) => {
+            const active = selected?.name === u.name
             return (
               <button
-                key={m.id}
+                key={u.name}
                 type="button"
-                onClick={() => onSelect(m)}
+                onClick={() => pickModelName(u.name)}
                 class={[
                   'text-left p-4 rounded-xl border transition-all',
                   active
@@ -685,9 +871,18 @@ function ModelStep({
                     : 'border-[var(--color-border)]/60 bg-[var(--color-surface-2)] hover:border-[var(--color-text-muted)]',
                 ].join(' ')}
               >
-                <div class="font-semibold">{m.name}</div>
+                <div class="flex items-center justify-between gap-2">
+                  <div class="font-semibold">{u.name}</div>
+                  {u.bodyType && (
+                    <span class="text-[10px] px-1.5 py-0.5 rounded bg-[var(--color-surface)]/70 text-[var(--color-text-muted)] font-medium">
+                      {BODY_LABEL[u.bodyType]}
+                    </span>
+                  )}
+                </div>
                 <div class="mt-1 text-xs text-[var(--color-text-muted)]">
-                  {m.chassisCode} · {m.yearStart}-{m.yearEnd}
+                  {u.generations.length === 1
+                    ? `${u.generations[0].chassisCode} · ${u.generations[0].yearStart}-${u.generations[0].yearEnd}`
+                    : `${u.generations.length} jenerasyon · ${Math.min(...u.generations.map((g) => g.yearStart))}-${Math.max(...u.generations.map((g) => g.yearEnd))}`}
                 </div>
               </button>
             )
@@ -1064,7 +1259,7 @@ function LogoStep({
                   {hasLogo && brand && (
                     <div class="absolute inset-0 grid place-items-center">
                       <div class="size-5 grid place-items-center rounded-full bg-black/60 backdrop-blur ring-1 ring-white/30">
-                        <ClientBrandLogo iconSlug={brand.iconSlug} name={brand.name} size={10} color="#fff" />
+                        <ClientBrandLogo iconSlug={brand.iconSlug} logoUrl={brand.logoUrl} name={brand.name} size={10} color="#fff" />
                       </div>
                     </div>
                   )}
@@ -1437,6 +1632,7 @@ function Preview({
                   <div class="absolute bottom-6 left-1/2 -translate-x-1/2 size-16 grid place-items-center rounded-full bg-black/40 backdrop-blur-md ring-1 ring-white/30 shadow-[0_4px_20px_rgba(0,0,0,0.6)] animate-in slide-in-from-bottom-4 fade-in duration-700">
                     <ClientBrandLogo
                       iconSlug={brand.iconSlug}
+                      logoUrl={brand.logoUrl}
                       name={brand.name}
                       size={32}
                       color="#ffffff"
@@ -1648,6 +1844,7 @@ function MatSlot({
         <div class="absolute top-[20%] left-1/2 -translate-x-1/2 size-[18%] grid place-items-center rounded-full bg-black/65 backdrop-blur ring-1 ring-white/15 shadow-md">
           <ClientBrandLogo
             iconSlug={brand.iconSlug}
+            logoUrl={brand.logoUrl}
             name={brand.name}
             size={20}
             color="#ffffff"
