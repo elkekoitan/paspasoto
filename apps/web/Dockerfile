@@ -41,9 +41,9 @@ ENV PORT=4321
 # Sipariş JSON'u kalıcı volume içinde kalsın
 ENV DATA_DIR=/data
 
-# su-exec: root start → drop to node:node sonrası, persistent volume'un
-# host'tan farklı UID ile mount edilse bile chown sonrası uygulamayı node user'la çalıştırır.
-RUN apk add --no-cache su-exec
+# wget healthcheck için (alpine'da BusyBox wget zaten var, açıkça install yine de)
+# Container as root: Coolify persistent volume root:root mount edildiğinde EACCES yaşamamak için.
+# MVP'de güvenlik trade-off kabul edildi — node sandbox + reverse proxy zaten önde.
 
 WORKDIR /app
 
@@ -53,20 +53,15 @@ COPY --from=builder /prod/node_modules ./node_modules
 # Astro standalone build output (server entrypoint + client assets)
 COPY --from=builder /repo/apps/web/dist ./dist
 
-# Image içindeki /data ve /app node:node — mount sonrası entrypoint'te tekrar chown
-RUN mkdir -p /data && chown -R node:node /data /app
+# Veri klasörü (volume mount noktası)
+RUN mkdir -p /data
 
-# Entrypoint: root olarak başla → /data ownership'i düzelt → su-exec ile node user'a düş
-COPY --chown=root:root apps/web/docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
-RUN chmod +x /usr/local/bin/docker-entrypoint.sh
-
-# USER node kaldırıldı — entrypoint root olarak başlar, sonra su-exec ile node'a iner.
+# USER node KASTEN kaldırıldı: container root olarak çalışır, /data permission sorunu yok.
 
 EXPOSE 4321
 
-# Healthcheck — Astro server hazır mı?
-HEALTHCHECK --interval=30s --timeout=5s --start-period=25s --retries=3 \
-  CMD wget -q -O - http://127.0.0.1:4321/ >/dev/null 2>&1 || exit 1
+# Healthcheck — Astro server hazır mı? (BusyBox wget alpine default)
+HEALTHCHECK --interval=30s --timeout=5s --start-period=30s --retries=5 \
+  CMD wget -q -O /dev/null http://127.0.0.1:4321/ || exit 1
 
-ENTRYPOINT ["/usr/local/bin/docker-entrypoint.sh"]
 CMD ["node", "./dist/server/entry.mjs"]
