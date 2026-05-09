@@ -264,6 +264,13 @@ export function getByToken(token: string): Order | undefined {
   return load().orders.find((o) => o.accessToken === token)
 }
 
+/** Dış platform referansıyla sipariş ara — webhook idempotency için */
+export function getByExternalRef(platform: Channel, id: string): Order | undefined {
+  return load().orders.find(
+    (o) => o.externalRef?.platform === platform && o.externalRef?.id === id,
+  )
+}
+
 export function getByOrderNoAndPhoneLast4(
   orderNo: string,
   last4: string,
