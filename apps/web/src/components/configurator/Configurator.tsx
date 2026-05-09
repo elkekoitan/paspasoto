@@ -227,6 +227,7 @@ export default function Configurator() {
   const [submittingQuote, setSubmittingQuote] = useState(false)
   const [quoteResult, setQuoteResult] = useState<{ orderNo: string; accessToken: string } | null>(null)
   const [showContactForm, setShowContactForm] = useState(false)
+  const [showMobilePreview, setShowMobilePreview] = useState(false)
 
   const TR_CITIES = [
     'İstanbul', 'Ankara', 'İzmir', 'Bursa', 'Antalya', 'Konya', 'Adana', 'Gaziantep',
@@ -333,9 +334,14 @@ export default function Configurator() {
       {/* Floating HUD UI */}
       <div class="absolute inset-0 z-10 flex flex-col md:flex-row p-4 md:p-8 pointer-events-none">
         
-        {/* Mobile-only compact preview chip — wizard panel üstünde sticky */}
+        {/* Mobile-only compact preview chip — tıklayınca fullscreen preview açar */}
         {matColor && borderColor && (
-          <div class="md:hidden absolute top-16 inset-x-4 z-30 pointer-events-auto animate-in fade-in slide-in-from-top-4 duration-500">
+          <button
+            type="button"
+            onClick={() => setShowMobilePreview(true)}
+            class="md:hidden absolute top-16 inset-x-4 z-30 pointer-events-auto animate-in fade-in slide-in-from-top-4 duration-500 active:scale-[0.98] transition-transform"
+            aria-label="Tasarım önizlemesini aç"
+          >
             <div class="flex items-center gap-2.5 px-3 py-2 rounded-2xl bg-black/60 backdrop-blur-xl border border-white/15 shadow-2xl">
               <div class="flex -space-x-2">
                 <span class="size-7 rounded-full ring-2 ring-black/40" style={`background-color: ${matColor.hex};`}></span>
@@ -346,8 +352,8 @@ export default function Configurator() {
                   </span>
                 )}
               </div>
-              <div class="flex-1 min-w-0">
-                <div class="text-[10px] text-white/60 leading-tight">Canlı Tasarım</div>
+              <div class="flex-1 min-w-0 text-left">
+                <div class="text-[10px] text-white/60 leading-tight">🔍 Tasarımı Gör</div>
                 <div class="text-xs text-white font-semibold leading-tight truncate">
                   {matColor.name} + {borderColor.name}
                   {brand && model && <span class="text-white/60"> · {brand.name} {model.name}</span>}
@@ -357,6 +363,37 @@ export default function Configurator() {
                 <div class="text-[10px] text-white/60 leading-tight">Fiyat</div>
                 <div class="text-sm font-display font-bold text-[var(--color-primary)] leading-tight tabular-nums">{formatTRY(totalPrice)}</div>
               </div>
+            </div>
+          </button>
+        )}
+
+        {/* Mobile fullscreen preview overlay — chip tıklanırsa açılır */}
+        {showMobilePreview && matColor && borderColor && heelPad && product && (
+          <div
+            class="md:hidden fixed inset-0 z-[200] bg-black/90 backdrop-blur-md pointer-events-auto overflow-y-auto p-4 animate-in fade-in duration-200"
+            onClick={(e) => { if (e.target === e.currentTarget) setShowMobilePreview(false) }}
+          >
+            <div class="max-w-md mx-auto pt-4 pb-20">
+              <button
+                type="button"
+                onClick={() => setShowMobilePreview(false)}
+                class="ml-auto flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/10 hover:bg-white/15 text-white text-xs font-semibold mb-3"
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12" /></svg>
+                Kapat
+              </button>
+              <Preview
+                matColor={matColor}
+                borderColor={borderColor}
+                heelPad={heelPad}
+                heelPadPassenger={heelPosition === 'both' || heelPosition === 'passenger-only'}
+                logoAccessory={logos.some((l) => l.brandSlug !== null) ? { id: 0, brandSlug: brand?.slug ?? null, name: brand?.name ?? '', price: 0 } : null}
+                brand={brand}
+                model={model}
+                product={product}
+                total={totalPrice}
+                onAddToCart={() => { setShowMobilePreview(false); setStep('summary') }}
+              />
             </div>
           </div>
         )}
