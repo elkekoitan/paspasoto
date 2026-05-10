@@ -18,6 +18,7 @@ import { BRANDS, VEHICLE_MODELS, type Brand, type VehicleModel } from '../../lib
 import { formatTRY } from '../../lib/format'
 import ClientBrandLogo from '../ui/ClientBrandLogo'
 import SeatPreview from './preview/SeatPreview'
+import { SEAT_PRESETS, type SeatPreset } from '../../lib/presets'
 
 const STATE_KEY = 'carmat-seat-draft-v1'
 
@@ -173,9 +174,46 @@ export default function SeatCoverConfigurator() {
     )
   }
 
+  function applyPreset(p: SeatPreset) {
+    const set = SEAT_SETS.find((s) => s.slug === p.setSlug) ?? seatSet
+    const mat = SEAT_MATERIALS.find((m) => m.slug === p.materialSlug) ?? material
+    const col = SEAT_COLORS.find((c) => c.slug === p.colorSlug) ?? color
+    setSeatSet(set)
+    setMaterial(mat)
+    setColor(col)
+  }
+
   return (
     <div class="grid lg:grid-cols-[minmax(0,1fr)_minmax(0,360px)] gap-6 lg:gap-10">
       <div class="space-y-6">
+        {/* Hızlı Tasarla — preset paketler (UX research #2, P2-A) */}
+        <section class="rounded-2xl bg-gradient-to-br from-[var(--color-primary)]/12 via-transparent to-transparent border border-[var(--color-primary)]/25 p-3.5">
+          <div class="flex items-center gap-2 mb-3">
+            <span class="text-[11px] uppercase tracking-[0.2em] text-[var(--color-primary)] font-bold">⚡ Hızlı Tasarla</span>
+            <span class="text-[10px] text-white/45">— veya aşağıdan adım adım</span>
+          </div>
+          <div class="grid grid-cols-3 gap-2">
+            {SEAT_PRESETS.map((p) => (
+              <button
+                key={p.slug}
+                type="button"
+                onClick={() => applyPreset(p)}
+                class="group relative rounded-xl border border-white/10 hover:border-[var(--color-primary)]/70 p-2.5 transition-all hover:-translate-y-0.5 hover:shadow-lg overflow-hidden"
+              >
+                <div
+                  class="absolute inset-0 opacity-25 group-hover:opacity-50 transition-opacity"
+                  style={`background: radial-gradient(circle at 50% 30%, ${p.accentHex}, transparent 70%);`}
+                />
+                <div class="relative text-center">
+                  <div class="text-[26px] leading-none mb-1">{p.emoji}</div>
+                  <div class="text-[12px] font-bold text-white tracking-tight">{p.name}</div>
+                  <div class="text-[10px] text-white/65 leading-snug mt-1 line-clamp-2">{p.tagline}</div>
+                </div>
+              </button>
+            ))}
+          </div>
+        </section>
+
         {/* 1. Marka */}
         <Section number="1" title="Marka" subtitle="Aracınızın markasını seçin">
           <input
