@@ -17,6 +17,7 @@ import {
 import { BRANDS, VEHICLE_MODELS, type Brand, type VehicleModel } from '../../lib/catalog'
 import { formatTRY } from '../../lib/format'
 import ClientBrandLogo from '../ui/ClientBrandLogo'
+import SeatPreview from './preview/SeatPreview'
 
 const STATE_KEY = 'carmat-seat-draft-v1'
 
@@ -336,11 +337,9 @@ export default function SeatCoverConfigurator() {
         <div class="rounded-2xl bg-[var(--color-surface)] border border-[var(--color-border)]/60 p-5">
           <h3 class="font-display text-base font-semibold mb-3">Sipariş Özeti</h3>
 
-          <div class="aspect-[4/3] rounded-xl overflow-hidden ring-1 ring-[var(--color-border)] relative mb-4">
-            <div class="absolute inset-0" style={`background-color: ${color.hex};`}></div>
-            <div class="absolute inset-x-4 bottom-4 px-3 py-1.5 rounded-lg bg-black/60 backdrop-blur text-white text-[10px] font-semibold">
-              {material.name} · {color.name}
-            </div>
+          {/* SVG Live Preview — Tesla/Audi configurator pattern (P1-B) */}
+          <div class="mb-4">
+            <SeatPreview set={seatSet} material={material} color={color} brand={brand} />
           </div>
 
           <dl class="space-y-2 text-xs">
