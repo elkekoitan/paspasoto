@@ -33,7 +33,11 @@ export default function SeatPreview({ set, material, color, brand, pipingHex }: 
   // Materyal dokusu — perforated/alcantara için noktalı pattern göster
   const showPerforation = material.slug === 'mesh' || material.slug?.includes('alcantara')
   const isLeather = material.slug?.includes('leather') || material.slug?.includes('deri')
-  const piping = pipingHex ?? (color.hex.toLowerCase() === '#000000' ? '#c9a86a' : '#1a1a20')
+  // Çok koyu renkler için kontrast krem dikiş (görünürlük) — değilse koyu dikiş
+  const isDarkColor = parseHex(color.hex).r + parseHex(color.hex).g + parseHex(color.hex).b < 200
+  const piping = pipingHex ?? (isDarkColor ? '#c9a86a' : '#1a1a20')
+  // Edge outline opacity (her zaman görünür stroke için)
+  const edgeStroke = isDarkColor ? 'rgba(255,255,255,0.18)' : 'rgba(0,0,0,0.25)'
 
   return (
     <div class="relative rounded-xl overflow-hidden bg-gradient-to-br from-[#15151b] via-[#0e0e14] to-[#1a1a22] aspect-[4/3] ring-1 ring-white/10">
@@ -89,7 +93,7 @@ export default function SeatPreview({ set, material, color, brand, pipingHex }: 
           </linearGradient>
         </defs>
 
-        {view === 'side' ? <SeatSide piping={piping} showPerforation={showPerforation} isLeather={isLeather} /> : <SeatFront piping={piping} showPerforation={showPerforation} isLeather={isLeather} />}
+        {view === 'side' ? <SeatSide piping={piping} edgeStroke={edgeStroke} showPerforation={showPerforation} isLeather={isLeather} /> : <SeatFront piping={piping} edgeStroke={edgeStroke} showPerforation={showPerforation} isLeather={isLeather} />}
 
         {/* Marka rozetinin koltuk başlığında nakışı (sadece brand seçilmişse) */}
         {brand && view === 'side' && (
@@ -146,7 +150,7 @@ export default function SeatPreview({ set, material, color, brand, pipingHex }: 
 }
 
 /** Yan profil koltuk SVG — 3 bölge (gövde, başlık, bolster) */
-function SeatSide({ piping, showPerforation, isLeather }: { piping: string; showPerforation: boolean; isLeather: boolean }) {
+function SeatSide({ piping, edgeStroke, showPerforation, isLeather }: { piping: string; edgeStroke: string; showPerforation: boolean; isLeather: boolean }) {
   const fill = 'url(#seat-fill)'
   return (
     <g transform="translate(0, 0)">
@@ -154,12 +158,12 @@ function SeatSide({ piping, showPerforation, isLeather }: { piping: string; show
       <rect x="155" y="245" width="8" height="22" fill="#1a1a20" rx="1" />
       <ellipse cx="159" cy="270" rx="22" ry="3" fill="#000" opacity="0.4" />
 
-      {/* Gövde (oturma minderi) */}
+      {/* Gövde (oturma minderi) — outer edge stroke (her zaman görünür kontrast) */}
       <path
         d="M 80 200 Q 80 180 100 175 L 230 175 Q 245 180 245 195 L 245 240 Q 245 250 235 250 L 90 250 Q 80 250 80 240 Z"
         fill={fill}
-        stroke={piping}
-        stroke-width="1.5"
+        stroke={edgeStroke}
+        stroke-width="2"
       />
       {/* Doku overlay */}
       {showPerforation && (
@@ -183,12 +187,12 @@ function SeatSide({ piping, showPerforation, isLeather }: { piping: string; show
       <path d="M 85 200 L 240 200" stroke={piping} stroke-width="1" stroke-dasharray="2 3" fill="none" opacity="0.7" />
       <path d="M 85 245 L 240 245" stroke={piping} stroke-width="1" stroke-dasharray="2 3" fill="none" opacity="0.7" />
 
-      {/* Sırt (back rest) */}
+      {/* Sırt (back rest) — visible edge */}
       <path
         d="M 95 50 Q 95 35 110 30 L 145 22 Q 165 20 165 40 L 165 175 L 95 175 Z"
         fill={fill}
-        stroke={piping}
-        stroke-width="1.5"
+        stroke={edgeStroke}
+        stroke-width="2"
       />
       {showPerforation && (
         <path d="M 100 50 L 160 35 L 160 170 L 100 170 Z" fill="url(#perforation)" />
@@ -205,8 +209,8 @@ function SeatSide({ piping, showPerforation, isLeather }: { piping: string; show
       <path
         d="M 110 25 Q 110 5 130 5 L 142 5 Q 152 5 152 22 L 152 40 L 110 40 Z"
         fill={fill}
-        stroke={piping}
-        stroke-width="1.5"
+        stroke={edgeStroke}
+        stroke-width="2"
       />
       {/* Headrest kollar (rod) */}
       <line x1="118" y1="22" x2="118" y2="38" stroke="#0a0a0a" stroke-width="1.5" />
@@ -226,7 +230,7 @@ function SeatSide({ piping, showPerforation, isLeather }: { piping: string; show
 }
 
 /** Ön profil koltuk SVG */
-function SeatFront({ piping, showPerforation, isLeather }: { piping: string; showPerforation: boolean; isLeather: boolean }) {
+function SeatFront({ piping, edgeStroke, showPerforation, isLeather }: { piping: string; edgeStroke: string; showPerforation: boolean; isLeather: boolean }) {
   const fill = 'url(#seat-fill)'
   return (
     <g>
@@ -237,8 +241,8 @@ function SeatFront({ piping, showPerforation, isLeather }: { piping: string; sho
       <path
         d="M 130 230 Q 130 210 145 205 L 255 205 Q 270 210 270 225 L 270 260 Q 270 268 260 268 L 140 268 Q 130 268 130 258 Z"
         fill={fill}
-        stroke={piping}
-        stroke-width="1.5"
+        stroke={edgeStroke}
+        stroke-width="2"
       />
       {showPerforation && <path d="M 135 215 L 265 215 L 265 265 L 135 265 Z" fill="url(#perforation)" />}
       {isLeather && <path d="M 135 215 L 265 215 L 265 265 L 135 265 Z" fill="url(#leather-grain)" />}
