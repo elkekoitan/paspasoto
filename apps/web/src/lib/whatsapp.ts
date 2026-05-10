@@ -85,6 +85,32 @@ export function getSupportWaUrl(): string {
 }
 
 /**
+ * "Emin Değilim" — Konfigüratör halındaki seçimleri WhatsApp'a iletir.
+ * Atölye gelen config'i okur, müşteriye uygun öneri yapar.
+ */
+export function buildHelpRequestUrl(state: {
+  brandName?: string
+  modelName?: string
+  modelChassis?: string
+  productName?: string
+  matColorName?: string
+  borderColorName?: string
+  heelName?: string
+  totalPrice?: number
+}): string {
+  const lines = ['Merhaba, paspas konfigürasyonumda emin değilim. Tavsiye eder misiniz?', '']
+  if (state.brandName) lines.push(`🚗 Araç: ${state.brandName} ${state.modelName ?? ''} ${state.modelChassis ?? ''}`.trim())
+  if (state.productName) lines.push(`📦 Set: ${state.productName}`)
+  if (state.matColorName) lines.push(`🎨 Zemin: ${state.matColorName}`)
+  if (state.borderColorName) lines.push(`🪡 Kenarlık: ${state.borderColorName}`)
+  if (state.heelName) lines.push(`👟 Topukluk: ${state.heelName}`)
+  if (state.totalPrice) lines.push(`💰 Tahmini: ${state.totalPrice.toLocaleString('tr-TR')}₺`)
+  lines.push('', 'Bu kombinasyona ne dersiniz? Daha iyi bir öneriniz var mı?')
+  const text = encodeURIComponent(lines.join('\n'))
+  return `https://wa.me/905545417561?text=${text}`
+}
+
+/**
  * Sipariş üzerinden Carmat atölyesine direkt WhatsApp — admin değil müşteri için.
  * (örn. /siparis-takip/detay sayfasında "Atölye ile iletişim" butonu)
  */

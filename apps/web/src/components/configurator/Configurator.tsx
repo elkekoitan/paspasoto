@@ -19,6 +19,8 @@ import {
   type Product,
 } from '../../lib/catalog'
 import { getTrimsForModel, FUEL_LABEL, TRANSMISSION_LABEL } from '../../lib/catalog-trims'
+import { PRESETS, type ConfigPreset } from '../../lib/presets'
+import { buildHelpRequestUrl } from '../../lib/whatsapp'
 import { formatTRY } from '../../lib/format'
 import ClientBrandLogo from '../ui/ClientBrandLogo'
 import VirtualShowroom from './VirtualShowroom'
@@ -187,6 +189,28 @@ export default function Configurator() {
     setLogos((prev) => prev.map((l) => (l.position === position ? { ...l, orientation } : l)))
   const applyLogoToAll = (brandSlug: string | null) =>
     setLogos((prev) => prev.map((l) => ({ ...l, brandSlug })))
+
+  /** Hızlı tasarla preset uygula — mat + border + heel + logo seti tek tıkla. */
+  const applyPreset = (preset: ConfigPreset) => {
+    const mat = MAT_COLORS.find((c) => c.slug === preset.matSlug) ?? MAT_COLORS[0]!
+    const border = BORDER_COLORS.find((c) => c.slug === preset.borderSlug) ?? BORDER_COLORS[0]!
+    const heel = HEEL_PADS.find((p) => p.slug === preset.heelSlug) ?? HEEL_PADS[0]!
+    setMatColor(mat)
+    setBorderColor(border)
+    setHeelPad(heel)
+    if (preset.logoMode === 'auto' && brand) {
+      setLogos((prev) => prev.map((l) => ({
+        ...l,
+        brandSlug: brand.slug,
+        placement: preset.logoPlacement ?? 'top-center',
+        orientation: preset.logoOrientation ?? 'horizontal',
+      })))
+    } else if (preset.logoMode === 'none') {
+      setLogos((prev) => prev.map((l) => ({ ...l, brandSlug: null })))
+    }
+    // Otomatik özet adımına atla
+    setStep('summary')
+  }
 
   const models = useMemo(
     () => VEHICLE_MODELS.filter((m) => m.brandSlug === brand?.slug),
@@ -445,6 +469,37 @@ export default function Configurator() {
                   </button>
                 </div>
 
+                {/* Hızlı Tasarla — Preset paketler (sadece marka/model adımlarında) */}
+                {(step === 'brand' || step === 'model' || step === 'product') && brand && (
+                  <div class="mb-5 p-3 rounded-xl bg-gradient-to-br from-[var(--color-primary)]/10 via-transparent to-transparent border border-[var(--color-primary)]/20">
+                    <div class="flex items-center gap-2 mb-2.5">
+                      <span class="text-[10px] uppercase tracking-[0.2em] text-[var(--color-primary)] font-bold">⚡ Hızlı Tasarla</span>
+                      <span class="text-[10px] text-white/40">— ya da aşağıdan adım adım</span>
+                    </div>
+                    <div class="grid grid-cols-3 gap-1.5">
+                      {PRESETS.map((p) => (
+                        <button
+                          key={p.slug}
+                          type="button"
+                          onClick={() => applyPreset(p)}
+                          disabled={!matColor || !borderColor || !heelPad || !product}
+                          class="group relative rounded-lg border-2 border-white/10 hover:border-[var(--color-primary)]/60 p-2 transition-all hover:-translate-y-0.5 overflow-hidden disabled:opacity-50"
+                        >
+                          <div
+                            class="absolute inset-0 opacity-20 group-hover:opacity-40 transition-opacity"
+                            style={`background: radial-gradient(circle at 50% 30%, ${p.accentHex}, transparent 70%);`}
+                          />
+                          <div class="relative text-center">
+                            <div class="text-2xl mb-0.5">{p.emoji}</div>
+                            <div class="text-[11px] font-bold text-white">{p.name}</div>
+                            <div class="text-[9px] text-white/60 leading-tight mt-0.5 line-clamp-2">{p.tagline}</div>
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
                 <div class="animate-in slide-in-from-left-4 fade-in duration-500">
                   {step === 'brand' && <BrandStep brands={filteredBrands} selected={brand} onSelect={(b) => { setBrand(b); setModel(null); setStep('model'); }} search={search} onSearchChange={setSearch} />}
                   {step === 'model' && brand && <ModelStep brand={brand} models={models} selected={model} selectedTrim={trim} onSelect={(m, t) => { setModel(m); setTrim(t ?? null); setStep('product'); }} onBack={() => setStep('brand')} />}
@@ -485,13 +540,34 @@ export default function Configurator() {
 
               {/* Footer nav inside the panel */}
               {step !== 'summary' && (
-                <div class="mt-auto p-6 border-t border-white/10 bg-black/20 flex items-center justify-between relative z-10">
-                  <button type="button" onClick={prev} disabled={step === 'brand'} class="px-5 py-2.5 rounded-xl text-sm font-medium text-white/70 hover:text-white hover:bg-white/10 disabled:opacity-30 transition-colors backdrop-blur-md">
-                    ← Geri
-                  </button>
-                  <button type="button" onClick={next} disabled={!canNext} class="px-6 py-2.5 rounded-xl text-sm font-bold bg-white text-black hover:bg-white/90 disabled:opacity-30 transition-colors shadow-[0_0_20px_rgba(255,255,255,0.4)]">
-                    Devam →
-                  </button>
+                <div class="mt-auto p-4 md:p-6 border-t border-white/10 bg-black/20 relative z-10 space-y-2.5">
+                  <div class="flex items-center justify-between gap-2">
+                    <button type="button" onClick={prev} disabled={step === 'brand'} class="px-5 py-2.5 rounded-xl text-sm font-medium text-white/70 hover:text-white hover:bg-white/10 disabled:opacity-30 transition-colors backdrop-blur-md">
+                      ← Geri
+                    </button>
+                    <button type="button" onClick={next} disabled={!canNext} class="px-6 py-2.5 rounded-xl text-sm font-bold bg-white text-black hover:bg-white/90 disabled:opacity-30 transition-colors shadow-[0_0_20px_rgba(255,255,255,0.4)]">
+                      Devam →
+                    </button>
+                  </div>
+                  {/* "Emin Değilim" — atölyeye WhatsApp ile mevcut konfigürasyonu gönder */}
+                  <a
+                    href={buildHelpRequestUrl({
+                      brandName: brand?.name,
+                      modelName: model?.name,
+                      modelChassis: model?.chassisCode,
+                      productName: product?.name,
+                      matColorName: matColor?.name,
+                      borderColorName: borderColor?.name,
+                      heelName: heelPad?.name,
+                      totalPrice,
+                    })}
+                    target="_blank"
+                    rel="noopener"
+                    class="flex items-center justify-center gap-2 px-3 py-2 rounded-xl text-[11px] font-semibold text-emerald-300/80 hover:text-emerald-300 hover:bg-emerald-500/10 border border-emerald-500/20 transition-colors"
+                  >
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946C.16 5.335 5.495 0 12.05 0c3.181 0 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414 0 6.557-5.336 11.892-11.893 11.892-1.99 0-3.951-.5-5.688-1.448L.057 24zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.742-.981zm11.387-5.464c-.074-.124-.272-.198-.57-.347-.297-.149-1.758-.868-2.031-.967-.272-.099-.47-.149-.669.149-.198.297-.768.967-.941 1.165-.173.198-.347.223-.644.074-.297-.149-1.255-.462-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.521.151-.172.2-.296.3-.495.099-.198.05-.372-.025-.521-.075-.148-.669-1.611-.916-2.206-.242-.579-.487-.501-.669-.51l-.57-.01c-.198 0-.52.074-.792.372s-1.04 1.016-1.04 2.479 1.065 2.876 1.213 3.074c.149.198 2.095 3.2 5.076 4.487.709.306 1.263.489 1.694.626.712.226 1.36.194 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.695.248-1.29.173-1.414z"/></svg>
+                    🤔 Emin değilim — atölyeden tavsiye iste
+                  </a>
                 </div>
               )}
            </div>
