@@ -1848,8 +1848,13 @@ function SummaryStep({
         <Row label="Amblem" value={logoSummary} />
       </dl>
 
-      {/* Güven artırıcı trust badges — UX research: konversiyona %18 etkili */}
-      <div class="mt-5 grid grid-cols-2 sm:grid-cols-4 gap-2">
+      {/* Güven artırıcı trust badges — UX research: konversiyona %18 etkili
+       * Inline style ile grid garantili — Preact hydration'da Tailwind 'grid' class
+       * düşmesinden korunur. */}
+      <div
+        class="mt-5"
+        style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.5rem;"
+      >
         {[
           { icon: '🛡️', label: '2 Yıl Garanti', sub: 'Üretici güvencesi' },
           { icon: '🚚', label: 'Kargo Dahil', sub: 'Tüm Türkiye' },
@@ -1888,7 +1893,10 @@ function SummaryStep({
         <div class="text-[10px] uppercase tracking-[0.2em] text-white/40 font-semibold mb-3 text-center">
           Sipariş yolculuğu
         </div>
-        <ol class="grid grid-cols-5 gap-1 text-center">
+        <ol
+          class="text-center"
+          style="display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 0.25rem;"
+        >
           {[
             { step: '1', label: 'Onay', sub: 'Bugün', dot: 'bg-[var(--color-primary)]' },
             { step: '2', label: 'Üretim', sub: 'Aynı gün', dot: 'bg-white/30' },
