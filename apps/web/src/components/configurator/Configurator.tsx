@@ -474,28 +474,27 @@ export default function Configurator() {
 
                 {/* Hızlı Tasarla — Preset paketler (marka/model/set adımlarında) */}
                 {(step === 'brand' || step === 'model' || step === 'product') && (
-                  <div class="mb-5 p-3 rounded-xl bg-gradient-to-br from-[var(--color-primary)]/10 via-transparent to-transparent border border-[var(--color-primary)]/20">
-                    <div class="flex items-center gap-2 mb-2.5">
-                      <span class="text-[10px] uppercase tracking-[0.2em] text-[var(--color-primary)] font-bold">⚡ Hızlı Tasarla</span>
-                      <span class="text-[10px] text-white/40">— ya da aşağıdan adım adım</span>
+                  <div class="mb-5 p-3.5 rounded-xl bg-gradient-to-br from-[var(--color-primary)]/12 via-transparent to-transparent border border-[var(--color-primary)]/25">
+                    <div class="flex items-center gap-2 mb-3">
+                      <span class="text-[11px] uppercase tracking-[0.2em] text-[var(--color-primary)] font-bold">⚡ Hızlı Tasarla</span>
+                      <span class="text-[10px] text-white/45">— veya aşağıdan adım adım</span>
                     </div>
-                    <div class="grid grid-cols-3 gap-1.5">
+                    <div class="grid grid-cols-3 gap-2">
                       {PRESETS.map((p) => (
                         <button
                           key={p.slug}
                           type="button"
                           onClick={() => applyPreset(p)}
-                          disabled={!matColor || !borderColor || !heelPad || !product}
-                          class="group relative rounded-lg border-2 border-white/10 hover:border-[var(--color-primary)]/60 p-2 transition-all hover:-translate-y-0.5 overflow-hidden disabled:opacity-50"
+                          class="group relative rounded-xl border border-white/10 hover:border-[var(--color-primary)]/70 p-2.5 transition-all hover:-translate-y-0.5 hover:shadow-lg overflow-hidden"
                         >
                           <div
-                            class="absolute inset-0 opacity-20 group-hover:opacity-40 transition-opacity"
+                            class="absolute inset-0 opacity-25 group-hover:opacity-50 transition-opacity"
                             style={`background: radial-gradient(circle at 50% 30%, ${p.accentHex}, transparent 70%);`}
                           />
                           <div class="relative text-center">
-                            <div class="text-2xl mb-0.5">{p.emoji}</div>
-                            <div class="text-[11px] font-bold text-white">{p.name}</div>
-                            <div class="text-[9px] text-white/60 leading-tight mt-0.5 line-clamp-2">{p.tagline}</div>
+                            <div class="text-[26px] leading-none mb-1">{p.emoji}</div>
+                            <div class="text-[12px] font-bold text-white tracking-tight">{p.name}</div>
+                            <div class="text-[10px] text-white/65 leading-snug mt-1 line-clamp-2">{p.tagline}</div>
                           </div>
                         </button>
                       ))}
