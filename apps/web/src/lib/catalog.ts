@@ -175,7 +175,7 @@ export const BRANDS: Brand[] = [
   { id: 33, slug: 'cupra', name: 'Cupra', popular: false, color: '#C8612A', logoUrl: '/assets/brands/cupra.svg' },
   { id: 34, slug: 'byd', name: 'BYD', popular: true, color: '#003366', logoUrl: '/assets/brands/byd.svg' },
   { id: 35, slug: 'togg', name: 'TOGG', popular: true, color: '#0061A8', logoUrl: '/assets/brands/togg.svg' },
-  { id: 36, slug: 'iveco', name: 'Iveco', popular: false, iconSlug: 'iveco', color: '#003D80' },
+  { id: 36, slug: 'iveco', name: 'Iveco', popular: false, iconSlug: 'iveco', color: '#003D80', logoUrl: '/assets/brands/iveco.svg' },
   { id: 37, slug: 'isuzu', name: 'Isuzu', popular: false, color: '#C8102E', logoUrl: '/assets/brands/isuzu.svg' },
   { id: 38, slug: 'mahindra', name: 'Mahindra', popular: false, iconSlug: 'mahindra', color: '#C8102E', logoUrl: '/assets/brands/mahindra.svg' },
   { id: 39, slug: 'chery', name: 'Chery', popular: true, color: '#C8102E', logoUrl: '/assets/brands/chery.svg' },

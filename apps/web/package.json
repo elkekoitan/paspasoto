@@ -10,7 +10,8 @@
     "preview": "astro preview --host",
     "astro": "astro",
     "typecheck": "astro check",
-    "lint": "echo 'lint placeholder'"
+    "lint": "echo 'lint placeholder'",
+    "validate:catalog": "tsx scripts/validate-catalog.ts"
   },
   "dependencies": {
     "@astrojs/node": "^9.5.5",
