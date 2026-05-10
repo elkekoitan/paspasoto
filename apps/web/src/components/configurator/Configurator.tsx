@@ -502,7 +502,9 @@ export default function Configurator() {
                   </div>
                 )}
 
-                <div class="animate-in slide-in-from-left-4 fade-in duration-500">
+                {/* key={step} — Preact reconciliation'ın step değişimde DOM nodes'larını
+                  yeniden kullanmasını engeller (parent class diff bug fix) */}
+                <div key={step} class="animate-in slide-in-from-left-4 fade-in duration-500">
                   {step === 'brand' && <BrandStep brands={filteredBrands} selected={brand} onSelect={(b) => { setBrand(b); setModel(null); setStep('model'); }} search={search} onSearchChange={setSearch} />}
                   {step === 'model' && brand && <ModelStep brand={brand} models={models} selected={model} selectedTrim={trim} onSelect={(m, t) => { setModel(m); setTrim(t ?? null); setStep('product'); }} onBack={() => setStep('brand')} />}
                   {step === 'product' && <ProductStep products={PRODUCTS} selected={product} onSelect={(p) => { setProduct(p); setStep('mat'); }} />}
