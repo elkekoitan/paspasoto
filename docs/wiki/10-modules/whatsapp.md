@@ -26,8 +26,14 @@ Carmat'ta sipariş `productionStatus` geçişlerinde müşteriye otomatik WhatsA
   - `sendWhatsAppTextAsync(...)` — background trigger
   - 3 şablon: `buildProductionStartedMessage`, `buildReadyMessage`, `buildDeliveredMessage`
   - `toEvolutionPhone(...)` — TR tel format normalize (90XXXXXXXXXX)
-- `apps/web/src/lib/whatsapp.ts` — Admin manuel için wa.me deeplink helper
+- `apps/web/src/lib/whatsapp.ts` — Admin manuel + müşteri yardım için wa.me deeplink helper
   - `buildProductionStartedWaUrl(order)` — atölye telefonunda WhatsApp açar
+  - `buildReadyWaUrl(order)` — sipariş hazır mesajı
+  - `getSupportWaUrl()` — Base.astro floating destek butonu
+  - `getOrderSupportWaUrl(orderNo)` — sipariş takip "Atölyeye sor" butonu
+  - **`buildHelpRequestUrl(state)`** — Konfigüratör "🤔 Emin değilim" CTA (commit 2f98d3c)
+    Mevcut config (marka/model/mat/border/heel/totalPrice) WhatsApp özetine eklenir,
+    atölye config'i okuyup öneri yapar
 - `apps/web/src/pages/api/orders/[orderNo].ts` — PATCH trigger
   - productionStatus değiştiğinde `sendWhatsAppTextAsync` çağrılır
 - `apps/web/src/components/admin/OrderEditor.tsx` — yeşil "WhatsApp Bildir" butonu

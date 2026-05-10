@@ -70,6 +70,35 @@ Configurator JSX'inde **iki yerde** Preview render edilir:
 - VirtualShowroom backdrop kalır + IMG fallback (`/images/showroom_*.png`)
   Three.js cylinder yüklenmese bile önizleme görünür (commit 380938c)
 
+## Hızlı Tasarla — Preset paketler (commit 2f98d3c)
+
+Choice overload kıran tek-tık akış (UX research #2). BrandStep'in üstünde 3 büyük gradient kart:
+
+| Preset | Mat | Border | Heel | Logo |
+|---|---|---|---|---|
+| 🏛️ **Klasik** | siyah | siyah | standart | yok |
+| 🏎️ **Spor** | siyah | kırmızı | antrasit-karbon | auto top-center horizontal |
+| 👑 **Lüks** | bej | kahve | krem-noktali | auto top-center horizontal |
+
+**Kritik dosya**: `apps/web/src/lib/presets.ts` — `ConfigPreset` tipi + `PRESETS[]` array
+**Helper**: `Configurator.tsx → applyPreset(preset)` — matColor/borderColor/heelPad/logos set + `setStep('summary')`
+**UX**: marka seçilmeden de uygulanabilir (logoMode='auto' için later marka seçilince logo otomatik çekilir)
+
+## "Emin Değilim" CTA (commit 2f98d3c)
+
+Wizard footer'a sticky yeşil link (UX research #7). Tıklanınca `buildHelpRequestUrl(state)` ile mevcut konfig özetini WhatsApp'a iletir:
+```
+🚗 Araç: BMW 3 Serisi G20
+📦 Set: 4'lü Tam Set
+🎨 Zemin: Siyah
+🪡 Kenarlık: Kırmızı
+👟 Topukluk: Antrasit Karbon
+💰 Tahmini: 2.450₺
+```
+Atölye config'i okur, müşteriye uygun öneri yapar — choice overload kırma 2. aşaması.
+
+**Kritik helper**: `apps/web/src/lib/whatsapp.ts → buildHelpRequestUrl(state)`
+
 ## Premium BrandStep tasarımı (commit 3117f69)
 
 - 3-4 sütun aspect-square büyük kartlar
