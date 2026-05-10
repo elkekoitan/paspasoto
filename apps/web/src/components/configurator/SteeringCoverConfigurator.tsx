@@ -13,6 +13,7 @@ import {
   type SteeringMaterial,
 } from '../../lib/catalog-steering'
 import { formatTRY } from '../../lib/format'
+import SteeringPreview from './preview/SteeringPreview'
 
 const STATE_KEY = 'carmat-steering-draft-v1'
 
@@ -254,11 +255,9 @@ export default function SteeringCoverConfigurator() {
         <div class="rounded-2xl bg-[var(--color-surface)] border border-[var(--color-border)]/60 p-5">
           <h3 class="font-display text-base font-semibold mb-3">Sipariş Özeti</h3>
 
-          <div class="aspect-[4/3] rounded-xl overflow-hidden ring-1 ring-[var(--color-border)] relative mb-4 grid place-items-center" style={`background: radial-gradient(circle at 50% 50%, ${material.textureHex}, #0b0b0f 80%);`}>
-            <div class="size-32 rounded-full border-[12px]" style={`border-color: ${material.textureHex}; box-shadow: inset 0 0 30px rgba(0,0,0,0.6), 0 0 30px rgba(0,0,0,0.4);`}></div>
-            <div class="absolute bottom-3 left-3 right-3 px-3 py-1.5 rounded-lg bg-black/60 backdrop-blur text-white text-[10px] font-semibold text-center">
-              {size.name} · {pattern.name} · {material.name}
-            </div>
+          {/* SVG Live Preview (P1-C) — 3-spoke direksiyon + materyal/desen overlay */}
+          <div class="mb-4">
+            <SteeringPreview size={size} pattern={pattern} material={material} />
           </div>
 
           <dl class="space-y-2 text-xs">
