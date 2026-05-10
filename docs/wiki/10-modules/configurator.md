@@ -70,6 +70,34 @@ Configurator JSX'inde **iki yerde** Preview render edilir:
 - VirtualShowroom backdrop kalır + IMG fallback (`/images/showroom_*.png`)
   Three.js cylinder yüklenmese bile önizleme görünür (commit 380938c)
 
+## Summary trust badges + timeline (commit 2bed6d3, dad3bd2)
+
+Summary step ekstra güven sinyalleri:
+
+**4 trust badge** (UX research: %18 konversiyon etkisi):
+- 🛡️ 2 Yıl Garanti — Üretici güvencesi
+- 🚚 Kargo Dahil — Tüm Türkiye
+- ⏱️ 5–7 İş Günü — Aynı gün üretim
+- ↩️ 14 Gün İade — Beğenmezsen iade
+
+**5 nokta timeline** — sipariş yolculuğu visualize:
+- 1 Onay (bugün, primary dot)
+- 2 Üretim (aynı gün)
+- 3 Kalite (3. gün)
+- 4 Kargo (5. gün)
+- 5 Teslim (7. gün)
+
+Beklenti yönetimi + güven artırma. Toplam 31 satır eklendi SummaryStep'e.
+
+## StepperBar pill kontrast + ✓ checkmark (commit 65a1b12)
+
+Inactive pill'ler `bg-[var(--color-surface)]` üzerinde `text-text-muted` çok dimdi. Düzeltildi:
+- Inactive: `bg-white/5 text-white/55 border-white/10`
+- Passed: `bg-white/8 text-white/95` + ✓ checkmark (number yerine)
+- Active: primary bg + shadow-sm + border-primary
+
+Net visual progress + kontrast.
+
 ## StepperBar 8 step pill wrap (commit 02b4465)
 
 8 step `overflow-x-auto` yerine `flex-wrap` — 420px wizard panelinde 2 sıraya yazılır.
