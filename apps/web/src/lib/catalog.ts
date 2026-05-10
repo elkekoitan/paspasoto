@@ -314,6 +314,55 @@ export const VEHICLE_MODELS: VehicleModel[] = [
   { id: 100, brandSlug: 'suzuki', slug: 'vitara', name: 'Vitara', chassisCode: 'LY', yearStart: 2015, yearEnd: 2026, bodyType: 'suv' },
   { id: 101, brandSlug: 'jeep', slug: 'compass-mp', name: 'Compass', chassisCode: 'MP', yearStart: 2017, yearEnd: 2026, bodyType: 'suv' },
   { id: 102, brandSlug: 'jeep', slug: 'renegade', name: 'Renegade', chassisCode: 'BU', yearStart: 2014, yearEnd: 2026, bodyType: 'suv' },
+  // Premium gap completion (P0-B genişleme): Türkiye en çok satan / aranan modeller
+  // Audi
+  { id: 120, brandSlug: 'audi', slug: 'q7-4m', name: 'Q7', chassisCode: '4M', yearStart: 2015, yearEnd: 2026, bodyType: 'suv' },
+  { id: 121, brandSlug: 'audi', slug: 'q8-4mn', name: 'Q8', chassisCode: '4MN', yearStart: 2018, yearEnd: 2026, bodyType: 'suv' },
+  { id: 122, brandSlug: 'audi', slug: 'a8-d5', name: 'A8', chassisCode: 'D5', yearStart: 2017, yearEnd: 2026, bodyType: 'sedan' },
+  { id: 123, brandSlug: 'audi', slug: 'e-tron', name: 'e-tron', chassisCode: 'GE', yearStart: 2018, yearEnd: 2026, bodyType: 'suv' },
+  // Mercedes
+  { id: 124, brandSlug: 'mercedes', slug: 'e-serisi-w214', name: 'E Serisi', chassisCode: 'W214', yearStart: 2023, yearEnd: 2026, bodyType: 'sedan' },
+  { id: 125, brandSlug: 'mercedes', slug: 's-serisi-w223', name: 'S Serisi', chassisCode: 'W223', yearStart: 2020, yearEnd: 2026, bodyType: 'sedan' },
+  { id: 126, brandSlug: 'mercedes', slug: 'gle-w167', name: 'GLE', chassisCode: 'W167', yearStart: 2019, yearEnd: 2026, bodyType: 'suv' },
+  { id: 127, brandSlug: 'mercedes', slug: 'gls-x167', name: 'GLS', chassisCode: 'X167', yearStart: 2019, yearEnd: 2026, bodyType: 'suv' },
+  { id: 128, brandSlug: 'mercedes', slug: 'eqs-v297', name: 'EQS', chassisCode: 'V297', yearStart: 2021, yearEnd: 2026, bodyType: 'sedan' },
+  { id: 129, brandSlug: 'mercedes', slug: 'b-serisi-w247', name: 'B Serisi', chassisCode: 'W247', yearStart: 2018, yearEnd: 2026, bodyType: 'mpv' },
+  // Volkswagen
+  { id: 130, brandSlug: 'volkswagen', slug: 'touareg-cr', name: 'Touareg', chassisCode: 'CR', yearStart: 2018, yearEnd: 2026, bodyType: 'suv' },
+  { id: 131, brandSlug: 'volkswagen', slug: 'id-4', name: 'ID.4', chassisCode: 'E1', yearStart: 2020, yearEnd: 2026, bodyType: 'crossover' },
+  { id: 132, brandSlug: 'volkswagen', slug: 'caddy-mk5', name: 'Caddy', chassisCode: 'Mk5', yearStart: 2020, yearEnd: 2026, bodyType: 'mpv' },
+  { id: 133, brandSlug: 'volkswagen', slug: 't-cross', name: 'T-Cross', chassisCode: 'C1', yearStart: 2018, yearEnd: 2026, bodyType: 'crossover' },
+  // Hyundai
+  { id: 134, brandSlug: 'hyundai', slug: 'bayon', name: 'Bayon', chassisCode: 'BC3 CUV', yearStart: 2021, yearEnd: 2026, bodyType: 'crossover' },
+  { id: 135, brandSlug: 'hyundai', slug: 'ioniq-5', name: 'Ioniq 5', chassisCode: 'NE', yearStart: 2021, yearEnd: 2026, bodyType: 'crossover' },
+  { id: 136, brandSlug: 'hyundai', slug: 'ioniq-6', name: 'Ioniq 6', chassisCode: 'CE', yearStart: 2022, yearEnd: 2026, bodyType: 'sedan' },
+  { id: 137, brandSlug: 'hyundai', slug: 'elantra-cn7', name: 'Elantra', chassisCode: 'CN7', yearStart: 2020, yearEnd: 2026, bodyType: 'sedan' },
+  // Toyota
+  { id: 138, brandSlug: 'toyota', slug: 'yaris-xp210', name: 'Yaris', chassisCode: 'XP210', yearStart: 2020, yearEnd: 2026, bodyType: 'hatchback' },
+  { id: 139, brandSlug: 'toyota', slug: 'highlander-xu70', name: 'Highlander', chassisCode: 'XU70', yearStart: 2019, yearEnd: 2026, bodyType: 'suv' },
+  // Renault
+  { id: 140, brandSlug: 'renault', slug: 'megane-e-tech', name: 'Megane E-Tech', chassisCode: 'BCM', yearStart: 2022, yearEnd: 2026, bodyType: 'crossover' },
+  { id: 141, brandSlug: 'renault', slug: 'kadjar-2', name: 'Kadjar', chassisCode: 'Mk2', yearStart: 2015, yearEnd: 2022, bodyType: 'crossover' },
+  { id: 142, brandSlug: 'renault', slug: 'symbol-3', name: 'Symbol', chassisCode: 'L52', yearStart: 2013, yearEnd: 2022, bodyType: 'sedan' },
+  // Fiat
+  { id: 143, brandSlug: 'fiat', slug: 'fiat-500', name: '500', chassisCode: '312', yearStart: 2007, yearEnd: 2026, bodyType: 'hatchback' },
+  { id: 144, brandSlug: 'fiat', slug: 'linea', name: 'Linea', chassisCode: '323', yearStart: 2007, yearEnd: 2017, bodyType: 'sedan' },
+  { id: 145, brandSlug: 'fiat', slug: 'fiorino', name: 'Fiorino', chassisCode: '225', yearStart: 2008, yearEnd: 2026, bodyType: 'mpv' },
+  // Kia
+  { id: 146, brandSlug: 'kia', slug: 'picanto-jaa', name: 'Picanto', chassisCode: 'JA', yearStart: 2017, yearEnd: 2026, bodyType: 'hatchback' },
+  { id: 147, brandSlug: 'kia', slug: 'cerato-bd', name: 'Cerato', chassisCode: 'BD', yearStart: 2018, yearEnd: 2026, bodyType: 'sedan' },
+  { id: 148, brandSlug: 'kia', slug: 'ev6', name: 'EV6', chassisCode: 'CV', yearStart: 2021, yearEnd: 2026, bodyType: 'crossover' },
+  { id: 149, brandSlug: 'kia', slug: 'niro', name: 'Niro', chassisCode: 'SG2', yearStart: 2022, yearEnd: 2026, bodyType: 'crossover' },
+  // Nissan
+  { id: 150, brandSlug: 'nissan', slug: 'juke-2', name: 'Juke', chassisCode: 'F16', yearStart: 2019, yearEnd: 2026, bodyType: 'crossover' },
+  { id: 151, brandSlug: 'nissan', slug: 'micra-k14', name: 'Micra', chassisCode: 'K14', yearStart: 2017, yearEnd: 2024, bodyType: 'hatchback' },
+  // Honda
+  { id: 152, brandSlug: 'honda', slug: 'civic-fe', name: 'Civic', chassisCode: 'FE', yearStart: 2021, yearEnd: 2026, bodyType: 'sedan' },
+  { id: 153, brandSlug: 'honda', slug: 'crv-rs', name: 'CR-V', chassisCode: 'RS', yearStart: 2022, yearEnd: 2026, bodyType: 'suv' },
+  { id: 154, brandSlug: 'honda', slug: 'hrv-rv', name: 'HR-V', chassisCode: 'RV', yearStart: 2021, yearEnd: 2026, bodyType: 'crossover' },
+  // Tesla — Model X eklenmesi
+  { id: 155, brandSlug: 'tesla', slug: 'model-s', name: 'Model S', chassisCode: 'Plaid', yearStart: 2012, yearEnd: 2026, bodyType: 'sedan' },
+  { id: 156, brandSlug: 'tesla', slug: 'model-x', name: 'Model X', chassisCode: 'X', yearStart: 2015, yearEnd: 2026, bodyType: 'suv' },
 ]
 
 const SWATCH = '/assets/swatches'
