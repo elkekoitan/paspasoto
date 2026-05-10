@@ -70,6 +70,44 @@ Configurator JSX'inde **iki yerde** Preview render edilir:
 - VirtualShowroom backdrop kalır + IMG fallback (`/images/showroom_*.png`)
   Three.js cylinder yüklenmese bile önizleme görünür (commit 380938c)
 
+## Premium UX Overhaul — 8 commit (2026-05-10 gece)
+
+Kullanıcının "her marka model + premium hissi + koltuk/direksiyon önizleme" hedefine kapsamlı çözüm:
+
+### Hero rebalance (`2f8a7de`)
+- Sol-tarafı boş bug → görsel md:w-[60%]→52%, mask 35%→20%, sol konsantrik daire SVG accent
+- Text wrapper max-w-2xl→3xl, paragraph max-w-xl→2xl
+
+### Catalog tamamlama (`dc4f0c5` + `8e4848f`)
+- 40 → **46 marka** (+Polestar/Genesis/Alfa Romeo/Smart/Infiniti/SsangYong)
+- 113 → **150 model** (+37 popüler model: Audi Q7/Q8/A8/e-tron, Mercedes E/S/GLE/GLS/EQS/B,
+  VW Touareg/ID.4/Caddy/T-Cross, Hyundai Bayon/Ioniq 5/6/Elantra, Toyota Yaris/Highlander,
+  Renault Megane E-Tech/Kadjar/Symbol, Fiat 500/Linea/Fiorino, Kia Picanto/Cerato/EV6/Niro,
+  Nissan Juke/Micra, Honda Civic FE/CR-V/HR-V, Tesla Model S/X, BMW 7 G70/i7)
+- Mahindra/Chery logoUrl eksiği gider, 6 yeni SVG (text+icon)
+
+### SeatCover live preview (`b110303` + `8d0bf20`)
+- Eski statik div → SVG yan/ön profil koltuk illustration
+- 3 bölge (gövde + sırt + başlık + bolster), materyal-spesifik dokular
+  (alcantara perforated dot pattern, leather grain pattern)
+- Kenar dikiş dasharray, marka rozetinin headrest'te nakışı
+- isDarkColor algısı + edgeStroke kontrast (koyu renk visibility fix)
+
+### Steering live preview (`0a2eec8`)
+- Eski radial-gradient çember → 3-spoke direksiyon SVG
+- Standart ↔ Sport (D-shape flat-bottom) toggle
+- Pattern overlay'leri: karbon weave, perforated dot, diamond quilt
+- Materyal gradient + stitching dasharray + center hub + brand emblem
+
+### Multi-category Hızlı Tasarla (`8c60807`)
+- SeatPreset[] (Klasik/Sport/Lüks) + SteeringPreset[] (Klasik/Sport/Lüks)
+- Her configurator'da 3 emoji kart (🏛️/🏎️/👑), accentHex radial gradient
+- applyPreset helper: tek tıkla tüm seçimleri doldurur
+
+### BrandGrid model count badge (`8be9cd0`)
+- Her marka kartı sol üstünde "X MODEL" rozeti
+- Başlık dinamik: "150+ model, 46 marka"
+
 ## Summary trust badges + timeline (commit 2bed6d3, dad3bd2)
 
 Summary step ekstra güven sinyalleri:
