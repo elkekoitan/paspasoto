@@ -737,7 +737,7 @@ function StepperBar({
 }) {
   const currentIdx = STEPS.findIndex((s) => s.key === step)
   return (
-    <div class="flex flex-wrap items-center gap-1 pb-1">
+    <div class="flex flex-wrap items-center gap-1.5 pb-1">
       {STEPS.map((s, i) => {
         const active = s.key === step
         const passed = i < currentIdx
@@ -750,17 +750,20 @@ function StepperBar({
             disabled={!reachable}
             title={s.label}
             class={[
-              'shrink-0 flex items-center gap-1.5 px-2 py-1 rounded-full text-[11px] font-medium transition-colors',
-              active && 'bg-[var(--color-primary)] text-[var(--color-bg)]',
-              !active && passed && 'bg-[var(--color-surface-2)] text-[var(--color-text)] hover:bg-[var(--color-border)]',
-              !active && !passed && 'bg-[var(--color-surface)] text-[var(--color-text-muted)]',
+              'shrink-0 flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-medium transition-colors border',
+              active && 'bg-[var(--color-primary)] text-[var(--color-bg)] border-[var(--color-primary)] shadow-sm',
+              !active && passed && 'bg-white/8 text-white/95 border-white/15 hover:bg-white/15',
+              !active && !passed && 'bg-white/5 text-white/55 border-white/10 hover:text-white/80',
               !reachable && 'opacity-40 cursor-not-allowed',
             ]
               .filter(Boolean)
               .join(' ')}
           >
-            <span class="size-4 grid place-items-center rounded-full bg-[var(--color-bg)]/20 text-[9px] font-semibold">
-              {i + 1}
+            <span class={[
+              'size-4 grid place-items-center rounded-full text-[9px] font-bold',
+              active ? 'bg-[var(--color-bg)]/25 text-[var(--color-bg)]' : passed ? 'bg-white/15 text-white/95' : 'bg-white/8 text-white/60',
+            ].join(' ')}>
+              {passed ? '✓' : i + 1}
             </span>
             <span class={active ? 'inline' : 'hidden md:inline'}>{s.label}</span>
           </button>
