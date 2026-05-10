@@ -1,6 +1,5 @@
 ---
 import { POPULAR_BRANDS } from '@lib/catalog'
-import BrandLogo from '@components/ui/BrandLogo.astro'
 ---
 
 <section class="container-page py-24 md:py-32" data-reveal>
@@ -24,25 +23,42 @@ import BrandLogo from '@components/ui/BrandLogo.astro'
     </a>
   </div>
 
-  <div class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-7 gap-3 md:gap-4">
+  <div class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-7 gap-2 md:gap-3">
     {
-      POPULAR_BRANDS.map((brand) => (
-        <a
-          href={`/konfigurator?brand=${brand.slug}`}
-          class="group relative aspect-square flex flex-col items-center justify-center gap-2 rounded-2xl border border-[var(--color-border)]/60 bg-[var(--color-surface)]/50 backdrop-blur hover:bg-[var(--color-surface-2)] hover:border-[var(--color-primary)]/40 transition-all hover:-translate-y-1 hover:shadow-2xl hover:shadow-[var(--color-primary)]/5"
-        >
-          <BrandLogo
-            iconSlug={brand.iconSlug}
-            name={brand.name}
-            size={36}
-            class="text-[var(--color-text-soft)] group-hover:text-[var(--color-primary)] transition-colors"
-          />
-          <span class="text-[10px] font-medium text-[var(--color-text-muted)] group-hover:text-[var(--color-text)] tracking-wide uppercase transition-colors">
-            {brand.name}
-          </span>
-          <span class="absolute top-2 right-2 size-1.5 rounded-full bg-[var(--color-primary)] opacity-0 group-hover:opacity-100 transition-opacity" />
-        </a>
-      ))
+      POPULAR_BRANDS.map((brand) => {
+        const brandColor = brand.color || '#444'
+        const logoUrl = brand.logoUrl || `/assets/brands/${brand.slug}.svg`
+        return (
+          <a
+            href={`/konfigurator?brand=${brand.slug}`}
+            class="group relative aspect-square rounded-2xl border-2 border-white/10 hover:border-[var(--color-primary)]/60 overflow-hidden transition-all hover:-translate-y-1 hover:scale-[1.03] hover:shadow-2xl"
+            aria-label={brand.name}
+          >
+            {/* Brand color radial gradient bg — her marka kendi rengini yansıtır */}
+            <div
+              class="absolute inset-0 opacity-15 group-hover:opacity-35 transition-opacity"
+              style={`background: radial-gradient(circle at 50% 30%, ${brandColor}, transparent 70%);`}
+            />
+            {/* Glassmorphic overlay */}
+            <div class="absolute inset-0 bg-gradient-to-br from-white/8 via-transparent to-black/20 pointer-events-none" />
+            {/* İçerik — büyük beyaz logo + marka adı */}
+            <div class="relative h-full flex flex-col items-center justify-center gap-2 p-2 z-10">
+              <img
+                src={logoUrl}
+                alt={brand.name}
+                class="size-10 md:size-12 object-contain transition-transform group-hover:scale-110"
+                style="filter: brightness(0) invert(1) drop-shadow(0 2px 8px rgba(0,0,0,0.3));"
+                loading="lazy"
+              />
+              <span class="text-[10px] md:text-xs font-semibold text-white/80 group-hover:text-white tracking-wide uppercase transition-colors">
+                {brand.name}
+              </span>
+            </div>
+            {/* Hover indicator dot */}
+            <span class="absolute top-2 right-2 size-2 rounded-full bg-[var(--color-primary)] opacity-0 group-hover:opacity-100 transition-opacity shadow-[0_0_10px_var(--color-primary)]" />
+          </a>
+        )
+      })
     }
   </div>
 </section>
