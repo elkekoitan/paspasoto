@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 130 40" fill="none" stroke="currentColor" stroke-width="1.5" aria-label="SsangYong">
+  <!-- SsangYong: 2 ejderha kanadı yorumu (basitleştirilmiş 3-kollu rotor) -->
+  <g transform="translate(8, 8)">
+    <circle cx="12" cy="12" r="11" stroke-width="1.5"/>
+    <path d="M12 4 Q18 8 18 12 Q18 16 12 20 Q6 16 6 12 Q6 8 12 4 Z" stroke-width="1.2"/>
+    <line x1="12" y1="2" x2="12" y2="22" stroke-width="0.8"/>
+  </g>
+  <text x="38" y="26" font-family="system-ui, -apple-system, sans-serif" font-size="11" font-weight="600" letter-spacing="1" fill="currentColor" stroke="none">SSANGYONG</text>
+</svg>

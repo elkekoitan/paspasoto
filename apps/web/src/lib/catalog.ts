@@ -177,9 +177,16 @@ export const BRANDS: Brand[] = [
   { id: 35, slug: 'togg', name: 'TOGG', popular: true, color: '#0061A8', logoUrl: '/assets/brands/togg.svg' },
   { id: 36, slug: 'iveco', name: 'Iveco', popular: false, iconSlug: 'iveco', color: '#003D80' },
   { id: 37, slug: 'isuzu', name: 'Isuzu', popular: false, color: '#C8102E', logoUrl: '/assets/brands/isuzu.svg' },
-  { id: 38, slug: 'mahindra', name: 'Mahindra', popular: false, iconSlug: 'mahindra', color: '#C8102E' },
-  { id: 39, slug: 'chery', name: 'Chery', popular: true, color: '#C8102E' },
+  { id: 38, slug: 'mahindra', name: 'Mahindra', popular: false, iconSlug: 'mahindra', color: '#C8102E', logoUrl: '/assets/brands/mahindra.svg' },
+  { id: 39, slug: 'chery', name: 'Chery', popular: true, color: '#C8102E', logoUrl: '/assets/brands/chery.svg' },
   { id: 40, slug: 'hongqi', name: 'Hongqi', popular: false, color: '#9B1B1F', logoUrl: '/assets/brands/hongqi.svg' },
+  // Premium / EV / niche markalar — Türkiye pazarı genişlemesi
+  { id: 41, slug: 'polestar', name: 'Polestar', popular: false, color: '#1B2C3D', logoUrl: '/assets/brands/polestar.svg' },
+  { id: 42, slug: 'genesis', name: 'Genesis', popular: false, color: '#1A1A1A', logoUrl: '/assets/brands/genesis.svg' },
+  { id: 43, slug: 'alfa-romeo', name: 'Alfa Romeo', popular: false, color: '#C8102E', logoUrl: '/assets/brands/alfa-romeo.svg' },
+  { id: 44, slug: 'smart', name: 'Smart', popular: false, color: '#00B0F0', logoUrl: '/assets/brands/smart.svg' },
+  { id: 45, slug: 'infiniti', name: 'Infiniti', popular: false, color: '#1F2D45', logoUrl: '/assets/brands/infiniti.svg' },
+  { id: 46, slug: 'ssangyong', name: 'SsangYong', popular: false, color: '#003F87', logoUrl: '/assets/brands/ssangyong.svg' },
 ]
 
 export const VEHICLE_MODELS: VehicleModel[] = [
@@ -195,6 +202,8 @@ export const VEHICLE_MODELS: VehicleModel[] = [
   { id: 9, brandSlug: 'bmw', slug: 'x1-f48', name: 'X1', chassisCode: 'F48', yearStart: 2015, yearEnd: 2022, bodyType: 'suv' },
   { id: 10, brandSlug: 'bmw', slug: 'x3-g01', name: 'X3', chassisCode: 'G01', yearStart: 2017, yearEnd: 2026, bodyType: 'suv' },
   { id: 11, brandSlug: 'bmw', slug: 'x5-g05', name: 'X5', chassisCode: 'G05', yearStart: 2018, yearEnd: 2026, bodyType: 'suv' },
+  { id: 110, brandSlug: 'bmw', slug: '7-serisi-g70', name: '7 Serisi', chassisCode: 'G70', yearStart: 2022, yearEnd: 2026, bodyType: 'sedan' },
+  { id: 111, brandSlug: 'bmw', slug: 'i7-g70', name: 'i7', chassisCode: 'G70 EV', yearStart: 2022, yearEnd: 2026, bodyType: 'sedan' },
   // Audi
   { id: 12, brandSlug: 'audi', slug: 'a3-8v', name: 'A3', chassisCode: '8V', yearStart: 2012, yearEnd: 2020, bodyType: 'hatchback' },
   { id: 13, brandSlug: 'audi', slug: 'a3-8y', name: 'A3', chassisCode: '8Y', yearStart: 2020, yearEnd: 2026, bodyType: 'hatchback' },

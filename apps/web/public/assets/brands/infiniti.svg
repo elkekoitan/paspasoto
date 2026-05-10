@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 40" fill="none" stroke="currentColor" stroke-width="1.5" aria-label="Infiniti">
+  <!-- Infiniti logosu — sonsuzluk simgesi (yol perspektifi) -->
+  <g transform="translate(8, 8)">
+    <path d="M2 12 Q12 4 22 12 Q12 20 2 12 Z" stroke-width="1.5"/>
+    <path d="M22 12 Q12 4 2 12 M22 12 Q12 20 2 12" stroke-width="1.5"/>
+  </g>
+  <text x="38" y="26" font-family="system-ui, -apple-system, sans-serif" font-size="13" font-weight="500" letter-spacing="2" fill="currentColor" stroke="none">INFINITI</text>
+</svg>
