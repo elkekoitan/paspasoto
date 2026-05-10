@@ -2,12 +2,40 @@
 title: Karar Geçmişi (ADR)
 module: architecture
 status: living
-last_reviewed: 2026-05-07
+last_reviewed: 2026-05-10
 ---
 
 # Architecture Decision Records
 
 Önemli mimari kararların kısa kayıtları. Yeni karar verince **buraya yeni ADR ekleyin**, eskiyi silmeyin.
+
+---
+
+## ADR-009 · Logo placement 3-yön → 9-yön (3×3 grid)
+**Tarih**: 2026-05-10 (commit 64f16c9)
+**Bağlam**: Kullanıcı "logo yerleşim sağ sol da ekle" istedi. Eski 3-yön (top/middle/bottom — hep ortada) yetersizdi.
+**Karar**: 9 pozisyon (top/middle/bottom × left/center/right) + 3 legacy alias geriye dönük uyum. UI: 64×64 px 3×3 grid picker — paspas yüzeyinin görsel temsili.
+**Alternatif reddedildi**: 5 pozisyon (4 köşe + merkez) — UX yetersiz (kullanıcı sağ-sol bazlı ofset istedi).
+**Sonuç**: `LogoPlacement` 12 değer (9 yeni + 3 legacy), `PLACEMENT_COORDS` export, `PLACEMENT_GRID` UI iterator, `PLACEMENT_LABELS` Türkçe dil.
+
+## ADR-010 · Logo orientation horizontal/vertical
+**Tarih**: 2026-05-10 (commit 3791d05)
+**Bağlam**: Bazı markaların logosu yatay (BMW yuvarlak, VW kare), bazıları dikey daha iyi (markaya bağlı). Kullanıcı "yatay dikey seçenekleri de koy" istedi.
+**Karar**: `LogoOrientation = 'horizontal' | 'vertical'`, `MatLogoConfig.orientation` opsiyonel field. UI: 9-yön placement grid altında "Yatay/Dikey" toggle butonu. Default 'horizontal'.
+**Sonuç**: Müşteri her paspas için ayrı yön seçebilir. Preview component orientation'a göre logo SVG rotate eder.
+
+## ADR-011 · Container root user (Docker)
+**Tarih**: 2026-05-09 (commit e269878)
+**Bağlam**: Coolify persistent volume `/data` host'tan root:root mount ediyor. Docker container `USER node` (UID 1000) altında çalışınca EACCES yaşanıyor (orders.json yazma izni yok).
+**Karar**: Dockerfile'dan `USER node` kaldır. Container root olarak çalışsın. `apk add su-exec` çıkarıldı, entrypoint script kaldırıldı.
+**Alternatif reddedildi**: su-exec entrypoint chown — denenip rollback yapıldı (healthcheck `starting → ExitCode 1`, container ayağa kalkmadı).
+**Sonuç**: Dockerfile basitleşti, /data write çalışıyor. MVP güvenlik trade-off kabul edildi — production'da Coolify volume host-side chown 1000:1000 ile node user'a düşürülebilir.
+
+## ADR-012 · Trendyol API path migration (/sapigw → /integration)
+**Tarih**: 2026-05-09 (commit 46b99d1)
+**Bağlam**: Trendyol 2024'te API gateway taşıdı. Eski `/sapigw/suppliers/{id}/...` path'leri HTTP 556 Service Unavailable dönmeye başladı. Bizim kod hâlâ eski path'leri kullanıyordu.
+**Karar**: Tüm `/sapigw/suppliers/{id}/*` → `/integration/<modul>/sellers/{id}/*` olarak güncelle. `subscribedStatuses` enum PascalCase ('Created', 'Picking') → UPPERCASE ('CREATED', 'PICKING'). Yeni API 400 Bad Request dönüyordu eski enum ile.
+**Sonuç**: Bağlantı testi `{"ok":true,"status":200}` ✓. Webhook kayıt UPPERCASE statuses ile geçiyor. Listening endpoints: `/integration/sellers/{id}/addresses`, `/integration/order/sellers/{id}/orders`, `/integration/webhook/sellers/{id}/webhooks`, `/integration/product/brands`.
 
 ---
 

@@ -39,17 +39,45 @@ Müşterinin aracına özel paspas konfigüre etmesini sağlayan 8-adımlı (sah
 6. Mat zemin (10 renk)
 7. Kenarlık (15 renk)
 8. Topukluk (8 tür + konum: driver-only / passenger-only / both / none)
-9. Logo per-mat (5 pozisyon × 3 placement)
+9. Logo per-mat (5 pozisyon × **9-yön placement** × **yatay/dikey orientation**)
 10. Özet → "Teklif İste" → POST /api/quote
 ```
 
-## Live Preview (commit f77268a)
+## Logo placement: 9-yön + orientation (commit 64f16c9, 3791d05)
 
-Configurator JSX'inde sağ tarafa `<Preview />` component'i render edilir:
-- matColor + borderColor + heelPad + product seçili olunca otomatik görünür
-- max-w-[360px] glassmorphic kart, `slide-in-from-right` animasyonlu
-- VirtualShowroom backdrop kalır, Preview üstüne gelir
-- Mobile'da gizli (md+ ekranlarda görünür)
+Eski: 3 yön (top/middle/bottom — hep ortada)
+**Yeni: 9 pozisyon** = 3 dikey × 3 yatay = paspas yüzeyi 3×3 grid
+- top-left / top-center / top-right
+- middle-left / middle-center / middle-right
+- bottom-left / bottom-center / bottom-right
+- Legacy 'top'/'middle'/'bottom' kayıtları → '*-center' alias
+
+**Logo orientation**: `horizontal` (default, yatay) | `vertical` (90° rotated)
+- BMW yuvarlak logosu hem yatay hem dikey iyi
+- VW dikey yazı logosu yatay'da daha iyi
+- VW resmi logosunda da bazı versiyonlar dikey
+- UI: 3×3 grid picker altında "Yatay/Dikey" toggle butonu
+
+`PLACEMENT_COORDS` export: her 9 pozisyon için CSS `top: %`, `left: %` değerleri.
+Preview component bu coords'u kullanarak logo pozisyonunu renderlıyor.
+
+## Live Preview (commit f77268a, b845dd8)
+
+Configurator JSX'inde **iki yerde** Preview render edilir:
+- **Desktop**: Sağ panele (max-w-[360px]) glassmorphic kart, slide-in-from-right animasyonlu
+- **Mobile**: Sticky chip top-bar (matColor + borderColor + brand swatch chip).
+  Tıklanınca **fullscreen overlay** açılır, tam Preview component görünür
+- VirtualShowroom backdrop kalır + IMG fallback (`/images/showroom_*.png`)
+  Three.js cylinder yüklenmese bile önizleme görünür (commit 380938c)
+
+## Premium BrandStep tasarımı (commit 3117f69)
+
+- 3-4 sütun aspect-square büyük kartlar
+- Her marka kendi brand color radial gradient bg
+- ⭐ Popüler markalar (28) üstte ayrı section
+- Diğer markalar altta
+- Active state: orange border + glow + checkmark rozet köşe
+- Search aktif: flat grid, empty state mesajı
 
 ## State management
 - `useState` per field
