@@ -1883,8 +1883,33 @@ function SummaryStep({
         </button>
       </div>
 
+      {/* Üretim timeline — sipariş yolculuğu görseli */}
+      <div class="mt-5 pt-4 border-t border-white/5">
+        <div class="text-[10px] uppercase tracking-[0.2em] text-white/40 font-semibold mb-3 text-center">
+          Sipariş yolculuğu
+        </div>
+        <ol class="grid grid-cols-5 gap-1 text-center">
+          {[
+            { step: '1', label: 'Onay', sub: 'Bugün', dot: 'bg-[var(--color-primary)]' },
+            { step: '2', label: 'Üretim', sub: 'Aynı gün', dot: 'bg-white/30' },
+            { step: '3', label: 'Kalite', sub: '3. gün', dot: 'bg-white/30' },
+            { step: '4', label: 'Kargo', sub: '5. gün', dot: 'bg-white/30' },
+            { step: '5', label: 'Teslim', sub: '7. gün', dot: 'bg-white/30' },
+          ].map((s, i, arr) => (
+            <li class="relative">
+              {i < arr.length - 1 && (
+                <span class="absolute top-1.5 left-1/2 w-full h-px bg-white/10" aria-hidden="true" />
+              )}
+              <span class={`relative inline-block size-3 rounded-full ${s.dot} ring-2 ring-[var(--color-bg)]`} />
+              <div class="text-[10px] font-semibold text-white mt-1.5">{s.label}</div>
+              <div class="text-[9px] text-white/45 leading-tight">{s.sub}</div>
+            </li>
+          ))}
+        </ol>
+      </div>
+
       <p class="mt-4 text-[10px] text-[var(--color-text-muted)] text-center">
-        ✓ Sipariş onayından sonra atölyemiz aynı gün üretime başlar · Ortalama 5-7 iş günü kapınızda
+        ✓ Sipariş onayından sonra atölyemiz aynı gün üretime başlar
       </p>
     </div>
   )
