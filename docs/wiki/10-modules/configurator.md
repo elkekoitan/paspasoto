@@ -70,7 +70,16 @@ Configurator JSX'inde **iki yerde** Preview render edilir:
 - VirtualShowroom backdrop kalır + IMG fallback (`/images/showroom_*.png`)
   Three.js cylinder yüklenmese bile önizleme görünür (commit 380938c)
 
-## Hızlı Tasarla — Preset paketler (commit 2f98d3c)
+## StepperBar 8 step pill wrap (commit 02b4465)
+
+8 step `overflow-x-auto` yerine `flex-wrap` — 420px wizard panelinde 2 sıraya yazılır.
+- Active step label her zaman görünür
+- Inactive label `md:` breakpoint üstünde (768px+) görünür
+- Pill height kısaltıldı (1.5 → 1) ve number-circle 5x5 → 4x4
+
+Bu sayede tüm 8 step bir bakışta görünür, kullanıcı yatay scroll'a gerek duymaz.
+
+## Hızlı Tasarla — Preset paketler (commit 2f98d3c, polish 91ef8e9)
 
 Choice overload kıran tek-tık akış (UX research #2). BrandStep'in üstünde 3 büyük gradient kart:
 
@@ -82,7 +91,10 @@ Choice overload kıran tek-tık akış (UX research #2). BrandStep'in üstünde 
 
 **Kritik dosya**: `apps/web/src/lib/presets.ts` — `ConfigPreset` tipi + `PRESETS[]` array
 **Helper**: `Configurator.tsx → applyPreset(preset)` — matColor/borderColor/heelPad/logos set + `setStep('summary')`
-**UX**: marka seçilmeden de uygulanabilir (logoMode='auto' için later marka seçilince logo otomatik çekilir)
+**UX**: marka seçilmeden de uygulanabilir
+- Brand step'te preset cards görünür (commit 02b4465 öncesi sadece marka seçildikten sonra görünüyordu)
+- `applyPreset` smart navigation: `brand && model` varsa summary'e atlar, yoksa mevcut step'te kalır (önizlemede mat/border live görür)
+- logoMode='auto' için brand seçili değilse logos boş kalır, brand seçilince useEffect otomatik doldurur
 
 ## "Emin Değilim" CTA (commit 2f98d3c)
 
