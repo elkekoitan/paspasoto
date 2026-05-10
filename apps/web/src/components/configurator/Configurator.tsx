@@ -208,8 +208,11 @@ export default function Configurator() {
     } else if (preset.logoMode === 'none') {
       setLogos((prev) => prev.map((l) => ({ ...l, brandSlug: null })))
     }
-    // Otomatik özet adımına atla
-    setStep('summary')
+    // Yalnızca araç seçilmişse özet'e zıpla; aksi hâlde brand step'te
+    // kalsın ve kullanıcı önizlemede preset rengini canlı görsün.
+    if (brand && model) {
+      setStep('summary')
+    }
   }
 
   const models = useMemo(
@@ -469,8 +472,8 @@ export default function Configurator() {
                   </button>
                 </div>
 
-                {/* Hızlı Tasarla — Preset paketler (sadece marka/model adımlarında) */}
-                {(step === 'brand' || step === 'model' || step === 'product') && brand && (
+                {/* Hızlı Tasarla — Preset paketler (marka/model/set adımlarında) */}
+                {(step === 'brand' || step === 'model' || step === 'product') && (
                   <div class="mb-5 p-3 rounded-xl bg-gradient-to-br from-[var(--color-primary)]/10 via-transparent to-transparent border border-[var(--color-primary)]/20">
                     <div class="flex items-center gap-2 mb-2.5">
                       <span class="text-[10px] uppercase tracking-[0.2em] text-[var(--color-primary)] font-bold">⚡ Hızlı Tasarla</span>
@@ -735,7 +738,7 @@ function StepperBar({
 }) {
   const currentIdx = STEPS.findIndex((s) => s.key === step)
   return (
-    <div class="flex items-center gap-1 overflow-x-auto pb-2 -mx-1 px-1">
+    <div class="flex flex-wrap items-center gap-1 pb-1">
       {STEPS.map((s, i) => {
         const active = s.key === step
         const passed = i < currentIdx
@@ -746,8 +749,9 @@ function StepperBar({
             type="button"
             onClick={() => reachable && onJump(s.key)}
             disabled={!reachable}
+            title={s.label}
             class={[
-              'shrink-0 flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium transition-colors',
+              'shrink-0 flex items-center gap-1.5 px-2 py-1 rounded-full text-[11px] font-medium transition-colors',
               active && 'bg-[var(--color-primary)] text-[var(--color-bg)]',
               !active && passed && 'bg-[var(--color-surface-2)] text-[var(--color-text)] hover:bg-[var(--color-border)]',
               !active && !passed && 'bg-[var(--color-surface)] text-[var(--color-text-muted)]',
@@ -756,10 +760,10 @@ function StepperBar({
               .filter(Boolean)
               .join(' ')}
           >
-            <span class="size-5 grid place-items-center rounded-full bg-[var(--color-bg)]/20 text-[10px] font-semibold">
+            <span class="size-4 grid place-items-center rounded-full bg-[var(--color-bg)]/20 text-[9px] font-semibold">
               {i + 1}
             </span>
-            <span class="hidden sm:inline">{s.label}</span>
+            <span class={active ? 'inline' : 'hidden md:inline'}>{s.label}</span>
           </button>
         )
       })}
