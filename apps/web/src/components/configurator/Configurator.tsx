@@ -1850,10 +1850,9 @@ function SummaryStep({
         <Row label="Amblem" value={logoSummary} />
       </dl>
 
-      {/* Güven artırıcı trust badges — UX research: konversiyona %18 etkili
-       * Inline style ile grid garantili — Preact hydration'da Tailwind 'grid' class
-       * düşmesinden korunur. */}
-      <div
+      {/* Güven artırıcı trust badges — section tag ile Preact reconciliation'ı
+       * div diff bug'ından korunur (key={step} de çalışmadığı için tag farkı zorla). */}
+      <section
         class="mt-5"
         style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.5rem;"
       >
@@ -1863,13 +1862,13 @@ function SummaryStep({
           { icon: '⏱️', label: '5–7 İş Günü', sub: 'Aynı gün üretim' },
           { icon: '↩️', label: '14 Gün İade', sub: 'Beğenmezsen iade' },
         ].map((b) => (
-          <div class="rounded-xl border border-white/10 bg-white/5 p-2.5 text-center">
+          <article class="rounded-xl border border-white/10 bg-white/5 p-2.5 text-center">
             <div class="text-[20px] leading-none mb-1">{b.icon}</div>
             <div class="text-[11px] font-semibold text-white">{b.label}</div>
             <div class="text-[9px] text-white/50 mt-0.5 leading-tight">{b.sub}</div>
-          </div>
+          </article>
         ))}
-      </div>
+      </section>
 
       <div class="mt-6 pt-5 border-t border-[var(--color-border)]/60 flex items-center justify-between gap-4">
         <div>
