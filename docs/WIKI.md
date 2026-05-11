@@ -265,6 +265,37 @@ POST /api/push/unsubscribe       → endpoint sil
 | Persistent volume | `/data` (Coolify volume mount) — `orders.json` + `pushSubscriptions` |
 | Env vars | `ADMIN_PASSWORD`, `SESSION_SECRET`, `PUBLIC_SITE_URL`, `DATA_DIR=/data`, ileride: `SMTP_*`, `VAPID_*`, `WHATSAPP_*`, `TRENDYOL_*` |
 | Coolify | Project `vgr9kd6dmv0zkr83f7zshma6` · App `kw1f0tskisx5pl6i5jw2tzgw` · Server `hiyxmas7zd09o6pfwkws4iwf` |
+| Sağlayıcı | E Telekomünikasyon Ltd. Şti. (Sultanbeyli/İstanbul) · 185.255.95.111 |
+
+### Deploy zinciri (otomatik script)
+
+`scripts/coolify-redeploy.mjs` — sunucu açıkken tek komutla:
+1. App ayarları (port 4321, healthcheck `/health`, dockerfile path)
+2. Env vars (ADMIN_PASSWORD, SESSION_SECRET random/env, DATA_DIR, PUBLIC_SITE_URL, PWA_DISABLED)
+3. Persistent storage `/data`
+4. Force rebuild
+5. Build durumunu poll (60s aralıkla)
+
+```bash
+ADMIN_PASSWORD="atolye-sifre" SESSION_SECRET="$(openssl rand -base64 48)" \
+  node scripts/coolify-redeploy.mjs
+```
+
+### Sunucu down olduğunda
+
+| Belirti | Tanı | Eylem |
+|---|---|---|
+| `curl 8000` timeout + `ping` paket kaybı | VDS kapalı/kernel panic/network down | Sağlayıcı panelinden Hard Reset |
+| `curl 8000` 502/503 | Coolify container crash | SSH: `docker logs coolify`, `systemctl restart coolify` |
+| `curl 8000` 200 ama app açılmıyor | Sadece app container down | Coolify UI > Restart application |
+| Disk dolu uyarısı | `/var/lib/docker` overflow | `docker system prune -af --volumes` |
+| Healthcheck "connection refused" | App container nginx/node başlamadı | Build log incele, port mismatch kontrol et |
+
+### Sunucu açıkken sağlık kontrol
+
+```bash
+ssh root@185.255.95.111 -- "df -h && echo '---' && free -m && echo '---' && docker system df && echo '---' && systemctl status coolify --no-pager | head -5"
+```
 
 ---
 
