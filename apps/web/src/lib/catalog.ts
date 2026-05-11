@@ -113,6 +113,94 @@ export type MatColor = {
 
 export type BorderColor = MatColor
 
+/**
+ * Paspas doku tipi — Primeeva-tarzı 2 seçenek.
+ * Eski mat hep "diamond" idi (varsayılan). Artık honeycomb (petek) opsiyonu var.
+ *
+ * - `diamond`: Elmas dikiş deseni (klasik, sportif görünüm)
+ * - `honeycomb`: Petek doku (premium hava akışlı, suyu drene eden)
+ */
+export type MatTexture = {
+  id: number
+  slug: 'diamond' | 'honeycomb'
+  name: string
+  description: string
+  /** CSS background-image URL — pattern tile (256×256) */
+  patternUrl: string
+  pricePremium: number
+  isDefault: boolean
+}
+
+export const MAT_TEXTURES: MatTexture[] = [
+  {
+    id: 1,
+    slug: 'diamond',
+    name: 'Elmas',
+    description: 'Klasik elmas dikiş · sportif',
+    patternUrl: '/assets/textures/diamond.svg',
+    pricePremium: 0,
+    isDefault: true,
+  },
+  {
+    id: 2,
+    slug: 'honeycomb',
+    name: 'Petek',
+    description: 'Premium 3D petek · hava akışlı',
+    patternUrl: '/assets/textures/honeycomb.svg',
+    pricePremium: 150,
+    isDefault: false,
+  },
+]
+
+/**
+ * Marka emblem (logo) tipi — kullanıcının fotoğraflarda gösterdiği 2 stil:
+ *  - `premium-leather`: Siyah deri taban + lazer baskılı marka logosu
+ *  - `metal-plate`: Krom/metal dikdörtgen plaka + lazer baskılı marka logosu
+ */
+export type EmblemType = {
+  id: number
+  slug: 'premium-leather' | 'metal-plate'
+  name: string
+  description: string
+  /** Plaka taban rengi hex (preview rendering için) */
+  baseHex: string
+  /** Marka adı/logosunun lazer baskılı rengi */
+  engraveHex: string
+  pricePremium: number
+  isDefault: boolean
+}
+
+export const EMBLEM_TYPES: EmblemType[] = [
+  {
+    id: 1,
+    slug: 'premium-leather',
+    name: 'Premium Deri',
+    description: 'Siyah deri taban · lazer baskı',
+    baseHex: '#1a1a20',
+    engraveHex: '#e8e8e8',
+    pricePremium: 0,
+    isDefault: true,
+  },
+  {
+    id: 2,
+    slug: 'metal-plate',
+    name: 'Metal Plaka',
+    description: 'Krom metal taban · lazer kazıma',
+    baseHex: '#b8b9bc',
+    engraveHex: '#3a3a3f',
+    pricePremium: 100,
+    isDefault: false,
+  },
+]
+
+export function getMatTextureBySlug(slug: string): MatTexture | undefined {
+  return MAT_TEXTURES.find((t) => t.slug === slug)
+}
+
+export function getEmblemTypeBySlug(slug: string): EmblemType | undefined {
+  return EMBLEM_TYPES.find((e) => e.slug === slug)
+}
+
 export type HeelPad = {
   id: number
   slug: string

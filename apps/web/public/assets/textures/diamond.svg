@@ -1,0 +1,44 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="80" height="80" viewBox="0 0 80 80">
+  <!--
+    Elmas (diamond) dikiş deseni — 80×80 tile.
+    Premium oto paspas zemini için klasik sportif görünüm.
+    currentColor + dikiş tonu için stroke kullanır.
+  -->
+  <defs>
+    <linearGradient id="diamond-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="rgba(255,255,255,0.08)" />
+      <stop offset="50%" stop-color="rgba(255,255,255,0.02)" />
+      <stop offset="100%" stop-color="rgba(0,0,0,0.15)" />
+    </linearGradient>
+  </defs>
+
+  <!-- Taban (renk overlay ile bu kısım dolacak; şimdilik transparent) -->
+  <rect width="80" height="80" fill="transparent" />
+
+  <!-- Diamond grid — 45° rotasyonlu kareler -->
+  <g stroke="currentColor" stroke-width="0.6" fill="none" opacity="0.45">
+    <!-- Yatay dikiş çizgileri (45°) -->
+    <line x1="0" y1="40" x2="40" y2="0" />
+    <line x1="0" y1="80" x2="80" y2="0" />
+    <line x1="40" y1="80" x2="80" y2="40" />
+    <!-- Ters yöne (135°) -->
+    <line x1="40" y1="0" x2="80" y2="40" />
+    <line x1="0" y1="0" x2="80" y2="80" />
+    <line x1="0" y1="40" x2="40" y2="80" />
+  </g>
+
+  <!-- Highlight overlay (3D quilted hissi) -->
+  <rect width="80" height="80" fill="url(#diamond-grad)" />
+
+  <!-- Köşelerde dikiş düğüm noktaları -->
+  <g fill="currentColor" opacity="0.5">
+    <circle cx="40" cy="0" r="0.6" />
+    <circle cx="40" cy="80" r="0.6" />
+    <circle cx="0" cy="40" r="0.6" />
+    <circle cx="80" cy="40" r="0.6" />
+    <circle cx="0" cy="0" r="0.6" />
+    <circle cx="80" cy="80" r="0.6" />
+    <circle cx="80" cy="0" r="0.6" />
+    <circle cx="0" cy="80" r="0.6" />
+  </g>
+</svg>

@@ -6,6 +6,8 @@ import {
   BORDER_COLORS,
   HEEL_PADS,
   LOGO_ACCESSORIES,
+  MAT_TEXTURES,
+  EMBLEM_TYPES,
   PRODUCTS,
   BODY_LABEL,
   type Brand,
@@ -16,6 +18,8 @@ import {
   type BorderColor,
   type HeelPad,
   type LogoAccessory,
+  type MatTexture,
+  type EmblemType,
   type Product,
 } from '../../lib/catalog'
 import { getTrimsForModel, FUEL_LABEL, TRANSMISSION_LABEL } from '../../lib/catalog-trims'
@@ -89,6 +93,10 @@ type Draft = {
   heelSlug?: string
   heelPosition?: HeelPosition
   logos?: MatLogoConfig[]
+  /** Mat doku — diamond | honeycomb (Primeeva-inspired) */
+  textureSlug?: 'diamond' | 'honeycomb'
+  /** Marka emblem tipi — premium-leather | metal-plate */
+  emblemTypeSlug?: 'premium-leather' | 'metal-plate'
 }
 
 /** Set parts → o set için pozisyon listesi */
@@ -139,6 +147,15 @@ export default function Configurator() {
         }))
   const [logos, setLogos] = useState<MatLogoConfig[]>(initialLogos)
 
+  // Mat doku tipi: Diamond (varsayılan) veya Honeycomb (premium 3D havuzlu petek)
+  const [texture, setTexture] = useState<MatTexture>(
+    draft.textureSlug ? MAT_TEXTURES.find((t) => t.slug === draft.textureSlug) ?? MAT_TEXTURES[0]! : MAT_TEXTURES[0]!,
+  )
+  // Marka emblem tipi: Premium deri veya Metal plaka
+  const [emblemType, setEmblemType] = useState<EmblemType>(
+    draft.emblemTypeSlug ? EMBLEM_TYPES.find((e) => e.slug === draft.emblemTypeSlug) ?? EMBLEM_TYPES[0]! : EMBLEM_TYPES[0]!,
+  )
+
   const [search, setSearch] = useState('')
   // Kullanıcıya draft'tan devam ediyoruz uyarısı
   const [showRestoredHint, setShowRestoredHint] = useState(!!initialBrand)
@@ -155,9 +172,11 @@ export default function Configurator() {
       heelSlug: heelPad?.slug,
       heelPosition,
       logos,
+      textureSlug: texture.slug,
+      emblemTypeSlug: emblemType.slug,
     }
     try { localStorage.setItem(STATE_KEY, JSON.stringify(next)) } catch {}
-  }, [brand, model, product, matColor, borderColor, heelPad, heelPosition, logos])
+  }, [brand, model, product, matColor, borderColor, heelPad, heelPosition, logos, texture, emblemType])
 
   function resetDraft() {
     if (!confirm('Tüm seçimleriniz silinip baştan başlanacak. Emin misiniz?')) return
@@ -231,14 +250,17 @@ export default function Configurator() {
     total += heelPad?.pricePremium ?? 0
     // Topukluk: 'both' = +100₺ (yolcu paspasına ek), 'passenger-only' = +0 (yer değişimi)
     if (heelPosition === 'both') total += 100
-    // Logo: her aktif (brandSlug != null) pozisyon için +150₺
+    // Logo: her aktif (brandSlug != null) pozisyon için +150₺ (premium-leather) / +250₺ (metal-plate)
     const activePositions = positionsFor(product?.parts ?? 0, !!product?.includesTrunk)
     const logoCount = logos.filter(
       (l) => l.brandSlug !== null && activePositions.includes(l.position),
     ).length
-    total += logoCount * 150
+    const logoUnit = 150 + (emblemType?.pricePremium ?? 0)
+    total += logoCount * logoUnit
+    // Mat doku premium: honeycomb +150₺ (tek seferlik, set bazında)
+    total += texture?.pricePremium ?? 0
     return total
-  }, [product, heelPad, heelPosition, logos])
+  }, [product, heelPad, heelPosition, logos, texture, emblemType])
 
   function next() {
     const i = STEPS.findIndex((s) => s.key === step)
@@ -432,6 +454,8 @@ export default function Configurator() {
                 brand={brand}
                 model={model}
                 product={product}
+                texture={texture}
+                emblemType={emblemType}
                 total={totalPrice}
                 onAddToCart={() => { setShowMobilePreview(false); setStep('summary') }}
               />
@@ -508,22 +532,100 @@ export default function Configurator() {
                   {step === 'brand' && <BrandStep brands={filteredBrands} selected={brand} onSelect={(b) => { setBrand(b); setModel(null); setStep('model'); }} search={search} onSearchChange={setSearch} />}
                   {step === 'model' && brand && <ModelStep brand={brand} models={models} selected={model} selectedTrim={trim} onSelect={(m, t) => { setModel(m); setTrim(t ?? null); setStep('product'); }} onBack={() => setStep('brand')} />}
                   {step === 'product' && <ProductStep products={PRODUCTS} selected={product} onSelect={(p) => { setProduct(p); setStep('mat'); }} />}
-                  {step === 'mat' && <SwatchStep title="Paspas Zemin Rengi" description="Paspasın havuzlu kısmının zemin rengi." colors={MAT_COLORS} selected={matColor?.id} onSelect={(c) => { setMatColor(c); setStep('border'); }} />}
+                  {step === 'mat' && (
+                    <>
+                      {/* Doku tipi chip row — Primeeva-inspired (P3: photo-realistic) */}
+                      <div class="mb-5 rounded-xl border border-white/10 bg-white/[0.02] p-3">
+                        <div class="flex items-center gap-2 mb-2.5">
+                          <span class="text-[11px] uppercase tracking-[0.2em] text-[var(--color-primary)] font-bold">Doku Tipi</span>
+                          <span class="text-[10px] text-white/45">— Paspas yüzeyi deseni</span>
+                        </div>
+                        <div class="grid grid-cols-2 gap-2">
+                          {MAT_TEXTURES.map((t) => (
+                            <button
+                              key={t.slug}
+                              type="button"
+                              onClick={() => setTexture(t)}
+                              class={[
+                                'relative rounded-lg border-2 p-2.5 text-left transition-all overflow-hidden',
+                                texture.slug === t.slug
+                                  ? 'border-[var(--color-primary)] bg-[var(--color-primary)]/10 shadow-[var(--shadow-glow)]'
+                                  : 'border-white/10 hover:border-white/30 bg-white/[0.02]',
+                              ].join(' ')}
+                            >
+                              {/* Doku önizleme küçük tile */}
+                              <div
+                                class="absolute inset-0 opacity-30 pointer-events-none"
+                                style={`background-image: url(${t.patternUrl}); background-size: ${t.slug === 'diamond' ? '40px' : '30px'} auto; color: ${matColor?.hex ?? '#888'};`}
+                              />
+                              <div class="relative">
+                                <div class="text-[13px] font-bold text-white">{t.name}</div>
+                                <div class="text-[10px] text-white/60 leading-tight mt-0.5">{t.description}</div>
+                                {t.pricePremium > 0 && (
+                                  <div class="text-[10px] text-[var(--color-primary)] font-bold mt-1">+{formatTRY(t.pricePremium)}</div>
+                                )}
+                              </div>
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                      <SwatchStep title="Paspas Zemin Rengi" description="Paspasın havuzlu kısmının zemin rengi." colors={MAT_COLORS} selected={matColor?.id} onSelect={(c) => { setMatColor(c); setStep('border'); }} />
+                    </>
+                  )}
                   {step === 'border' && <SwatchStep title="Kenarlık Rengi" description="Paspasın çevresini saran biye/kenarlık şeridi." colors={BORDER_COLORS} selected={borderColor?.id} onSelect={(c) => { setBorderColor(c); setStep('heel'); }} big={false} />}
                   {step === 'heel' && <HeelPadStep pads={HEEL_PADS} selected={heelPad} onSelect={setHeelPad} heelPosition={heelPosition} onPositionChange={setHeelPosition} onContinue={() => setStep('logo')} />}
                   {step === 'logo' && (
-                    <LogoStep
-                      brand={brand}
-                      product={product!}
-                      matColor={matColor!}
-                      borderColor={borderColor!}
-                      logos={logos}
-                      onSetLogo={setLogoFor}
-                      onSetPlacement={setPlacementFor}
-                      onSetOrientation={setOrientationFor}
-                      onApplyAll={applyLogoToAll}
-                      onContinue={() => setStep('summary')}
-                    />
+                    <>
+                      {/* Emblem tipi chip row — Premium deri vs Metal plaka */}
+                      <div class="mb-5 rounded-xl border border-white/10 bg-white/[0.02] p-3">
+                        <div class="flex items-center gap-2 mb-2.5">
+                          <span class="text-[11px] uppercase tracking-[0.2em] text-[var(--color-primary)] font-bold">Emblem Tipi</span>
+                          <span class="text-[10px] text-white/45">— Marka logosu taban</span>
+                        </div>
+                        <div class="grid grid-cols-2 gap-2">
+                          {EMBLEM_TYPES.map((e) => (
+                            <button
+                              key={e.slug}
+                              type="button"
+                              onClick={() => setEmblemType(e)}
+                              class={[
+                                'relative rounded-lg border-2 p-2.5 text-left transition-all overflow-hidden',
+                                emblemType.slug === e.slug
+                                  ? 'border-[var(--color-primary)] bg-[var(--color-primary)]/10 shadow-[var(--shadow-glow)]'
+                                  : 'border-white/10 hover:border-white/30 bg-white/[0.02]',
+                              ].join(' ')}
+                            >
+                              {/* Plaka mini önizleme */}
+                              <div
+                                class="absolute right-2 top-1/2 -translate-y-1/2 w-14 h-7 rounded-sm flex items-center justify-center text-[8px] font-bold tracking-widest"
+                                style={`background-color: ${e.baseHex}; color: ${e.engraveHex}; box-shadow: inset 0 0 3px rgba(0,0,0,0.4), 0 1px 2px rgba(0,0,0,0.3);`}
+                              >
+                                {brand?.name?.toUpperCase()?.slice(0, 4) ?? 'LOGO'}
+                              </div>
+                              <div class="relative pr-16">
+                                <div class="text-[13px] font-bold text-white">{e.name}</div>
+                                <div class="text-[10px] text-white/60 leading-tight mt-0.5">{e.description}</div>
+                                {e.pricePremium > 0 && (
+                                  <div class="text-[10px] text-[var(--color-primary)] font-bold mt-1">+{formatTRY(e.pricePremium)} / adet</div>
+                                )}
+                              </div>
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                      <LogoStep
+                        brand={brand}
+                        product={product!}
+                        matColor={matColor!}
+                        borderColor={borderColor!}
+                        logos={logos}
+                        onSetLogo={setLogoFor}
+                        onSetPlacement={setPlacementFor}
+                        onSetOrientation={setOrientationFor}
+                        onApplyAll={applyLogoToAll}
+                        onContinue={() => setStep('summary')}
+                      />
+                    </>
                   )}
                   {step === 'summary' && (
                     <SummaryStep
@@ -591,6 +693,8 @@ export default function Configurator() {
                  brand={brand}
                  model={model}
                  product={product}
+                 texture={texture}
+                 emblemType={emblemType}
                  total={totalPrice}
                  onAddToCart={() => setStep('summary')}
                />
@@ -1960,6 +2064,8 @@ function Preview({
   brand,
   model,
   product,
+  texture,
+  emblemType,
   total,
   onAddToCart,
 }: {
@@ -1971,9 +2077,16 @@ function Preview({
   brand: Brand | null
   model: VehicleModel | null
   product: Product | null
+  /** Mat doku (diamond/honeycomb) — opsiyonel, varsayılan diamond */
+  texture?: MatTexture
+  /** Emblem tipi (premium-leather/metal-plate) — opsiyonel */
+  emblemType?: EmblemType
   total: number
   onAddToCart: () => void
 }) {
+  // Doku overlay için aktif pattern URL ve tint
+  const texturePatternUrl = texture?.patternUrl ?? '/assets/textures/diamond.svg'
+  const textureTileSize = texture?.slug === 'honeycomb' ? '24px auto' : '32px 32px'
   const showTrunk = product?.includesTrunk ?? false
   const showRear = (product?.parts ?? 0) >= 4
   const showLogo = logoAccessory && logoAccessory.brandSlug !== null
@@ -2170,6 +2283,8 @@ function Preview({
                 showLogo={!!showLogo}
                 brand={brand}
                 label="SÜRÜCÜ"
+                texture={texture}
+                emblemType={emblemType}
               />
               {/* Yolcu ön */}
               <MatSlot
@@ -2179,6 +2294,8 @@ function Preview({
                 showLogo={!!showLogo}
                 brand={brand}
                 label="YOLCU"
+                texture={texture}
+                emblemType={emblemType}
               />
               {/* Sol arka */}
               {showRear && (
@@ -2189,6 +2306,8 @@ function Preview({
                   showLogo={!!showLogo}
                   brand={brand}
                   label=""
+                  texture={texture}
+                  emblemType={emblemType}
                 />
               )}
               {/* Sağ arka */}
@@ -2200,6 +2319,8 @@ function Preview({
                   showLogo={!!showLogo}
                   brand={brand}
                   label=""
+                  texture={texture}
+                  emblemType={emblemType}
                 />
               )}
               {showRear && (
@@ -2218,6 +2339,8 @@ function Preview({
                   showLogo={false}
                   brand={brand}
                   label="BAGAJ"
+                  texture={texture}
+                  emblemType={emblemType}
                 />
               )}
             </div>
@@ -2303,6 +2426,8 @@ function MatSlot({
   showLogo,
   brand,
   label,
+  texture,
+  emblemType,
 }: {
   x: string
   y: string
@@ -2315,7 +2440,15 @@ function MatSlot({
   showLogo: boolean
   brand: Brand | null
   label: string
+  texture?: MatTexture
+  emblemType?: EmblemType
 }) {
+  // Doku tile parametreleri
+  const texPatternUrl = texture?.patternUrl ?? '/assets/textures/diamond.svg'
+  const texTileSize = texture?.slug === 'honeycomb' ? '14px auto' : '16px 16px'
+  const texTintColor = matColor?.hex ?? '#444'
+  // Emblem rendering — premium-leather vs metal-plate
+  const isMetal = emblemType?.slug === 'metal-plate'
   return (
     <div
       class="absolute rounded-md overflow-hidden shadow-lg"
@@ -2340,6 +2473,11 @@ function MatSlot({
             loading="eager"
           />
         )}
+        {/* Doku overlay — Diamond veya Honeycomb pattern, matColor ile tint */}
+        <div
+          class="absolute inset-0 pointer-events-none mix-blend-overlay opacity-60"
+          style={`background-image: url(${texPatternUrl}); background-size: ${texTileSize}; color: ${texTintColor};`}
+        />
         <div
           class="absolute inset-0"
           style="background: linear-gradient(180deg, rgba(255,255,255,0.10) 0%, transparent 30%, transparent 70%, rgba(0,0,0,0.25) 100%);"
@@ -2351,17 +2489,35 @@ function MatSlot({
           <img src={heelPad.swatchUrl} alt="" class="size-full object-cover" loading="eager" />
         </div>
       )}
-      {/* Amblem (gerçek marka logosu) */}
+      {/* Amblem — Premium deri (yuvarlak) veya Metal plaka (dikdörtgen) */}
       {showLogo && brand && (
-        <div class="absolute top-[20%] left-1/2 -translate-x-1/2 size-[18%] grid place-items-center rounded-full bg-black/65 backdrop-blur ring-1 ring-white/15 shadow-md">
-          <ClientBrandLogo
-            iconSlug={brand.iconSlug}
-            logoUrl={brand.logoUrl}
-            name={brand.name}
-            size={20}
-            color="#ffffff"
-          />
-        </div>
+        isMetal ? (
+          <div
+            class="absolute top-[22%] left-1/2 -translate-x-1/2 w-[40%] h-[10%] grid place-items-center rounded-[2px] overflow-hidden"
+            style={`background: linear-gradient(135deg, ${emblemType.baseHex} 0%, ${lightenHex(emblemType.baseHex, 25)} 50%, ${emblemType.baseHex} 100%); box-shadow: inset 0 1px 2px rgba(255,255,255,0.4), inset 0 -1px 2px rgba(0,0,0,0.4), 0 1px 3px rgba(0,0,0,0.5);`}
+          >
+            <ClientBrandLogo
+              iconSlug={brand.iconSlug}
+              logoUrl={brand.logoUrl}
+              name={brand.name}
+              size={14}
+              color={emblemType.engraveHex}
+            />
+          </div>
+        ) : (
+          <div
+            class="absolute top-[20%] left-1/2 -translate-x-1/2 size-[18%] grid place-items-center rounded-full backdrop-blur ring-1 ring-white/15 shadow-md"
+            style={`background: ${emblemType?.baseHex ?? '#1a1a20'}cc;`}
+          >
+            <ClientBrandLogo
+              iconSlug={brand.iconSlug}
+              logoUrl={brand.logoUrl}
+              name={brand.name}
+              size={20}
+              color={emblemType?.engraveHex ?? '#ffffff'}
+            />
+          </div>
+        )
       )}
       {/* Etiket */}
       {label && (
@@ -2371,6 +2527,18 @@ function MatSlot({
       )}
     </div>
   )
+}
+
+/** Hex rengi % miktar kadar açma — metal plaka highlight için */
+function lightenHex(hex: string, percent: number): string {
+  const h = hex.replace('#', '')
+  const r = parseInt(h.slice(0, 2), 16)
+  const g = parseInt(h.slice(2, 4), 16)
+  const b = parseInt(h.slice(4, 6), 16)
+  const lr = Math.min(255, Math.round(r + (255 - r) * (percent / 100)))
+  const lg = Math.min(255, Math.round(g + (255 - g) * (percent / 100)))
+  const lb = Math.min(255, Math.round(b + (255 - b) * (percent / 100)))
+  return `#${lr.toString(16).padStart(2, '0')}${lg.toString(16).padStart(2, '0')}${lb.toString(16).padStart(2, '0')}`
 }
 
 function ChipPreview({ swatch, label, icon }: { swatch?: string; label: string; icon?: string }) {
