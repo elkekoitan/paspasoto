@@ -538,7 +538,7 @@ function ProductionRecipe({ order }: { order: Order }) {
   ${i.trimName ? `<tr><th>Donanım</th><td>${i.trimName} · ${i.trimEngine ?? ''} · ${i.trimFuel ?? ''} · ${i.trimTransmission ?? ''}</td></tr>` : ''}
   <tr><th>Adres</th><td>${order.shippingAddress.addressLine}<br>${order.shippingAddress.district} / ${order.shippingAddress.city}</td></tr>
 </table>
-<div class="footer">PaspasOto · Konya · ${new Date().toLocaleDateString('tr-TR')}</div>
+<div class="footer">Carmat — Fevzi Çakmak Mah. 10733. Sk. No: 1, Karatay / Konya · ${new Date().toLocaleDateString('tr-TR')}</div>
 <script>window.print()</script>`)
     w.document.close()
   }
