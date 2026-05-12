@@ -26,7 +26,7 @@ import { getTrimsForModel, FUEL_LABEL, TRANSMISSION_LABEL } from '../../lib/cata
 import { buildHelpRequestUrl } from '../../lib/whatsapp'
 import { formatTRY } from '../../lib/format'
 import ClientBrandLogo from '../ui/ClientBrandLogo'
-import VirtualShowroom from './VirtualShowroom'
+import BigMatBackdrop from './BigMatBackdrop'
 import LivePreview from './preview/LivePreview'
 
 /** Product slug → asset set slug mapping (gerçek EVA paspas fotoğraf adları) */
@@ -332,16 +332,15 @@ export default function Configurator() {
     }
   }
 
-  const bgImage = matColor?.showroomUrl || '/images/showroom_black_red_1778185224584.png'
-
   return (
     <div class="absolute inset-0 w-full h-full text-white overflow-hidden bg-[#0b0b0f] font-sans">
-      {/* 3D WebGL Showroom Environment */}
-      <VirtualShowroom imageUrl={bgImage} />
-
-      {/* Gradients for UI readability */}
-      <div class="absolute inset-0 z-0 bg-gradient-to-t from-black/90 via-transparent to-transparent pointer-events-none"></div>
-      <div class="absolute inset-0 z-0 bg-gradient-to-r from-black/80 via-black/10 to-transparent pointer-events-none"></div>
+      {/* Tam ekran EVA paspas önizleme — mat color + border color canlı değişir */}
+      <BigMatBackdrop
+        matColorSlug={matColor?.slug ?? 'siyah'}
+        matColorHex={matColor?.hex ?? '#111'}
+        borderHex={borderColor?.hex ?? '#15151a'}
+        setSlug={productToSetSlug(product?.slug)}
+      />
 
       {/* Floating HUD UI */}
       <div class="absolute inset-0 z-10 flex flex-col md:flex-row p-4 md:p-8 pointer-events-none">
