@@ -116,7 +116,7 @@ export function buildProductionStartedMessage(args: {
     `Merhaba ${firstName}, ${args.orderNo} numaralı siparişiniz Carmat atölyesinde üretime alındı! 🔧\n\n` +
     `📦 Takip linkiniz:\n${args.trackingUrl}\n\n` +
     `Üretim süresi yaklaşık 5-7 iş günü. Hazır olunca tekrar haber vereceğiz.\n\n` +
-    `Sorularınız için: 0554 541 7561\n— Carmat Atölye, Konya`
+    `Sorularınız için: 0507 498 89 89\n— Carmat Atölye, Konya`
   )
 }
 
@@ -147,6 +147,6 @@ export function buildDeliveredMessage(args: {
   return (
     `Merhaba ${firstName}, ${args.orderNo} siparişiniz teslim edildi! 🎉\n\n` +
     `Aracınızda kullanmaya başlayın. Memnun kaldıysanız Trendyol/Hepsiburada'da yorum yapmanızı çok memnun eder.\n\n` +
-    `İade/değişim için: 0554 541 7561\n— Carmat Atölye, Konya 🇹🇷`
+    `İade/değişim için: 0507 498 89 89\n— Carmat Atölye, Konya 🇹🇷`
   )
 }
