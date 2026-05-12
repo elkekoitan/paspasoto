@@ -349,6 +349,11 @@ export default function OrderEditor({ initial }: { initial: Order }) {
           </div>
         </Section>
 
+        {/* Üretim Reçetesi — atölyenin ustasına yazdırılabilir özet */}
+        <Section title="Üretim Reçetesi">
+          <ProductionRecipe order={order} />
+        </Section>
+
         {/* Notlar */}
         <Section title="Atölye İç Notu">
           <textarea
@@ -458,6 +463,148 @@ export default function OrderEditor({ initial }: { initial: Order }) {
 
 const inp =
   'w-full px-3 py-2 rounded-lg bg-[var(--color-surface-2)] border border-[var(--color-border)] focus:border-[var(--color-primary)] outline-none text-sm'
+
+const PLACEMENT_LABEL_TR: Record<string, string> = {
+  'top-left': 'Üst Sol',
+  'top-center': 'Üst Orta',
+  'top-right': 'Üst Sağ',
+  'middle-left': 'Orta Sol',
+  'middle-center': 'Orta',
+  'middle-right': 'Orta Sağ',
+  'bottom-left': 'Alt Sol',
+  'bottom-center': 'Alt Orta',
+  'bottom-right': 'Alt Sağ',
+  top: 'Üst',
+  middle: 'Orta',
+  bottom: 'Alt',
+}
+
+const POSITION_LABEL_TR: Record<string, string> = {
+  driver: 'Sürücü',
+  passenger: 'Yolcu',
+  leftRear: 'Sol Arka',
+  rightRear: 'Sağ Arka',
+  trunk: 'Bagaj',
+}
+
+function ProductionRecipe({ order }: { order: Order }) {
+  const [open, setOpen] = useState(false)
+  const i = order.items[0] as Record<string, any> | undefined
+  if (!i) return null
+
+  const heelPos = i.heelPosition === 'both'
+    ? 'Sürücü + Yolcu'
+    : i.heelPosition === 'driver-only'
+      ? 'Sürücü'
+      : i.heelPosition === 'passenger-only'
+        ? 'Yolcu'
+        : i.heelPosition === 'none'
+          ? 'İstemiyor'
+          : (i.heelPadPassenger ? 'Sürücü + Yolcu' : 'Sürücü')
+
+  const logos: Array<{ position: string; brandSlug: string | null; placement: string }> =
+    Array.isArray(i.logos) ? i.logos.filter((l: any) => l && l.brandSlug) : []
+
+  function print() {
+    if (typeof window === 'undefined') return
+    const w = window.open('', '_blank', 'width=800,height=900')
+    if (!w) return
+    w.document.write(`<!doctype html><meta charset="utf-8"><title>Üretim Reçetesi · ${order.orderNo}</title>
+<style>
+  body { font: 14px -apple-system, Segoe UI, sans-serif; padding: 32px; color: #111; }
+  h1 { font-size: 20px; margin: 0 0 4px; }
+  .meta { color: #666; font-size: 12px; margin-bottom: 24px; }
+  table { width: 100%; border-collapse: collapse; margin-bottom: 16px; }
+  th, td { text-align: left; padding: 8px 12px; border-bottom: 1px solid #eee; vertical-align: top; }
+  th { background: #f7f7f7; font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; color: #555; width: 30%; }
+  td { font-weight: 500; }
+  .footer { margin-top: 32px; font-size: 11px; color: #999; }
+  @media print { body { padding: 16px; } }
+</style>
+<h1>Üretim Reçetesi</h1>
+<div class="meta">Sipariş #${order.orderNo} · ${new Date(order.createdAt).toLocaleString('tr-TR')}</div>
+<table>
+  <tr><th>Müşteri</th><td>${order.customer.fullName} · ${order.customer.phone}</td></tr>
+  <tr><th>Araç</th><td>${i.brandName ?? ''} ${i.modelName ?? ''} ${i.modelChassis ?? ''}</td></tr>
+  <tr><th>Set Tipi</th><td>${i.productName ?? ''} (${i.productParts ?? '?'} parça)</td></tr>
+  <tr><th>Mat Rengi</th><td>${i.matName ?? ''}</td></tr>
+  <tr><th>Kenarlık</th><td>${i.borderName ?? ''}</td></tr>
+  <tr><th>Topukluk</th><td>${i.heelName ?? '-'} · ${heelPos}</td></tr>
+  <tr><th>Logo</th><td>${
+    logos.length === 0
+      ? 'Yok'
+      : logos.map((l) => `${POSITION_LABEL_TR[l.position] ?? l.position}: ${l.brandSlug} (${PLACEMENT_LABEL_TR[l.placement] ?? l.placement})`).join('<br>')
+  }</td></tr>
+  ${i.trimName ? `<tr><th>Donanım</th><td>${i.trimName} · ${i.trimEngine ?? ''} · ${i.trimFuel ?? ''} · ${i.trimTransmission ?? ''}</td></tr>` : ''}
+  <tr><th>Adres</th><td>${order.shippingAddress.addressLine}<br>${order.shippingAddress.district} / ${order.shippingAddress.city}</td></tr>
+</table>
+<div class="footer">PaspasOto · Konya · ${new Date().toLocaleDateString('tr-TR')}</div>
+<script>window.print()</script>`)
+    w.document.close()
+  }
+
+  return (
+    <div>
+      <button
+        type="button"
+        onClick={() => setOpen(!open)}
+        class="w-full flex items-center justify-between gap-2 text-left text-sm font-medium text-[var(--color-text-soft)] hover:text-[var(--color-text)]"
+      >
+        <span>{open ? '▾' : '▸'} Reçeteyi {open ? 'gizle' : 'aç'}</span>
+        <button
+          type="button"
+          onClick={(e) => { e.stopPropagation(); print() }}
+          class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-[var(--color-primary)] text-black hover:bg-[var(--color-primary)]/90"
+        >
+          Yazdır
+        </button>
+      </button>
+
+      {open && (
+        <dl class="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-2 text-sm">
+          <Row label="Araç" value={`${i.brandName ?? ''} ${i.modelName ?? ''} ${i.modelChassis ?? ''}`} />
+          <Row label="Set" value={`${i.productName ?? ''} · ${i.productParts ?? '?'} parça`} />
+          <Row label="Mat Rengi" value={i.matName ?? '-'} />
+          <Row label="Kenarlık" value={i.borderName ?? '-'} />
+          <Row label="Topukluk" value={`${i.heelName ?? '-'} · ${heelPos}`} />
+          <Row
+            label="Logo"
+            value={
+              logos.length === 0
+                ? 'Yok'
+                : logos
+                    .map((l) => `${POSITION_LABEL_TR[l.position] ?? l.position} → ${l.brandSlug} (${PLACEMENT_LABEL_TR[l.placement] ?? l.placement})`)
+                    .join(', ')
+            }
+          />
+          {i.trimName && <Row label="Donanım" value={`${i.trimName} · ${i.trimEngine ?? ''} ${i.trimFuel ?? ''} ${i.trimTransmission ?? ''}`} />}
+          {i.previewUrl && (
+            <div class="col-span-full mt-2">
+              <div class="text-[10px] uppercase tracking-wider text-[var(--color-text-muted)] font-bold mb-1.5">
+                Konfigüratör Önizleme
+              </div>
+              <img
+                src={i.previewUrl}
+                alt="Tasarım önizleme"
+                class="max-w-sm rounded-lg border border-[var(--color-border)]/60"
+                loading="lazy"
+              />
+            </div>
+          )}
+        </dl>
+      )}
+    </div>
+  )
+}
+
+function Row({ label, value }: { label: string; value: string }) {
+  return (
+    <div>
+      <dt class="text-[10px] uppercase tracking-wider text-[var(--color-text-muted)] font-bold">{label}</dt>
+      <dd class="font-medium">{value}</dd>
+    </div>
+  )
+}
 
 function Section({ title, children }: { title: string; children: any }) {
   return (

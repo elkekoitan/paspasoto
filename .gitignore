@@ -68,6 +68,10 @@ temp/
 CREDENTIALS.md
 .credentials
 
+# Asset üretim hattı — ham screenshot'lar (üretilen webp'ler track edilir)
+apps/web/public/assets/_raw/*
+!apps/web/public/assets/_raw/README.md
+
 # Generated assets (build çıktısı)
 apps/web/public/sw.js
 apps/web/public/workbox-*.js

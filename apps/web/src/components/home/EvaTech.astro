@@ -1,0 +1,265 @@
+---
+/**
+ * EvaTech — EVA Paspas Teknolojisi tanıtım bölümü.
+ *
+ * 5 alt bölüm:
+ *   1) "EVA Nedir?" — malzeme açıklaması ve özellikler
+ *   2) Doku karşılaştırma — Diamond vs Honeycomb
+ *   3) Üretim süreci — 4 adım atölye fotoğraflarıyla
+ *   4) Garanti & dayanım — kart blokları
+ *   5) EVA vs alternatifler — karşılaştırma tablosu
+ *
+ * Asset slotları (sonradan atölye fotoğraflarıyla doldurulacak):
+ *   /assets/tech/eva-texture-closeup.webp
+ *   /assets/tech/diamond-pattern.webp
+ *   /assets/tech/production-cutting.webp
+ *   /assets/tech/production-sewing.webp
+ *   /assets/tech/production-laser.webp
+ *   /assets/tech/quality-check.webp
+ */
+
+const FEATURES = [
+  {
+    title: 'Kokmaz',
+    desc: 'PVC tabanlı paspaslarda görülen kimyasal koku EVA içinde yoktur.',
+    icon: 'M9 12l2 2 4-4m6 2a9 9 0 1 1-18 0 9 9 0 0 1 18 0z',
+  },
+  {
+    title: 'Kıvrılmaz',
+    desc: 'EVA + termoplastik karışımı sayesinde sıcakta veya soğukta deformasyon yapmaz.',
+    icon: 'M4 6h16M4 12h16M4 18h16',
+  },
+  {
+    title: 'Kaymaz',
+    desc: 'Alt yüzeyde noktasal grip dokusu; pedal bölgesinde kayma olmaz.',
+    icon: 'M6 6l12 12M6 18L18 6',
+  },
+  {
+    title: 'Yıkanabilir',
+    desc: 'Su, sabun veya basınçlı yıkamaya dayanıklı. Kuruduğunda yeni görünür.',
+    icon: 'M12 2c-1 0-5 6-5 9a5 5 0 0 0 10 0c0-3-4-9-5-9z',
+  },
+  {
+    title: '−40°C / +80°C',
+    desc: 'Aşırı sıcak ve soğukta esnekliğini korur. Kış-yaz tek paspas.',
+    icon: 'M12 3v18M3 12h18',
+  },
+  {
+    title: '2 Yıl Garanti',
+    desc: 'Üretim ve malzeme hatalarına karşı resmi garantili.',
+    icon: 'M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z',
+  },
+]
+
+const PRODUCTION_STEPS = [
+  {
+    step: '01',
+    title: 'Lazer Kalıp',
+    desc: 'Aracınızın orijinal paspas kalıbı arşivimizden veya örnek paspastan dijital ortama aktarılır.',
+    photo: '/assets/tech/production-laser.webp',
+  },
+  {
+    step: '02',
+    title: 'CNC Kesim',
+    desc: 'EVA tabaka, milimetrik hassasiyetle araç zeminine birebir uyacak şekilde kesilir.',
+    photo: '/assets/tech/production-cutting.webp',
+  },
+  {
+    step: '03',
+    title: 'Kenarlık Dikim',
+    desc: 'Seçtiğiniz renkte deri-süet karışımı biye, endüstriyel dikiş makinesinde el ile geçirilir.',
+    photo: '/assets/tech/production-sewing.webp',
+  },
+  {
+    step: '04',
+    title: 'Kalite Kontrol',
+    desc: 'Topukluk, logo ve kenarlık hizaları kontrol edilir. Onaylı paspaslar paketlenir.',
+    photo: '/assets/tech/quality-check.webp',
+  },
+]
+
+const COMPARISON = [
+  { feature: 'Koku', eva: 'Yok', halı: 'Var', kauçuk: 'Güçlü', havuzlu: 'Hafif' },
+  { feature: 'Kaymazlık', eva: 'Yüksek', halı: 'Orta', kauçuk: 'Yüksek', havuzlu: 'Düşük' },
+  { feature: 'Yıkanabilirlik', eva: 'Tam', halı: 'Kısmi', kauçuk: 'Tam', havuzlu: 'Tam' },
+  { feature: 'Sıcaklık Dayanımı', eva: '−40 / +80°C', halı: 'Düşük', kauçuk: 'Orta', havuzlu: 'Düşük' },
+  { feature: 'Estetik', eva: 'Yüksek', halı: 'Yüksek', kauçuk: 'Düşük', havuzlu: 'Orta' },
+  { feature: 'Ağırlık', eva: 'Hafif', halı: 'Orta', kauçuk: 'Ağır', havuzlu: 'Ağır' },
+  { feature: 'Servis Ömrü', eva: '5-7 yıl', halı: '2-3 yıl', kauçuk: '3-4 yıl', havuzlu: '3-5 yıl' },
+]
+---
+
+<section
+  id="eva-teknoloji"
+  class="relative border-y border-[var(--color-border)]/50 bg-gradient-to-b from-[var(--color-bg)] via-[var(--color-surface)]/30 to-[var(--color-bg)]"
+  data-reveal
+>
+  <div class="container-page py-16 md:py-24">
+
+    {/* Header */}
+    <div class="mx-auto max-w-3xl text-center">
+      <span class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[var(--color-primary-soft)] text-[var(--color-primary)] ring-1 ring-[var(--color-primary)]/30 text-[10px] uppercase tracking-[0.2em] font-bold">
+        <span class="size-1.5 rounded-full bg-[var(--color-primary)] animate-pulse"></span>
+        EVA Teknolojisi
+      </span>
+      <h2 class="mt-4 font-display text-3xl md:text-5xl font-semibold leading-tight">
+        Neden <span class="text-[var(--color-primary)]">EVA Paspas</span>?
+      </h2>
+      <p class="mt-4 text-sm md:text-base text-[var(--color-text-muted)] leading-relaxed">
+        Ethylene-Vinyl Acetate — esnek, kokusuz, suya ve kimyasallara dayanıklı bir polimer. Otomotiv iç mekan için en uygun
+        paspas malzemesi. Halı ve kauçuk paspaslara kıyasla daha estetik, daha hijyenik ve daha uzun ömürlüdür.
+      </p>
+    </div>
+
+    {/* Özellikler grid */}
+    <div class="mt-12 grid grid-cols-2 md:grid-cols-3 gap-4 md:gap-6">
+      {FEATURES.map((f) => (
+        <div class="group flex items-start gap-3 p-4 rounded-2xl border border-[var(--color-border)]/50 bg-[var(--color-surface)]/40 hover:border-[var(--color-primary)]/40 transition-colors">
+          <span
+            class="grid size-10 shrink-0 place-items-center rounded-xl bg-[var(--color-primary-soft)] text-[var(--color-primary)] ring-1 ring-[var(--color-primary)]/20"
+            aria-hidden="true"
+          >
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d={f.icon} />
+            </svg>
+          </span>
+          <div class="min-w-0">
+            <h3 class="text-sm font-semibold text-[var(--color-text)]">{f.title}</h3>
+            <p class="mt-1 text-xs text-[var(--color-text-muted)] leading-relaxed">{f.desc}</p>
+          </div>
+        </div>
+      ))}
+    </div>
+
+    {/* Diamond doku showcase */}
+    <div class="mt-20 md:mt-28">
+      <div class="text-center max-w-2xl mx-auto">
+        <h3 class="font-display text-2xl md:text-3xl font-semibold">
+          Diamond Doku
+        </h3>
+        <p class="mt-3 text-sm text-[var(--color-text-muted)]">
+          Tüm paspaslarımız klasik elmas (baklava) dikiş deseniyle üretilir — premium görünüm, sportif karakter.
+        </p>
+      </div>
+
+      <article class="mt-10 group relative overflow-hidden rounded-3xl border border-[var(--color-border)]/60 bg-[var(--color-surface)]/50 max-w-3xl mx-auto">
+        <div class="aspect-[16/9] overflow-hidden bg-black">
+          <img
+            src="/assets/tech/diamond-pattern.webp"
+            alt="Diamond doku örneği"
+            loading="lazy"
+            decoding="async"
+            class="size-full object-cover group-hover:scale-105 transition-transform duration-700"
+            onerror="this.style.display='none'"
+          />
+        </div>
+        <div class="p-6 md:p-8">
+          <div class="flex items-center justify-between gap-3">
+            <h4 class="font-display text-xl font-semibold">Klasik Elmas (Baklava)</h4>
+            <span class="px-2 py-0.5 rounded-full bg-[var(--color-primary-soft)] text-[var(--color-primary)] text-[10px] uppercase tracking-wider font-bold">
+              Standart
+            </span>
+          </div>
+          <p class="mt-2 text-sm text-[var(--color-text-muted)] leading-relaxed">
+            Eğimli baklava dilimi şeklinde derin oluklar — su ve tozu tutar, ışık altında premium yansıma verir.
+            Tüm araç tipleri ve renk kombinasyonlarıyla uyumlu.
+          </p>
+        </div>
+      </article>
+    </div>
+
+    {/* Üretim süreci */}
+    <div class="mt-20 md:mt-28">
+      <div class="text-center max-w-2xl mx-auto">
+        <h3 class="font-display text-2xl md:text-3xl font-semibold">
+          Atölyeden Aracınıza
+        </h3>
+        <p class="mt-3 text-sm text-[var(--color-text-muted)]">
+          4 adımda paspasınız üretilir. Tüm süreç Konya atölyemizde, kendi ekibimizle.
+        </p>
+      </div>
+
+      <ol class="mt-10 grid md:grid-cols-2 lg:grid-cols-4 gap-5">
+        {PRODUCTION_STEPS.map((s) => (
+          <li class="relative group">
+            <div class="overflow-hidden rounded-2xl border border-[var(--color-border)]/60 bg-[var(--color-surface)]/40">
+              <div class="aspect-[4/3] bg-black overflow-hidden">
+                <img
+                  src={s.photo}
+                  alt={s.title}
+                  loading="lazy"
+                  decoding="async"
+                  class="size-full object-cover group-hover:scale-105 transition-transform duration-700"
+                  onerror="this.style.display='none'"
+                />
+              </div>
+              <div class="p-4">
+                <div class="flex items-center gap-2">
+                  <span class="font-display text-xl font-bold text-[var(--color-primary)] tabular-nums">{s.step}</span>
+                  <h4 class="text-sm font-semibold">{s.title}</h4>
+                </div>
+                <p class="mt-1.5 text-xs text-[var(--color-text-muted)] leading-relaxed">{s.desc}</p>
+              </div>
+            </div>
+          </li>
+        ))}
+      </ol>
+    </div>
+
+    {/* Karşılaştırma tablosu */}
+    <div class="mt-20 md:mt-28">
+      <div class="text-center max-w-2xl mx-auto">
+        <h3 class="font-display text-2xl md:text-3xl font-semibold">
+          EVA vs Diğerleri
+        </h3>
+        <p class="mt-3 text-sm text-[var(--color-text-muted)]">
+          Pazardaki 4 ana paspas tipi karşılaştırma tablosu.
+        </p>
+      </div>
+
+      <div class="mt-8 overflow-x-auto rounded-2xl border border-[var(--color-border)]/60 bg-[var(--color-surface)]/30">
+        <table class="w-full text-xs md:text-sm">
+          <thead>
+            <tr class="bg-[var(--color-surface)]/50 text-left">
+              <th class="p-3 md:p-4 font-semibold text-[var(--color-text-muted)] uppercase text-[10px] tracking-wider">Kriter</th>
+              <th class="p-3 md:p-4 font-semibold text-[var(--color-primary)] uppercase text-[10px] tracking-wider">EVA</th>
+              <th class="p-3 md:p-4 font-semibold text-[var(--color-text-muted)] uppercase text-[10px] tracking-wider">Halı</th>
+              <th class="p-3 md:p-4 font-semibold text-[var(--color-text-muted)] uppercase text-[10px] tracking-wider">Kauçuk</th>
+              <th class="p-3 md:p-4 font-semibold text-[var(--color-text-muted)] uppercase text-[10px] tracking-wider">3D Havuzlu</th>
+            </tr>
+          </thead>
+          <tbody>
+            {COMPARISON.map((row, i) => (
+              <tr class={i % 2 === 0 ? 'bg-transparent' : 'bg-[var(--color-surface)]/20'}>
+                <td class="p-3 md:p-4 font-medium text-[var(--color-text)]">{row.feature}</td>
+                <td class="p-3 md:p-4 text-[var(--color-primary)] font-semibold">{row.eva}</td>
+                <td class="p-3 md:p-4 text-[var(--color-text-muted)]">{row.halı}</td>
+                <td class="p-3 md:p-4 text-[var(--color-text-muted)]">{row.kauçuk}</td>
+                <td class="p-3 md:p-4 text-[var(--color-text-muted)]">{row.havuzlu}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      <p class="mt-3 text-[11px] text-[var(--color-text-muted)] text-center">
+        Bağımsız kullanıcı geri bildirimleri ve üretici teknik datasheet'leri esas alınmıştır.
+      </p>
+    </div>
+
+    {/* CTA */}
+    <div class="mt-16 md:mt-20 flex flex-col items-center gap-4">
+      <p class="text-sm md:text-base text-[var(--color-text-soft)] text-center max-w-xl">
+        Aracınıza özel EVA paspasınızı şimdi tasarlayın. Renk, doku, kenarlık ve logo seçenekleriyle.
+      </p>
+      <a
+        href="/konfigurator"
+        class="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-[var(--color-primary)] text-black font-semibold text-sm hover:bg-[var(--color-primary)]/90 transition-colors shadow-lg shadow-[var(--color-primary)]/20"
+      >
+        Tasarımı Başlat
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M5 12h14M12 5l7 7-7 7" />
+        </svg>
+      </a>
+    </div>
+  </div>
+</section>

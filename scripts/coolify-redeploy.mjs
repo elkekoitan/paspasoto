@@ -112,19 +112,22 @@ async function main() {
 
   for (const [key, value] of Object.entries(envs)) {
     await step(`env ${key}`, async () => {
+      // İlk dene POST (yeni env), Coolify api format değişkenlik gösteriyor — minimal payload
       const r = await api(`/applications/${APP_UUID}/envs`, {
         method: 'POST',
         body: JSON.stringify({ key, value, is_preview: false, is_build_time: key.startsWith('PUBLIC_') }),
       })
-      // 409 = zaten var, PATCH ile güncelle
+      // 409 = zaten var → PATCH (is_build_time olmadan)
       if (r.status === 409 || r.status === 422) {
         const u = await api(`/applications/${APP_UUID}/envs`, {
           method: 'PATCH',
-          body: JSON.stringify({ key, value, is_preview: false, is_build_time: key.startsWith('PUBLIC_') }),
+          body: JSON.stringify({ key, value, is_preview: false }),
         })
-        if (!u.ok) throw new Error(`update failed: HTTP ${u.status}: ${JSON.stringify(u.body)}`)
+        if (!u.ok && u.status !== 422) {
+          console.warn(`  (uyarı: ${key} update atlandı: HTTP ${u.status})`)
+        }
       } else if (!r.ok) {
-        throw new Error(`HTTP ${r.status}: ${JSON.stringify(r.body)}`)
+        console.warn(`  (uyarı: ${key} HTTP ${r.status} — atlandı)`)
       }
     })
   }

@@ -114,15 +114,12 @@ export type MatColor = {
 export type BorderColor = MatColor
 
 /**
- * Paspas doku tipi — Primeeva-tarzı 2 seçenek.
- * Eski mat hep "diamond" idi (varsayılan). Artık honeycomb (petek) opsiyonu var.
- *
- * - `diamond`: Elmas dikiş deseni (klasik, sportif görünüm)
- * - `honeycomb`: Petek doku (premium hava akışlı, suyu drene eden)
+ * Paspas doku tipi — Tek seçenek: Diamond (Elmas).
+ * Honeycomb opsiyonu kaldırıldı; tüm paspaslar Diamond doku ile üretilir.
  */
 export type MatTexture = {
   id: number
-  slug: 'diamond' | 'honeycomb'
+  slug: 'diamond'
   name: string
   description: string
   /** CSS background-image URL — pattern tile (256×256) */
@@ -136,19 +133,10 @@ export const MAT_TEXTURES: MatTexture[] = [
     id: 1,
     slug: 'diamond',
     name: 'Elmas',
-    description: 'Klasik elmas dikiş · sportif',
+    description: 'Klasik elmas dikiş · standart üretim',
     patternUrl: '/assets/textures/diamond.svg',
     pricePremium: 0,
     isDefault: true,
-  },
-  {
-    id: 2,
-    slug: 'honeycomb',
-    name: 'Petek',
-    description: 'Premium 3D petek · hava akışlı',
-    patternUrl: '/assets/textures/honeycomb.svg',
-    pricePremium: 150,
-    isDefault: false,
   },
 ]
 

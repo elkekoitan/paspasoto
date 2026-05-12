@@ -1,5 +1,5 @@
 ---
-type NavChild = { href: string; label: string; desc?: string }
+type NavChild = { href: string; label: string; desc?: string; soon?: boolean }
 type NavItem = { href: string; label: string; children?: NavChild[] }
 
 const NAV: NavItem[] = [
@@ -8,8 +8,8 @@ const NAV: NavItem[] = [
     label: 'Tasarla',
     children: [
       { href: '/konfigurator', label: 'Paspas', desc: 'Aracınıza özel ölçü, 5 paspas + bagaj' },
-      { href: '/konfigurator/koltuk', label: 'Koltuk Kılıfı', desc: '5 malzeme · 8 renk seçeneği' },
-      { href: '/konfigurator/direksiyon', label: 'Direksiyon Kılıfı', desc: '3 boyut · 5 desen · 4 malzeme' },
+      { href: '/konfigurator/koltuk', label: 'Koltuk Kılıfı', desc: 'Ön tasarım · ön sipariş alıyoruz', soon: true },
+      { href: '/konfigurator/direksiyon', label: 'Direksiyon Kılıfı', desc: 'Ön tasarım · ön sipariş alıyoruz', soon: true },
     ],
   },
   { href: '/markalar', label: 'Markalar' },
@@ -69,7 +69,12 @@ const path = Astro.url.pathname
                               : 'hover:bg-[var(--color-surface-2)]',
                           ]}
                         >
-                          <div class="text-sm font-semibold text-[var(--color-text)]">{child.label}</div>
+                          <div class="flex items-center gap-2">
+                            <div class="text-sm font-semibold text-[var(--color-text)]">{child.label}</div>
+                            {child.soon && (
+                              <span class="px-1.5 py-0.5 rounded-full bg-[var(--color-primary-soft)] text-[var(--color-primary)] text-[9px] uppercase tracking-wider font-bold">Yakında</span>
+                            )}
+                          </div>
                           {child.desc && (
                             <div class="text-[11px] text-[var(--color-text-muted)] mt-0.5">{child.desc}</div>
                           )}
