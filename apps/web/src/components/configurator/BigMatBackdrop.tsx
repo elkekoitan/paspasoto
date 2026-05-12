@@ -34,9 +34,17 @@ const HERO_BASE = '/assets/mats/hero'
  * bu liste güncellenecek. Şu an boş — base + mix-blend kullanılır.
  */
 const VARIANT_AVAILABLE: Record<string, boolean> = {
-  // 'siyah': true,   ← user dosyayı eklediğinde true yap (veya glob-detect ile dinamik)
-  // 'gri': true,
-  // ...
+  siyah: true,
+  // Aşağıdaki renkler için per-color Gemini fotoları üretildikçe burası true yapılır
+  // gri: true,
+  // fume: true,
+  // mavi: true,
+  // taba: true,
+  // kirmizi: true,
+  // kahve: true,
+  // bordo: true,
+  // bej: true,
+  // 'turuncu-taba': true,
 }
 
 /** Mat color slug → mix-blend overlay rengi (siyah için overlay yok) */
