@@ -55,20 +55,23 @@ const STEPS: { key: StepKey; label: string }[] = [
 ]
 
 /**
- * Konfigüratör tasarımı localStorage'a kaydedilir — kullanıcı sayfayı kapatıp
- * tekrar açtığında kaldığı yerden devam eder. "Tasarımı sıfırla" butonu ile temizler.
+ * Konfigüratör her ziyarette sıfırdan başlar — "kaldığın yerden devam"
+ * özelliği kullanıcı geri bildirimi üzerine kaldırıldı. Eski localStorage
+ * key'leri ilk mount'ta temizlenir (cleanupStaleDrafts).
  */
-const STATE_KEY = 'carmat-config-draft-v3'
+const LEGACY_KEYS = [
+  'carmat-config-draft-v3',
+  'carmat-config-draft-v2',
+  'carmat-config-draft',
+  'carmat-seat-draft-v1',
+  'carmat-steering-draft-v1',
+]
 
-function loadDraft<T>(fallback: T): T {
-  if (typeof window === 'undefined') return fallback
+function cleanupStaleDrafts() {
+  if (typeof window === 'undefined') return
   try {
-    const raw = localStorage.getItem(STATE_KEY)
-    if (!raw) return fallback
-    return JSON.parse(raw) as T
-  } catch {
-    return fallback
-  }
+    for (const k of LEGACY_KEYS) localStorage.removeItem(k)
+  } catch {}
 }
 
 /** Paspas pozisyonu — araç içinde hangi paspas */
@@ -97,21 +100,6 @@ export type MatLogoConfig = {
   orientation?: LogoOrientation
 }
 
-type Draft = {
-  brandSlug?: string | null
-  modelSlug?: string | null
-  productSlug?: string
-  matSlug?: string
-  borderSlug?: string
-  heelSlug?: string
-  heelPosition?: HeelPosition
-  logos?: MatLogoConfig[]
-  /** Mat doku — sadece diamond */
-  textureSlug?: 'diamond'
-  /** Marka emblem tipi — premium-leather | metal-plate */
-  emblemTypeSlug?: 'premium-leather' | 'metal-plate'
-}
-
 /** Set parts → o set için pozisyon listesi */
 function positionsFor(parts: number, includesTrunk: boolean): MatPosition[] {
   const out: MatPosition[] = ['driver', 'passenger']
@@ -121,79 +109,32 @@ function positionsFor(parts: number, includesTrunk: boolean): MatPosition[] {
 }
 
 export default function Configurator() {
-  // İlk render'da localStorage'dan draft oku
-  const draft = loadDraft<Draft>({})
+  // Her ziyarette sıfırdan — kalmış localStorage key'lerini temizle
+  useEffect(() => { cleanupStaleDrafts() }, [])
 
-  const initialBrand = draft.brandSlug ? BRANDS.find((b) => b.slug === draft.brandSlug) ?? null : null
-  const initialModel = draft.modelSlug && initialBrand
-    ? VEHICLE_MODELS.find((m) => m.brandSlug === initialBrand.slug && m.slug === draft.modelSlug) ?? null
-    : null
-
-  const [step, setStep] = useState<StepKey>(initialBrand ? (initialModel ? 'summary' : 'model') : 'brand')
-  const [brand, setBrand] = useState<Brand | null>(initialBrand)
-  const [model, setModel] = useState<VehicleModel | null>(initialModel)
+  const [step, setStep] = useState<StepKey>('brand')
+  const [brand, setBrand] = useState<Brand | null>(null)
+  const [model, setModel] = useState<VehicleModel | null>(null)
   const [trim, setTrim] = useState<VehicleTrim | null>(null)
-  const [product, setProduct] = useState<Product | null>(
-    draft.productSlug ? PRODUCTS.find((p) => p.slug === draft.productSlug) ?? PRODUCTS[1]! : PRODUCTS[1]!,
+  const [product, setProduct] = useState<Product | null>(PRODUCTS[1]!)
+  const [matColor, setMatColor] = useState<MatColor | null>(MAT_COLORS[0]!)
+  const [borderColor, setBorderColor] = useState<BorderColor | null>(BORDER_COLORS[13]!)
+  const [heelPad, setHeelPad] = useState<HeelPad | null>(HEEL_PADS[0]!)
+  const [heelPosition, setHeelPosition] = useState<HeelPosition>('driver-only')
+  const [logos, setLogos] = useState<MatLogoConfig[]>(
+    (['driver', 'passenger', 'leftRear', 'rightRear', 'trunk'] as MatPosition[]).map((p) => ({
+      position: p,
+      brandSlug: null,
+      placement: 'top',
+    })),
   )
-  const [matColor, setMatColor] = useState<MatColor | null>(
-    draft.matSlug ? MAT_COLORS.find((c) => c.slug === draft.matSlug) ?? MAT_COLORS[0]! : MAT_COLORS[0]!,
-  )
-  const [borderColor, setBorderColor] = useState<BorderColor | null>(
-    draft.borderSlug ? BORDER_COLORS.find((c) => c.slug === draft.borderSlug) ?? BORDER_COLORS[13]! : BORDER_COLORS[13]!,
-  )
-  const [heelPad, setHeelPad] = useState<HeelPad | null>(
-    draft.heelSlug ? HEEL_PADS.find((h) => h.slug === draft.heelSlug) ?? HEEL_PADS[0]! : HEEL_PADS[0]!,
-  )
-  // Topukluk konumu: sürücü / yolcu / her ikisi / yok
-  const [heelPosition, setHeelPosition] = useState<HeelPosition>(
-    (draft.heelPosition as HeelPosition) ?? 'driver-only',
-  )
-  // Per-mat logos: 5 pozisyon için ayrı seçim + placement
-  const initialLogos: MatLogoConfig[] =
-    draft.logos && Array.isArray(draft.logos)
-      ? draft.logos
-      : (['driver', 'passenger', 'leftRear', 'rightRear', 'trunk'] as MatPosition[]).map((p) => ({
-          position: p,
-          brandSlug: null,
-          placement: 'top',
-        }))
-  const [logos, setLogos] = useState<MatLogoConfig[]>(initialLogos)
-
-  // Mat doku tipi: Diamond (varsayılan) veya Honeycomb (premium 3D havuzlu petek)
-  const [texture, setTexture] = useState<MatTexture>(
-    draft.textureSlug ? MAT_TEXTURES.find((t) => t.slug === draft.textureSlug) ?? MAT_TEXTURES[0]! : MAT_TEXTURES[0]!,
-  )
-  // Marka emblem tipi: Premium deri veya Metal plaka
-  const [emblemType, setEmblemType] = useState<EmblemType>(
-    draft.emblemTypeSlug ? EMBLEM_TYPES.find((e) => e.slug === draft.emblemTypeSlug) ?? EMBLEM_TYPES[0]! : EMBLEM_TYPES[0]!,
-  )
-
+  const [texture, setTexture] = useState<MatTexture>(MAT_TEXTURES[0]!)
+  const [emblemType, setEmblemType] = useState<EmblemType>(EMBLEM_TYPES[0]!)
   const [search, setSearch] = useState('')
-  // Kullanıcıya draft'tan devam ediyoruz uyarısı
-  const [showRestoredHint, setShowRestoredHint] = useState(!!initialBrand)
-
-  // Her değişimde draft kaydet
-  useEffect(() => {
-    if (typeof window === 'undefined') return
-    const next: Draft = {
-      brandSlug: brand?.slug ?? null,
-      modelSlug: model?.slug ?? null,
-      productSlug: product?.slug,
-      matSlug: matColor?.slug,
-      borderSlug: borderColor?.slug,
-      heelSlug: heelPad?.slug,
-      heelPosition,
-      logos,
-      textureSlug: texture.slug,
-      emblemTypeSlug: emblemType.slug,
-    }
-    try { localStorage.setItem(STATE_KEY, JSON.stringify(next)) } catch {}
-  }, [brand, model, product, matColor, borderColor, heelPad, heelPosition, logos, texture, emblemType])
 
   function resetDraft() {
     if (!confirm('Tüm seçimleriniz silinip baştan başlanacak. Emin misiniz?')) return
-    try { localStorage.removeItem(STATE_KEY) } catch {}
+    cleanupStaleDrafts()
     window.location.reload()
   }
 
@@ -379,8 +320,8 @@ export default function Configurator() {
       if (res.ok) {
         const data = await res.json()
         setQuoteResult(data)
-        // Talep oluştuktan sonra draft'ı temizle — yeni tasarım için
-        try { localStorage.removeItem(STATE_KEY) } catch {}
+        // Talep oluştuktan sonra varsa kalmış key'leri temizle
+        cleanupStaleDrafts()
       } else {
         alert('Talebiniz iletilemedi. Lütfen tekrar deneyin veya WhatsApp\'tan bize ulaşın.')
       }
@@ -476,18 +417,6 @@ export default function Configurator() {
               <div class="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent pointer-events-none"></div>
               
               <div class="p-6 md:p-8 flex-1 overflow-y-auto custom-scrollbar relative z-10">
-                {showRestoredHint && (
-                  <div class="mb-5 p-3 rounded-xl bg-amber-500/20 border border-amber-500/30 flex items-center gap-3 text-sm backdrop-blur-md">
-                    <span class="size-7 grid place-items-center rounded-full bg-amber-500 text-black shrink-0">
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 12l2 2 4-4 M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                    </span>
-                    <div class="flex-1 text-white/80 text-xs">
-                      <span class="text-white font-medium">Tasarımınız yüklendi.</span> Kaldığınız yerden devam edebilirsiniz.
-                    </div>
-                    <button onClick={() => setShowRestoredHint(false)} class="text-[10px] text-white/50 hover:text-white">Kapat</button>
-                  </div>
-                )}
-                
                 <div class="flex items-center justify-between gap-3 mb-4">
                   <div class="flex-1 min-w-0">
                     <StepperBar step={step} onJump={(k) => setStep(k)} canJump={(k) => isStepReachable(k, { brand, model, product, matColor, borderColor, heelPad })} />

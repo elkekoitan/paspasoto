@@ -16,37 +16,16 @@ import { formatTRY } from '../../lib/format'
 import SteeringPreview from './preview/SteeringPreview'
 import { STEERING_PRESETS, type SteeringPreset } from '../../lib/presets'
 
-const STATE_KEY = 'carmat-steering-draft-v1'
-
-type Draft = {
-  sizeSlug?: 'S' | 'M' | 'L'
-  patternSlug?: string
-  materialSlug?: string
-}
-
 const TR_CITIES = [
   'İstanbul', 'Ankara', 'İzmir', 'Bursa', 'Antalya', 'Konya', 'Adana', 'Gaziantep',
   'Kayseri', 'Mersin', 'Eskişehir', 'Diyarbakır', 'Samsun', 'Trabzon', 'Sakarya',
   'Manisa', 'Şanlıurfa', 'Denizli', 'Hatay', 'Balıkesir', 'Diğer',
 ]
 
-function loadDraft(): Draft {
-  if (typeof window === 'undefined') return {}
-  try { return JSON.parse(localStorage.getItem(STATE_KEY) || '{}') } catch { return {} }
-}
-
 export default function SteeringCoverConfigurator() {
-  const draft = loadDraft()
-
-  const [size, setSize] = useState<SteeringSize>(
-    draft.sizeSlug ? STEERING_SIZES.find((s) => s.slug === draft.sizeSlug) ?? STEERING_SIZES[1]! : STEERING_SIZES[1]!,
-  )
-  const [pattern, setPattern] = useState<SteeringPattern>(
-    draft.patternSlug ? STEERING_PATTERNS.find((p) => p.slug === draft.patternSlug) ?? STEERING_PATTERNS[0]! : STEERING_PATTERNS[0]!,
-  )
-  const [material, setMaterial] = useState<SteeringMaterial>(
-    draft.materialSlug ? STEERING_MATERIALS.find((m) => m.slug === draft.materialSlug) ?? STEERING_MATERIALS[0]! : STEERING_MATERIALS[0]!,
-  )
+  const [size, setSize] = useState<SteeringSize>(STEERING_SIZES[1]!)
+  const [pattern, setPattern] = useState<SteeringPattern>(STEERING_PATTERNS[0]!)
+  const [material, setMaterial] = useState<SteeringMaterial>(STEERING_MATERIALS[0]!)
 
   const [contactName, setContactName] = useState('')
   const [contactPhone, setContactPhone] = useState('')
@@ -56,12 +35,6 @@ export default function SteeringCoverConfigurator() {
   const [submitting, setSubmitting] = useState(false)
   const [result, setResult] = useState<{ orderNo: string } | null>(null)
   const [error, setError] = useState('')
-
-  useEffect(() => {
-    if (typeof window === 'undefined') return
-    const next: Draft = { sizeSlug: size.slug, patternSlug: pattern.slug, materialSlug: material.slug }
-    try { localStorage.setItem(STATE_KEY, JSON.stringify(next)) } catch {}
-  }, [size, pattern, material])
 
   const totalPrice = computeSteeringPrice(size.slug, pattern.slug, material.slug)
 
@@ -110,7 +83,6 @@ export default function SteeringCoverConfigurator() {
       if (res.ok) {
         const data = await res.json()
         setResult(data)
-        try { localStorage.removeItem(STATE_KEY) } catch {}
       } else {
         setError('Talebiniz iletilemedi. Tekrar deneyin.')
       }

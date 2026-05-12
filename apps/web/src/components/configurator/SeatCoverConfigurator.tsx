@@ -20,47 +20,18 @@ import ClientBrandLogo from '../ui/ClientBrandLogo'
 import SeatPreview from './preview/SeatPreview'
 import { SEAT_PRESETS, type SeatPreset } from '../../lib/presets'
 
-const STATE_KEY = 'carmat-seat-draft-v1'
-
-type Draft = {
-  brandSlug?: string | null
-  modelSlug?: string | null
-  setSlug?: string
-  materialSlug?: string
-  colorSlug?: string
-}
-
 const TR_CITIES = [
   'İstanbul', 'Ankara', 'İzmir', 'Bursa', 'Antalya', 'Konya', 'Adana', 'Gaziantep',
   'Kayseri', 'Mersin', 'Eskişehir', 'Diyarbakır', 'Samsun', 'Trabzon', 'Sakarya',
   'Manisa', 'Şanlıurfa', 'Denizli', 'Hatay', 'Balıkesir', 'Diğer',
 ]
 
-function loadDraft(): Draft {
-  if (typeof window === 'undefined') return {}
-  try { return JSON.parse(localStorage.getItem(STATE_KEY) || '{}') } catch { return {} }
-}
-
 export default function SeatCoverConfigurator() {
-  const draft = loadDraft()
-
-  const [brand, setBrand] = useState<Brand | null>(
-    draft.brandSlug ? BRANDS.find((b) => b.slug === draft.brandSlug) ?? null : null,
-  )
-  const [model, setModel] = useState<VehicleModel | null>(
-    draft.modelSlug && draft.brandSlug
-      ? VEHICLE_MODELS.find((m) => m.brandSlug === draft.brandSlug && m.slug === draft.modelSlug) ?? null
-      : null,
-  )
-  const [seatSet, setSeatSet] = useState<SeatSet>(
-    draft.setSlug ? SEAT_SETS.find((s) => s.slug === draft.setSlug) ?? SEAT_SETS[2]! : SEAT_SETS[2]!,
-  )
-  const [material, setMaterial] = useState<SeatMaterial>(
-    draft.materialSlug ? SEAT_MATERIALS.find((m) => m.slug === draft.materialSlug) ?? SEAT_MATERIALS[0]! : SEAT_MATERIALS[0]!,
-  )
-  const [color, setColor] = useState<SeatColor>(
-    draft.colorSlug ? SEAT_COLORS.find((c) => c.slug === draft.colorSlug) ?? SEAT_COLORS[0]! : SEAT_COLORS[0]!,
-  )
+  const [brand, setBrand] = useState<Brand | null>(null)
+  const [model, setModel] = useState<VehicleModel | null>(null)
+  const [seatSet, setSeatSet] = useState<SeatSet>(SEAT_SETS[2]!)
+  const [material, setMaterial] = useState<SeatMaterial>(SEAT_MATERIALS[0]!)
+  const [color, setColor] = useState<SeatColor>(SEAT_COLORS[0]!)
   const [search, setSearch] = useState('')
 
   // Customer fields (mini form)
@@ -72,18 +43,6 @@ export default function SeatCoverConfigurator() {
   const [submitting, setSubmitting] = useState(false)
   const [result, setResult] = useState<{ orderNo: string } | null>(null)
   const [error, setError] = useState('')
-
-  useEffect(() => {
-    if (typeof window === 'undefined') return
-    const next: Draft = {
-      brandSlug: brand?.slug ?? null,
-      modelSlug: model?.slug ?? null,
-      setSlug: seatSet.slug,
-      materialSlug: material.slug,
-      colorSlug: color.slug,
-    }
-    try { localStorage.setItem(STATE_KEY, JSON.stringify(next)) } catch {}
-  }, [brand, model, seatSet, material, color])
 
   const models = useMemo(
     () => VEHICLE_MODELS.filter((m) => m.brandSlug === brand?.slug),
@@ -145,7 +104,6 @@ export default function SeatCoverConfigurator() {
       if (res.ok) {
         const data = await res.json()
         setResult(data)
-        try { localStorage.removeItem(STATE_KEY) } catch {}
       } else {
         setError('Talebiniz iletilemedi. Tekrar deneyin.')
       }
