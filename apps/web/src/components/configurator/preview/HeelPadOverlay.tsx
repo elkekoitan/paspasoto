@@ -28,10 +28,8 @@ export default function HeelPadOverlay({ heelSlug, position, setSlug }: HeelPadO
     : position === 'passenger-only' ? ['passenger']
     : []
 
-  const key = `heel-${heelSlug}-${position}-${setSlug}`
-
   return (
-    <div key={key} class="preview-fade absolute inset-0 pointer-events-none">
+    <div class="absolute inset-0 pointer-events-none">
       {positions.map((p) => {
         const [x, y] = coords[p]
         return (

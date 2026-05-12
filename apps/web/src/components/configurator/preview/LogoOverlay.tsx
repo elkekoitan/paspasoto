@@ -48,10 +48,8 @@ export default function LogoOverlay({ logos, emblemType, setSlug }: LogoOverlayP
   const dir = emblemType === 'metal' || emblemType === 'metal-plate' ? 'metal' : 'premium'
   const bounds = MAT_BOUNDS[setSlug] ?? MAT_BOUNDS.default
 
-  const key = `logos-${emblemType}-${setSlug}-${logos.map((l) => `${l.position}:${l.brandSlug}:${l.placement}`).join('|')}`
-
   return (
-    <div key={key} class="preview-fade absolute inset-0 pointer-events-none">
+    <div class="absolute inset-0 pointer-events-none">
       {logos.map((l) => {
         if (!l.brandSlug) return null
         const b = bounds[l.position]

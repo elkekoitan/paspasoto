@@ -36,13 +36,10 @@ export default function BorderOverlay({
       .catch(() => setHasFile(false))
   }, [setSlug])
 
-  const key = `border-${setSlug}-${borderHex}`
-
   return (
     <div
-      key={key}
-      class="preview-fade absolute inset-0 pointer-events-none"
-      style={{ mixBlendMode: blendMode }}
+      class="absolute inset-0 pointer-events-none"
+      style={{ mixBlendMode: blendMode, transition: 'color 120ms ease-out' }}
     >
       {hasFile && svgContent ? (
         <div

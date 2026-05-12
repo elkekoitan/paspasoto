@@ -23,7 +23,6 @@ import {
   type Product,
 } from '../../lib/catalog'
 import { getTrimsForModel, FUEL_LABEL, TRANSMISSION_LABEL } from '../../lib/catalog-trims'
-import { PRESETS, type ConfigPreset } from '../../lib/presets'
 import { buildHelpRequestUrl } from '../../lib/whatsapp'
 import { formatTRY } from '../../lib/format'
 import ClientBrandLogo from '../ui/ClientBrandLogo'
@@ -222,31 +221,6 @@ export default function Configurator() {
     setLogos((prev) => prev.map((l) => (l.position === position ? { ...l, orientation } : l)))
   const applyLogoToAll = (brandSlug: string | null) =>
     setLogos((prev) => prev.map((l) => ({ ...l, brandSlug })))
-
-  /** Hızlı tasarla preset uygula — mat + border + heel + logo seti tek tıkla. */
-  const applyPreset = (preset: ConfigPreset) => {
-    const mat = MAT_COLORS.find((c) => c.slug === preset.matSlug) ?? MAT_COLORS[0]!
-    const border = BORDER_COLORS.find((c) => c.slug === preset.borderSlug) ?? BORDER_COLORS[0]!
-    const heel = HEEL_PADS.find((p) => p.slug === preset.heelSlug) ?? HEEL_PADS[0]!
-    setMatColor(mat)
-    setBorderColor(border)
-    setHeelPad(heel)
-    if (preset.logoMode === 'auto' && brand) {
-      setLogos((prev) => prev.map((l) => ({
-        ...l,
-        brandSlug: brand.slug,
-        placement: preset.logoPlacement ?? 'top-center',
-        orientation: preset.logoOrientation ?? 'horizontal',
-      })))
-    } else if (preset.logoMode === 'none') {
-      setLogos((prev) => prev.map((l) => ({ ...l, brandSlug: null })))
-    }
-    // Yalnızca araç seçilmişse özet'e zıpla; aksi hâlde brand step'te
-    // kalsın ve kullanıcı önizlemede preset rengini canlı görsün.
-    if (brand && model) {
-      setStep('summary')
-    }
-  }
 
   const models = useMemo(
     () => VEHICLE_MODELS.filter((m) => m.brandSlug === brand?.slug),
@@ -527,36 +501,6 @@ export default function Configurator() {
                     Sıfırla
                   </button>
                 </div>
-
-                {/* Hızlı Tasarla — Preset paketler (marka/model/set adımlarında) */}
-                {(step === 'brand' || step === 'model' || step === 'product') && (
-                  <div class="mb-5 p-3.5 rounded-xl bg-gradient-to-br from-[var(--color-primary)]/12 via-transparent to-transparent border border-[var(--color-primary)]/25">
-                    <div class="flex items-center gap-2 mb-3">
-                      <span class="text-[11px] uppercase tracking-[0.2em] text-[var(--color-primary)] font-bold">⚡ Hızlı Tasarla</span>
-                      <span class="text-[10px] text-white/45">— veya aşağıdan adım adım</span>
-                    </div>
-                    <div class="grid grid-cols-3 gap-2">
-                      {PRESETS.map((p) => (
-                        <button
-                          key={p.slug}
-                          type="button"
-                          onClick={() => applyPreset(p)}
-                          class="group relative rounded-xl border border-white/10 hover:border-[var(--color-primary)]/70 p-2.5 transition-all hover:-translate-y-0.5 hover:shadow-lg overflow-hidden"
-                        >
-                          <div
-                            class="absolute inset-0 opacity-25 group-hover:opacity-50 transition-opacity"
-                            style={`background: radial-gradient(circle at 50% 30%, ${p.accentHex}, transparent 70%);`}
-                          />
-                          <div class="relative text-center">
-                            <div class="text-[26px] leading-none mb-1">{p.emoji}</div>
-                            <div class="text-[12px] font-bold text-white tracking-tight">{p.name}</div>
-                            <div class="text-[10px] text-white/65 leading-snug mt-1 line-clamp-2">{p.tagline}</div>
-                          </div>
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                )}
 
                 {/* key={step} — Preact reconciliation'ın step değişimde DOM nodes'larını
                   yeniden kullanmasını engeller (parent class diff bug fix) */}
@@ -988,14 +932,17 @@ function BrandGrid({
                 <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12" /></svg>
               </div>
             )}
-            <div class="relative h-full flex flex-col items-center justify-center gap-1.5 p-2 z-10">
-              <ClientBrandLogo
-                iconSlug={b.iconSlug}
-                name={b.name}
-                size={48}
-                color="#fff"
-                logoUrl={b.logoUrl}
-              />
+            <div class="relative h-full flex flex-col items-center justify-center gap-2 p-3 z-10">
+              <div class="grid place-items-center size-16 sm:size-20 rounded-xl bg-white/95 ring-1 ring-white/40 shadow-lg shadow-black/40 p-2 group-hover:scale-105 transition-transform">
+                <ClientBrandLogo
+                  iconSlug={b.iconSlug}
+                  name={b.name}
+                  size={56}
+                  color={brandColor}
+                  logoUrl={b.logoUrl}
+                  className="size-full object-contain"
+                />
+              </div>
               <span class={['font-display font-semibold text-[11px] sm:text-xs leading-none truncate w-full text-center', active ? 'text-white' : 'text-white/80'].join(' ')}>
                 {b.name}
               </span>
@@ -1446,20 +1393,6 @@ function SwatchStep({
       <div class={big ? 'grid grid-cols-2 sm:grid-cols-5 gap-3' : 'grid grid-cols-3 sm:grid-cols-5 gap-2.5'}>
         {colors.map((c) => {
           const active = selected === c.id
-          const hasDiamond = !!c.threadHex
-          // Pure CSS photorealistic diamond stitching pattern
-          const style = hasDiamond ? {
-            backgroundColor: c.hex,
-            backgroundImage: `linear-gradient(115deg, transparent 75%, ${c.threadHex} 75%, ${c.threadHex} 76%, transparent 76%), linear-gradient(245deg, transparent 75%, ${c.threadHex} 75%, ${c.threadHex} 76%, transparent 76%)`,
-            backgroundSize: '24px 48px',
-            backgroundPosition: 'center',
-            boxShadow: 'inset 0 0 20px rgba(0,0,0,0.8)'
-          } : {
-            backgroundColor: c.hex,
-            backgroundImage: `repeating-linear-gradient(45deg, transparent, transparent 2px, rgba(0,0,0,0.2) 2px, rgba(0,0,0,0.2) 4px)`,
-            boxShadow: 'inset 0 0 10px rgba(0,0,0,0.5)'
-          }
-
           return (
             <button
               key={c.id}
@@ -1470,14 +1403,27 @@ function SwatchStep({
             >
               <div
                 class={[
-                  'aspect-[4/3] w-full rounded-xl ring-2 transition-all relative overflow-hidden',
+                  'aspect-[4/3] w-full rounded-xl ring-2 transition-all relative overflow-hidden bg-[var(--color-surface)]',
                   active
                     ? 'ring-white scale-105 shadow-[0_0_15px_rgba(255,255,255,0.4)] z-10'
                     : 'ring-white/10 hover:ring-white/30',
                 ].join(' ')}
               >
-                <div class="size-full transition-transform duration-700 group-hover:scale-110" style={style}></div>
-                <div class="absolute inset-0 bg-gradient-to-tr from-black/40 via-transparent to-white/10 pointer-events-none" />
+                {/* Gerçek EVA paspas swatch foto */}
+                <img
+                  src={c.swatchUrl}
+                  alt={c.name}
+                  loading="lazy"
+                  decoding="async"
+                  class="absolute inset-0 size-full object-cover transition-transform duration-700 group-hover:scale-110"
+                  onError={(e) => {
+                    // Foto yoksa düz renk
+                    const el = e.currentTarget as HTMLImageElement
+                    el.style.display = 'none'
+                    ;(el.parentElement as HTMLElement).style.backgroundColor = c.hex
+                  }}
+                />
+                <div class="absolute inset-0 bg-gradient-to-tr from-black/30 via-transparent to-white/5 pointer-events-none" />
                 {active && (
                   <span class="absolute inset-0 flex items-center justify-center bg-black/30 backdrop-blur-[1px]">
                     <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" class="drop-shadow">

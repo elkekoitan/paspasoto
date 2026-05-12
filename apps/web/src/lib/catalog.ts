@@ -253,9 +253,9 @@ export const BRANDS: Brand[] = [
   { id: 35, slug: 'togg', name: 'TOGG', popular: true, color: '#0061A8', logoUrl: '/assets/brands/togg.svg' },
   { id: 36, slug: 'iveco', name: 'Iveco', popular: false, iconSlug: 'iveco', color: '#003D80', logoUrl: '/assets/brands/iveco.svg' },
   { id: 37, slug: 'isuzu', name: 'Isuzu', popular: false, color: '#C8102E', logoUrl: '/assets/brands/isuzu.svg' },
-  { id: 38, slug: 'mahindra', name: 'Mahindra', popular: false, iconSlug: 'mahindra', color: '#C8102E', logoUrl: '/assets/brands/mahindra.svg' },
+  { id: 38, slug: 'mahindra', name: 'Mahindra', popular: false, iconSlug: 'mahindra', color: '#C8102E', logoUrl: '/assets/brands/mahindra.png' },
   { id: 39, slug: 'chery', name: 'Chery', popular: true, color: '#C8102E', logoUrl: '/assets/brands/chery.svg' },
-  { id: 40, slug: 'hongqi', name: 'Hongqi', popular: false, color: '#9B1B1F', logoUrl: '/assets/brands/hongqi.svg' },
+  { id: 40, slug: 'hongqi', name: 'Hongqi', popular: false, color: '#9B1B1F', logoUrl: '/assets/brands/hongqi.png' },
   // Premium / EV / niche markalar — Türkiye pazarı genişlemesi
   { id: 41, slug: 'polestar', name: 'Polestar', popular: false, color: '#1B2C3D', logoUrl: '/assets/brands/polestar.svg' },
   { id: 42, slug: 'genesis', name: 'Genesis', popular: false, color: '#1A1A1A', logoUrl: '/assets/brands/genesis.svg' },
