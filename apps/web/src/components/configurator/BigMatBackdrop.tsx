@@ -74,7 +74,7 @@ export default function BigMatBackdrop({
   const overlayColor = hasVariant ? '' : (MAT_OVERLAY[matColorSlug] ?? matColorHex ?? '')
 
   return (
-    <div class="absolute inset-0 overflow-hidden bg-[#0b0b0f]" aria-hidden>
+    <div id="configurator-preview" class="absolute inset-0 overflow-hidden bg-[#0b0b0f]" aria-hidden>
       {/* z=0: Base mat fotoğrafı — tam ekran */}
       <picture class="absolute inset-0 block">
         <source srcSet={`${HERO_BASE}/${hasVariant ? matColorSlug : 'default'}.avif`} type="image/avif" />

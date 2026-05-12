@@ -27,7 +27,6 @@ import { buildHelpRequestUrl } from '../../lib/whatsapp'
 import { formatTRY } from '../../lib/format'
 import ClientBrandLogo from '../ui/ClientBrandLogo'
 import BigMatBackdrop from './BigMatBackdrop'
-import LivePreview from './preview/LivePreview'
 
 /** Product slug → asset set slug mapping (gerçek EVA paspas fotoğraf adları) */
 function productToSetSlug(productSlug?: string): string {
@@ -219,7 +218,6 @@ export default function Configurator() {
   const [submittingQuote, setSubmittingQuote] = useState(false)
   const [quoteResult, setQuoteResult] = useState<{ orderNo: string; accessToken: string } | null>(null)
   const [showContactForm, setShowContactForm] = useState(false)
-  const [showMobilePreview, setShowMobilePreview] = useState(false)
 
   const TR_CITIES = [
     'İstanbul', 'Ankara', 'İzmir', 'Bursa', 'Antalya', 'Konya', 'Adana', 'Gaziantep',
@@ -345,70 +343,6 @@ export default function Configurator() {
       {/* Floating HUD UI */}
       <div class="absolute inset-0 z-10 flex flex-col md:flex-row p-4 md:p-8 pointer-events-none">
         
-        {/* Mobile-only compact preview chip — tıklayınca fullscreen preview açar */}
-        {matColor && borderColor && (
-          <button
-            type="button"
-            onClick={() => setShowMobilePreview(true)}
-            class="md:hidden absolute top-16 inset-x-4 z-30 pointer-events-auto animate-in fade-in slide-in-from-top-4 duration-500 active:scale-[0.98] transition-transform"
-            aria-label="Tasarım önizlemesini aç"
-          >
-            <div class="flex items-center gap-2.5 px-3 py-2 rounded-2xl bg-black/60 backdrop-blur-xl border border-white/15 shadow-2xl">
-              <div class="flex -space-x-2">
-                <span class="size-7 rounded-full ring-2 ring-black/40" style={`background-color: ${matColor.hex};`}></span>
-                <span class="size-7 rounded-full ring-2 ring-black/40" style={`background-color: ${borderColor.hex};`}></span>
-                {brand && (
-                  <span class="size-7 rounded-full bg-white/95 grid place-items-center ring-2 ring-black/40 overflow-hidden">
-                    <ClientBrandLogo iconSlug={brand.iconSlug} logoUrl={brand.logoUrl} name={brand.name} size={16} color="#000" />
-                  </span>
-                )}
-              </div>
-              <div class="flex-1 min-w-0 text-left">
-                <div class="text-[10px] text-white/60 leading-tight">🔍 Tasarımı Gör</div>
-                <div class="text-xs text-white font-semibold leading-tight truncate">
-                  {matColor.name} + {borderColor.name}
-                  {brand && model && <span class="text-white/60"> · {brand.name} {model.name}</span>}
-                </div>
-              </div>
-              <div class="text-right shrink-0">
-                <div class="text-[10px] text-white/60 leading-tight">Fiyat</div>
-                <div class="text-sm font-display font-bold text-[var(--color-primary)] leading-tight tabular-nums">{formatTRY(totalPrice)}</div>
-              </div>
-            </div>
-          </button>
-        )}
-
-        {/* Mobile fullscreen preview overlay — chip tıklanırsa açılır */}
-        {showMobilePreview && matColor && borderColor && heelPad && product && (
-          <div
-            class="md:hidden fixed inset-0 z-[200] bg-black/90 backdrop-blur-md pointer-events-auto overflow-y-auto p-4 animate-in fade-in duration-200"
-            onClick={(e) => { if (e.target === e.currentTarget) setShowMobilePreview(false) }}
-          >
-            <div class="max-w-md mx-auto pt-4 pb-20">
-              <button
-                type="button"
-                onClick={() => setShowMobilePreview(false)}
-                class="ml-auto flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/10 hover:bg-white/15 text-white text-xs font-semibold mb-3"
-              >
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12" /></svg>
-                Kapat
-              </button>
-              <LivePreview
-                setSlug={productToSetSlug(product?.slug)}
-                textureSlug="diamond"
-                matColorSlug={matColor?.slug ?? 'siyah'}
-                matColorHex={matColor?.hex}
-                borderHex={borderColor?.hex ?? '#15151a'}
-                heelSlug={heelPad ? `heel-${heelPad.slug}` : null}
-                heelPosition={heelPosition}
-                logos={logos}
-                emblemType={emblemSlugToDir(emblemType?.slug)}
-                vehicleLabel={brand && model ? `${brand.name} ${model.name}` : undefined}
-              />
-            </div>
-          </div>
-        )}
-
         {/* Left Side: Configuration Steps */}
         <div class="w-full md:w-[460px] h-full flex flex-col justify-end md:justify-center pointer-events-auto mt-16 md:mt-0">
            {/* Glassmorphic Panel */}
@@ -546,26 +480,8 @@ export default function Configurator() {
            </div>
         </div>
 
-        {/* Right Side: Live Preview + Price HUD */}
-        <div class="hidden md:flex flex-col justify-between items-end flex-1 py-8 pointer-events-auto gap-6">
-           {/* Canlı paspas önizlemesi — mat color seçildiyse görünür */}
-           {matColor && borderColor && heelPad && product && (
-             <div class="w-full max-w-[360px] animate-in slide-in-from-right-8 fade-in duration-700">
-               <LivePreview
-                 setSlug={productToSetSlug(product?.slug)}
-                 textureSlug="diamond"
-                 matColorSlug={matColor?.slug ?? 'siyah'}
-                 matColorHex={matColor?.hex}
-                 borderHex={borderColor?.hex ?? '#15151a'}
-                 heelSlug={heelPad ? `heel-${heelPad.slug}` : null}
-                 heelPosition={heelPosition}
-                 logos={logos}
-                 emblemType={emblemSlugToDir(emblemType?.slug)}
-                 vehicleLabel={brand && model ? `${brand.name} ${model.name}` : undefined}
-               />
-             </div>
-           )}
-
+        {/* Right Side: Price HUD only (önizleme arkaplanda) */}
+        <div class="hidden md:flex flex-col justify-end items-end flex-1 py-8 pointer-events-auto gap-6">
            <div class="text-right animate-in slide-in-from-right-8 fade-in duration-1000 delay-300">
              <div class="text-[11px] uppercase tracking-[0.4em] text-white/50 font-bold mb-2 drop-shadow-md">Canlı Konfigürasyon</div>
              <div class="text-7xl font-display font-semibold tabular-nums tracking-tighter drop-shadow-[0_5px_15px_rgba(0,0,0,0.8)] text-white">{formatTRY(totalPrice)}</div>
