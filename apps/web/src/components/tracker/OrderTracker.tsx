@@ -160,7 +160,7 @@ export default function OrderTracker() {
       </form>
       <p class="mt-6 text-xs text-[var(--color-text-muted)] text-center">
         Sipariş numaranızı bulamıyor musunuz?{' '}
-        <a href="https://wa.me/905074988989" class="text-[var(--color-primary)] hover:underline">
+        <a href="https://wa.me/905447108115" class="text-[var(--color-primary)] hover:underline">
           WhatsApp
         </a>
         'tan ulaşın.
@@ -526,7 +526,7 @@ function OrderDetail({ order }: { order: Order }) {
         )}
 
         <a
-          href="https://wa.me/905074988989"
+          href="https://wa.me/905447108115"
           target="_blank"
           rel="noopener"
           class="block text-center px-5 py-3 rounded-xl text-sm font-medium border border-[var(--color-success)]/40 text-[var(--color-success)] hover:bg-[var(--color-success)]/10"

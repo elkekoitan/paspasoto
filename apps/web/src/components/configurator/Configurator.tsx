@@ -769,7 +769,7 @@ function BrandStep({
         <h2 class="font-display text-xl font-semibold">Aracının markası</h2>
         <p class="mt-1 text-sm text-[var(--color-text-muted)]">
           Markanı seç — Türkiye'de satılan {brands.length} marka. Listede yoksa{' '}
-          <a href="https://wa.me/905074988989" class="text-[var(--color-primary)] underline-offset-2 hover:underline">WhatsApp'tan</a> iletin.
+          <a href="https://wa.me/905447108115" class="text-[var(--color-primary)] underline-offset-2 hover:underline">WhatsApp'tan</a> iletin.
         </p>
       </header>
 

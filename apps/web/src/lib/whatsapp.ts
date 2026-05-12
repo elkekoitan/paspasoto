@@ -50,7 +50,7 @@ export function buildProductionStartedWaUrl(order: Order, siteUrl?: string): str
     `Merhaba ${firstName}, ${order.orderNo} numaralı siparişiniz Carmat atölyesinde üretime alındı! 🔧\n\n` +
       `📦 Takip linkiniz:\n${trackUrl}\n\n` +
       `Üretim süresi yaklaşık 5-7 iş günü. Hazır olunca tekrar haber vereceğiz.\n\n` +
-      `Sorularınız için: 0507 498 89 89\n— Carmat Atölye, Konya 🇹🇷`,
+      `Sorularınız için: 0544 710 81 15\n— Carmat Atölye, Konya 🇹🇷`,
   )
   return `https://wa.me/${phone}?text=${text}`
 }
@@ -81,7 +81,7 @@ export function buildReadyWaUrl(order: Order, siteUrl?: string): string {
  * Genel destek WhatsApp linki — atölyeye soru sor (Base.astro floating button).
  */
 export function getSupportWaUrl(): string {
-  return 'https://wa.me/905074988989?text=Merhaba%2C+aracıma+özel+paspas+hakkında+bir+sorum+var.'
+  return 'https://wa.me/905447108115?text=Merhaba%2C+aracıma+özel+paspas+hakkında+bir+sorum+var.'
 }
 
 /**
@@ -107,7 +107,7 @@ export function buildHelpRequestUrl(state: {
   if (state.totalPrice) lines.push(`💰 Tahmini: ${state.totalPrice.toLocaleString('tr-TR')}₺`)
   lines.push('', 'Bu kombinasyona ne dersiniz? Daha iyi bir öneriniz var mı?')
   const text = encodeURIComponent(lines.join('\n'))
-  return `https://wa.me/905074988989?text=${text}`
+  return `https://wa.me/905447108115?text=${text}`
 }
 
 /**
@@ -118,5 +118,5 @@ export function getOrderSupportWaUrl(orderNo: string): string {
   const text = encodeURIComponent(
     `Merhaba, ${orderNo} numaralı siparişim hakkında bir sorum var.`,
   )
-  return `https://wa.me/905074988989?text=${text}`
+  return `https://wa.me/905447108115?text=${text}`
 }

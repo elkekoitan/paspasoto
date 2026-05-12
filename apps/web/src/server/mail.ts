@@ -128,7 +128,7 @@ const BRAND_FOOTER_HTML = `
 <div style="background:#0b0b0f;padding:20px 32px;text-align:center;border-top:1px solid #2a2a33;color:#8e8e94;font-family:'Inter',sans-serif;font-size:11px;line-height:1.6;">
   Carmat — Fevzi Çakmak Mah. 10733. Sk. No: 1 · Karatay / Konya<br/>
   <a href="https://carmat.com.tr" style="color:#d4923a;text-decoration:none;">carmat.com.tr</a>
-  · <a href="https://wa.me/905074988989" style="color:#d4923a;text-decoration:none;">WhatsApp</a>
+  · <a href="https://wa.me/905447108115" style="color:#d4923a;text-decoration:none;">WhatsApp</a>
   · <a href="mailto:destek@carmat.com.tr" style="color:#d4923a;text-decoration:none;">destek@carmat.com.tr</a>
 </div>`
 
@@ -175,7 +175,7 @@ export async function sendQuoteReceivedMail(input: {
       </table>
       <a href="${input.trackingUrl}" style="display:inline-block;padding:12px 24px;background:#d4923a;color:#0b0b0f;font-weight:700;text-decoration:none;border-radius:8px;">Talebimi Takip Et</a>
       <p style="line-height:1.6;color:#8e8e94;font-size:12px;margin-top:24px;">
-        Sorularınız için: WhatsApp +90 507 498 89 89
+        Sorularınız için: WhatsApp +90 544 710 81 15
       </p>
       `,
     ),
