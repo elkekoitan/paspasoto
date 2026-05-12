@@ -297,6 +297,34 @@ ADMIN_PASSWORD="atolye-sifre" SESSION_SECRET="$(openssl rand -base64 48)" \
 ssh root@185.255.95.111 -- "df -h && echo '---' && free -m && echo '---' && docker system df && echo '---' && systemctl status coolify --no-pager | head -5"
 ```
 
+### Sıfırdan Recovery + Sağlamlaştırma (SSH bootstrap)
+
+Sunucu yeniden açıldığında çalıştırılır. **Tüm projeleri ayağa kaldırır + bir daha çökmemesi için kalıcı önlemler alır**.
+
+```bash
+# Tek komutla (lokal Git Bash'ten):
+SSHPASS='<root-password>' node scripts/ssh-bootstrap.mjs
+
+# Veya doğrudan SSH'tan:
+ssh root@185.255.95.111
+curl -fsSL https://raw.githubusercontent.com/elkekoitan/paspasoto/main/scripts/server-bootstrap.sh | bash
+```
+
+**`scripts/server-bootstrap.sh` neler yapar:**
+1. Sistem sağlık raporu (disk/RAM/yük/network)
+2. Disk %85 üstündeyse Docker prune + log temizlik
+3. Docker daemon ayarları: `live-restore: true`, log limit (10MB × 3 file rotation), nofile=65536
+4. Coolify ve tüm container'ları ayağa kaldırma (stopped→start, unhealthy→restart)
+5. **UFW firewall**: sadece 22/80/443/8000 açık
+6. **Fail2ban**: SSH brute force koruması (5 hata → 24 saat ban)
+7. **Health monitor cron** (her 5 dk): Coolify dashboard + proxy + container health kontrolü, otomatik restart
+8. **Log rotation**: `/var/log/paspasoto/` 7 gün
+9. **Auto-backup cron** (günlük 03:30): Coolify postgres dump + `/data` tar.gz, 7 gün retention
+10. **Sysctl tuning**: TCP backlog, file descriptors, inotify limits, vm.swappiness=10
+11. **Unattended-upgrades**: sadece security patches (otomatik reboot YOK)
+
+**Sonuç:** Sunucu çöküşüne karşı çok katmanlı koruma — disk dolarsa otomatik prune, container ölürse otomatik restart, SSH brute force engellenir, sistem güvenlik güncellemeleri arka planda iner.
+
 ---
 
 ## Kod Yazma Kuralları
