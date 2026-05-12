@@ -43,7 +43,7 @@ const PLATFORMS = [
   // Hepsiburada / WooCommerce / Shopify ileri sürümlerde
 ]
 
-const baseUrl = Astro.url.origin
+const baseUrl = process.env.PUBLIC_SITE_URL || import.meta.env.PUBLIC_SITE_URL || Astro.url.origin
 ---
 
 <AdminLayout title="Entegrasyonlar" current="dashboard">
