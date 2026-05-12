@@ -21,9 +21,29 @@ export const trendyolAdapter: PlatformAdapter = {
 
   async verify(req, body, secret) {
     if (!secret) return false
+
+    // Yöntem 1: HTTP Basic Auth (Trendyol authenticationType=BASIC_AUTHENTICATION)
+    //   Header: Authorization: Basic base64("<username>:<password>")
+    //   Trendyol webhook tanımlanırken username="carmat", password=TRENDYOL_WEBHOOK_SECRET
+    const authHeader = req.headers.get('authorization') || ''
+    if (authHeader.startsWith('Basic ')) {
+      try {
+        const decoded = Buffer.from(authHeader.slice(6).trim(), 'base64').toString('utf8')
+        const idx = decoded.indexOf(':')
+        if (idx > 0) {
+          const user = decoded.slice(0, idx)
+          const pass = decoded.slice(idx + 1)
+          if (user === 'carmat' && pass.length === secret.length &&
+              timingSafeEqual(Buffer.from(pass, 'utf8'), Buffer.from(secret, 'utf8'))) {
+            return true
+          }
+        }
+      } catch { /* fall through to HMAC */ }
+    }
+
+    // Yöntem 2: HMAC-SHA256 (eski API)
     const sig = req.headers.get('x-trendyol-signature') || req.headers.get('x-signature')
     if (!sig) return false
-    // HMAC-SHA256 hex
     const expected = createHmac('sha256', secret).update(body).digest('hex')
     try {
       return (
