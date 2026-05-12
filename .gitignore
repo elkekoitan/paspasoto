@@ -62,6 +62,12 @@ tmp/
 temp/
 *.tmp
 
+# Local secrets — ASLA git'e gönderilmez
+.local-secrets.md
+*.local-secrets.md
+CREDENTIALS.md
+.credentials
+
 # Generated assets (build çıktısı)
 apps/web/public/sw.js
 apps/web/public/workbox-*.js
