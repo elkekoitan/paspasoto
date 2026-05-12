@@ -14,6 +14,17 @@ import { sendMail } from '../../../../server/mail'
 export const prerender = false
 
 /**
+ * GET /api/integrations/trendyol/webhook
+ * Trendyol webhook URL doğrulaması için — endpoint canlı mı kontrol eder.
+ */
+export const GET: APIRoute = async () => {
+  return new Response(JSON.stringify({ ok: true, endpoint: 'trendyol-webhook', methods: ['POST'] }), {
+    status: 200,
+    headers: { 'Content-Type': 'application/json' },
+  })
+}
+
+/**
  * POST /api/integrations/trendyol/webhook
  *
  * Trendyol Partner Portal → Webhook Yönetimi'nden eklenen endpoint.
