@@ -1,0 +1,32 @@
+---
+/**
+ * /konfigurator/sade — Carmat sadeleştirilmiş configurator.
+ *
+ * Sadece paspas seti + zemin rengi + kenarlık rengi. Hiç logo/heel/trim yok.
+ * Brand/model URL parametresi ile gelir: /konfigurator/sade?brand=bmw&model=3-serisi
+ */
+export const prerender = false
+import CleanConfigurator from '@components/configurator/clean/CleanConfigurator.tsx'
+import '../../styles/globals.css'
+
+const { searchParams } = Astro.url
+const brand = searchParams.get('brand') ?? undefined
+const model = searchParams.get('model') ?? undefined
+---
+
+<!doctype html>
+<html lang="tr" class="dark">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Paspas Konfigüratörü — Sade | Carmat</title>
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="description" content="Carmat paspas konfigüratörü — sadeleştirilmiş. Set seç, rengini belirle, kenarlığını seç, teklif iste." />
+    <style>
+      body, html { margin: 0; padding: 0; background: #0c0c0e; font-family: 'Inter', system-ui, sans-serif; }
+    </style>
+  </head>
+  <body>
+    <CleanConfigurator client:load initialBrandSlug={brand} initialModelSlug={model} />
+  </body>
+</html>
