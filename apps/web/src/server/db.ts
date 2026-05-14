@@ -60,6 +60,7 @@ export type PaymentMethod =
   | 'kapida'
   | 'sonra'
   | 'taksit'
+  | 'iyzico'
 export type PaymentStatus = 'bekliyor' | 'kismi' | 'tamamlandi' | 'iade'
 
 /**
@@ -79,16 +80,33 @@ export type PaymentInstallment = {
 }
 
 export const PAYMENT_METHOD_LABELS: Record<PaymentMethod, string> = {
-  'elden-nakit': 'Elden — Nakit',
-  'elden-kart': 'Elden — Kredi Kartı (POS)',
+  'elden-nakit': 'Dükkânda — Nakit',
+  'elden-kart': 'Dükkânda — Kredi Kartı (POS)',
   havale: 'Havale / EFT',
   kapida: 'Kapıda Ödeme',
   sonra: 'Sonra Ödenecek',
   taksit: 'Parçalı / Taksit',
+  iyzico: 'Online Kart (iyzico)',
 }
 
-/** Ürün kategorisi — paspas / koltuk kılıfı / direksiyon kılıfı */
-export type ProductCategory = 'mat' | 'seat-cover' | 'steering-cover'
+/**
+ * Ürün kategorisi — 7 ana kategori:
+ *  - mat: aracına özel kalıplanmış EVA paspas
+ *  - seat-cover: koltuk kılıfı (yakında, pasif)
+ *  - steering-cover: direksiyon kılıfı (yakında, pasif)
+ *  - screen-protector: multimedya/navigasyon ekran koruyucu
+ *  - perfume: oto parfüm
+ *  - chemical: oto kimya temizleyici
+ *  - bag: oto çantası / organizer
+ */
+export type ProductCategory =
+  | 'mat'
+  | 'seat-cover'
+  | 'steering-cover'
+  | 'screen-protector'
+  | 'perfume'
+  | 'chemical'
+  | 'bag'
 
 /** Paspas pozisyonu (araç içinde hangi paspas) */
 export type MatPosition = 'driver' | 'passenger' | 'leftRear' | 'rightRear' | 'trunk'
@@ -123,6 +141,8 @@ export type MatLogoConfig = {
 export type OrderItem = {
   /** Default 'mat' (geriye dönük uyumluluk) */
   category?: ProductCategory
+  /** Basit ürün (parfüm/çanta/kimya/ekran koruyucu) için catalog-extra.ts SimpleProduct id'si */
+  productId?: string
   brandSlug: string
   brandName: string
   modelSlug: string
@@ -235,6 +255,12 @@ export type Order = {
   internalNote?: string
   cargoCompany?: 'yurtici' | 'aras' | 'mng' | 'ptt' | 'surat'
   cargoTrackingNo?: string
+  /** Siparişi oluşturan kullanıcının id'si (multi-user için).
+   *  Online (configurator/checkout) siparişlerde undefined kalır. */
+  createdBy?: string
+  /** Dükkân kasasında siparişi kestiren personelin id'si.
+   *  channel='physical_store' siparişlerde dolu olur. */
+  cashierStaffId?: string
   createdAt: number
   paidAt?: number
   shippedAt?: number

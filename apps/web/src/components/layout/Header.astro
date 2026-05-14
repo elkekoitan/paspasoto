@@ -1,4 +1,6 @@
 ---
+import CartBadge from '@components/cart/CartBadge.tsx'
+
 type NavChild = { href: string; label: string; desc?: string; soon?: boolean }
 type NavItem = { href: string; label: string; children?: NavChild[] }
 
@@ -12,8 +14,18 @@ const NAV: NavItem[] = [
       { href: '/konfigurator/direksiyon', label: 'Direksiyon Kılıfı', desc: 'Ön tasarım · ön sipariş alıyoruz', soon: true },
     ],
   },
+  {
+    href: '/urunler',
+    label: 'Ürünler',
+    children: [
+      { href: '/urunler', label: 'Tüm Ürünler', desc: '6 kategori — hepsi tek yerde' },
+      { href: '/urunler/ekran-koruyucu', label: 'Multimedya Ekran Koruyucu', desc: '9H temperli cam' },
+      { href: '/urunler/parfum', label: 'Oto Parfüm', desc: 'Klips + sprey premium kokular' },
+      { href: '/urunler/kimya', label: 'Kimya & Bakım', desc: 'İç temizleyici, cam, deri bakım' },
+      { href: '/urunler/canta', label: 'Çanta & Organizer', desc: 'Bagaj, koltuk arkası, organizer' },
+    ],
+  },
   { href: '/markalar', label: 'Markalar' },
-  { href: '/tanitim', label: 'Hikayemiz' },
   { href: '/galeri', label: 'Galeri' },
   { href: '/iletisim', label: 'İletişim' },
 ]
@@ -106,15 +118,16 @@ const path = Astro.url.pathname
     <div class="flex items-center gap-2">
       <a
         href="/siparis-takip"
-        class="hidden sm:inline-flex items-center gap-2 px-3.5 py-2 rounded-lg text-sm font-medium text-[var(--color-text-soft)] hover:text-[var(--color-text)] transition-colors"
+        class="hidden lg:inline-flex items-center gap-2 px-3.5 py-2 rounded-lg text-sm font-medium text-[var(--color-text-soft)] hover:text-[var(--color-text)] transition-colors"
       >
         Sipariş Takip
       </a>
+      <CartBadge client:load />
       <a
         href="/konfigurator"
         class="hidden sm:inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-semibold bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] text-[var(--color-bg)] transition-all hover:shadow-[var(--shadow-glow)]"
       >
-        Teklif İste
+        Tasarla
       </a>
       <button
         type="button"

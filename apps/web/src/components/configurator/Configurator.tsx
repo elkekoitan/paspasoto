@@ -232,7 +232,51 @@ export default function Configurator() {
       alert('Lütfen tüm adımları tamamlayın.')
       return
     }
-    setShowContactForm(true)
+    // Aktif pozisyonlar için logoları filtrele
+    const activePositions = positionsFor(product.parts, product.includesTrunk)
+    const activeLogos = logos.filter((l) => activePositions.includes(l.position))
+    const logoQty = activeLogos.filter((l) => l.brandSlug !== null).length
+    const firstLogoBrand = activeLogos.find((l) => l.brandSlug !== null)?.brandSlug ?? null
+    const heelPassengerLegacy = heelPosition === 'both' || heelPosition === 'passenger-only'
+
+    const configPayload: Record<string, unknown> = {
+      brandSlug: brand.slug, brandName: brand.name,
+      modelSlug: model.slug, modelName: model.name, modelChassis: model.chassisCode,
+      productSlug: product.slug, productName: product.name, productParts: product.parts,
+      matSlug: matColor.slug, matName: matColor.name, matSwatchUrl: matColor.swatchUrl,
+      borderSlug: borderColor.slug, borderName: borderColor.name, borderSwatchUrl: borderColor.swatchUrl,
+      heelSlug: heelPad.slug, heelName: heelPad.name, heelSwatchUrl: heelPad.swatchUrl,
+      heelPosition,
+      logos: activeLogos,
+      heelPadPassenger: heelPassengerLegacy,
+      logoBrandSlug: firstLogoBrand,
+      logoQty,
+      category: 'mat' as const,
+      ...(trim ? {
+        trimId: trim.id, trimName: trim.name,
+        trimEngine: trim.engine, trimFuel: trim.fuel,
+        trimTransmission: trim.transmission, trimPackage: trim.package,
+      } : {}),
+    }
+
+    // Sepete ekle (cart.ts — lazy import çünkü Configurator zaten büyük)
+    import('../../lib/cart').then(({ addLine }) => {
+      addLine({
+        kind: 'mat-config',
+        name: `${brand.name} ${model.name} — ${product.name}`,
+        image: matColor.previewUrl || matColor.swatchUrl,
+        unitPrice: totalPrice,
+        quantity: 1,
+        config: configPayload,
+        attributes: {
+          Mat: matColor.name,
+          Kenarlık: borderColor.name,
+          Topukluk: heelPad.name,
+        },
+      })
+      // Sepet sayfasına git
+      window.location.href = '/sepet'
+    })
   }
 
   async function capturePreview(): Promise<string | null> {

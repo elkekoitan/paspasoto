@@ -1,0 +1,235 @@
+---
+export const prerender = true
+import Base from '@layouts/Base.astro'
+import AddToCartButton from '@components/cart/AddToCartButton.tsx'
+import ProductCard from '@components/products/ProductCard.tsx'
+import {
+  ALL_SIMPLE_PRODUCTS,
+  CATEGORY_META,
+  getProductsByCategory,
+  type SimpleProduct,
+  type SimpleCategory,
+} from '@lib/catalog-extra'
+import { formatTRY } from '@lib/format'
+
+export async function getStaticPaths() {
+  return ALL_SIMPLE_PRODUCTS.map((p) => ({
+    params: { category: p.category, slug: p.slug },
+    props: { product: p },
+  }))
+}
+
+const { product } = Astro.props as { product: SimpleProduct }
+const meta = CATEGORY_META[product.category as SimpleCategory]
+const related = getProductsByCategory(product.category as SimpleCategory)
+  .filter((p) => p.id !== product.id)
+  .slice(0, 4)
+
+const discount = product.oldPrice
+  ? Math.round(((product.oldPrice - product.price) / product.oldPrice) * 100)
+  : 0
+
+const BADGE_LABELS: Record<string, { text: string; class: string }> = {
+  'best-seller': { text: 'Çok Satan', class: 'bg-amber-500 text-black' },
+  new: { text: 'Yeni', class: 'bg-emerald-500 text-white' },
+  discount: { text: 'İndirim', class: 'bg-rose-500 text-white' },
+  limited: { text: 'Sınırlı', class: 'bg-purple-500 text-white' },
+  premium: { text: 'Premium', class: 'bg-gradient-to-r from-amber-400 to-amber-600 text-black' },
+}
+
+// Markdown'a benzer basit dönüşüm (paragraflar + bold + listeler)
+function renderDescription(text: string): string {
+  return text
+    .split(/\n\n+/)
+    .map((para) => {
+      // Liste paragrafı
+      if (/^- /m.test(para)) {
+        const items = para
+          .split('\n')
+          .filter((l) => l.startsWith('- '))
+          .map((l) => l.slice(2).trim())
+          .map((l) => `<li>${renderInline(l)}</li>`)
+          .join('')
+        return `<ul class="list-disc pl-5 space-y-1 my-3">${items}</ul>`
+      }
+      return `<p class="mb-3 leading-relaxed">${renderInline(para)}</p>`
+    })
+    .join('')
+}
+function renderInline(s: string): string {
+  return s
+    .replace(/\*\*(.+?)\*\*/g, '<strong class="text-[var(--color-text)] font-semibold">$1</strong>')
+    .replace(/\n/g, '<br/>')
+}
+---
+
+<Base
+  title={`${product.name} — Carmat`}
+  description={product.shortDescription}
+>
+  <section class="container-page py-8 md:py-12">
+    {/* Breadcrumb */}
+    <nav class="mb-6 flex items-center gap-1.5 text-xs text-[var(--color-text-muted)]" aria-label="breadcrumb">
+      <a href="/" class="hover:text-[var(--color-primary)]">Ana Sayfa</a>
+      <span class="opacity-50">/</span>
+      <a href="/urunler" class="hover:text-[var(--color-primary)]">Ürünler</a>
+      <span class="opacity-50">/</span>
+      <a href={meta.href} class="hover:text-[var(--color-primary)]">{meta.name}</a>
+      <span class="opacity-50">/</span>
+      <span class="text-[var(--color-text)] truncate">{product.name}</span>
+    </nav>
+
+    <div class="grid lg:grid-cols-2 gap-10 lg:gap-16">
+      {/* Sol: Görsel */}
+      <div class="relative">
+        <div class="relative aspect-square rounded-3xl overflow-hidden bg-[var(--color-surface)] ring-1 ring-[var(--color-border)]/60">
+          <img
+            src={product.image}
+            alt={product.name}
+            loading="eager"
+            decoding="sync"
+            class="size-full object-cover"
+          />
+          {product.badges && product.badges.length > 0 && (
+            <div class="absolute top-4 left-4 flex flex-col gap-1.5">
+              {product.badges.map((b) => (
+                <span class={`px-2.5 py-1 rounded-full text-[11px] font-bold tracking-wider uppercase ${BADGE_LABELS[b]?.class ?? 'bg-white text-black'}`}>
+                  {BADGE_LABELS[b]?.text ?? b}
+                </span>
+              ))}
+            </div>
+          )}
+          {discount > 0 && (
+            <span class="absolute top-4 right-4 size-16 rounded-full bg-[var(--color-danger)] text-white grid place-items-center text-base font-black tabular-nums">
+              −%{discount}
+            </span>
+          )}
+        </div>
+        {product.gallery && product.gallery.length > 0 && (
+          <div class="mt-4 grid grid-cols-4 gap-3">
+            {product.gallery.map((src) => (
+              <div class="aspect-square rounded-xl overflow-hidden bg-[var(--color-surface-2)] ring-1 ring-[var(--color-border)]/40">
+                <img src={src} alt="" loading="lazy" decoding="async" class="size-full object-cover" />
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Sağ: Detaylar */}
+      <div>
+        <p class="text-sm text-[var(--color-primary)] font-medium uppercase tracking-wider">{meta.name}</p>
+        <h1 class="mt-2 font-display text-3xl md:text-4xl font-semibold tracking-tight leading-tight">
+          {product.name}
+        </h1>
+
+        <p class="mt-4 text-[var(--color-text-soft)] text-lg leading-relaxed">
+          {product.shortDescription}
+        </p>
+
+        {/* Fiyat */}
+        <div class="mt-6 flex items-baseline gap-3">
+          <span class="font-display text-4xl md:text-5xl font-bold text-[var(--color-primary)] tabular-nums">
+            {formatTRY(product.price)}
+          </span>
+          {product.oldPrice && (
+            <span class="text-xl text-[var(--color-text-muted)] line-through tabular-nums">
+              {formatTRY(product.oldPrice)}
+            </span>
+          )}
+        </div>
+
+        {/* Stok */}
+        <div class="mt-4 flex items-center gap-2 text-sm">
+          {product.stock > 10 ? (
+            <>
+              <span class="size-2 rounded-full bg-emerald-500"></span>
+              <span class="text-emerald-500 font-medium">Stokta — hemen kargolanır</span>
+            </>
+          ) : product.stock > 0 ? (
+            <>
+              <span class="size-2 rounded-full bg-amber-500 animate-pulse"></span>
+              <span class="text-amber-500 font-medium">Son {product.stock} adet — acele edin</span>
+            </>
+          ) : (
+            <>
+              <span class="size-2 rounded-full bg-[var(--color-text-muted)]"></span>
+              <span class="text-[var(--color-text-muted)] font-medium">Stokta yok</span>
+            </>
+          )}
+        </div>
+
+        {/* CTA */}
+        <div class="mt-6 flex flex-col sm:flex-row gap-3">
+          <AddToCartButton client:load product={product} size="lg" fullWidth={false} />
+          <a
+            href="/sepet"
+            class="px-6 py-3.5 rounded-xl bg-[var(--color-surface-2)] hover:bg-[var(--color-border)] border border-[var(--color-border)] text-[var(--color-text)] font-semibold text-sm inline-flex items-center justify-center gap-2"
+          >
+            🛒 Sepete Git
+          </a>
+        </div>
+
+        {/* Teslimat info */}
+        <div class="mt-6 grid grid-cols-2 gap-3">
+          <div class="p-3 rounded-xl bg-[var(--color-surface)] border border-[var(--color-border)]/60">
+            <div class="flex items-center gap-2 text-xs font-medium text-[var(--color-text)]">
+              <span>🚚</span> 2-5 Gün Teslimat
+            </div>
+            <div class="text-[10px] text-[var(--color-text-muted)] mt-0.5">Türkiye'nin her yerine</div>
+          </div>
+          <div class="p-3 rounded-xl bg-[var(--color-surface)] border border-[var(--color-border)]/60">
+            <div class="flex items-center gap-2 text-xs font-medium text-[var(--color-text)]">
+              <span>↩️</span> 14 Gün İade
+            </div>
+            <div class="text-[10px] text-[var(--color-text-muted)] mt-0.5">Koşulsuz iade hakkı</div>
+          </div>
+        </div>
+
+        {/* Açıklama */}
+        <details open class="mt-8 rounded-2xl border border-[var(--color-border)]/60 bg-[var(--color-surface)] overflow-hidden">
+          <summary class="px-5 py-4 cursor-pointer font-semibold text-[var(--color-text)] hover:bg-[var(--color-surface-2)] transition-colors flex items-center justify-between">
+            <span>Ürün Açıklaması</span>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9" /></svg>
+          </summary>
+          <div class="px-5 pb-5 pt-2 text-sm text-[var(--color-text-soft)] leading-relaxed" set:html={renderDescription(product.description)}></div>
+        </details>
+
+        {/* Teknik özellikler */}
+        {product.attributes && Object.keys(product.attributes).length > 0 && (
+          <details open class="mt-3 rounded-2xl border border-[var(--color-border)]/60 bg-[var(--color-surface)] overflow-hidden">
+            <summary class="px-5 py-4 cursor-pointer font-semibold text-[var(--color-text)] hover:bg-[var(--color-surface-2)] transition-colors flex items-center justify-between">
+              <span>Teknik Özellikler</span>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9" /></svg>
+            </summary>
+            <dl class="px-5 pb-5 pt-2 grid grid-cols-1 gap-2 text-sm">
+              {Object.entries(product.attributes).map(([k, v]) => (
+                <div class="flex justify-between gap-3 py-2 border-b border-[var(--color-border)]/40 last:border-0">
+                  <dt class="text-[var(--color-text-muted)]">{k}</dt>
+                  <dd class="text-[var(--color-text)] font-medium text-right">{v}</dd>
+                </div>
+              ))}
+            </dl>
+          </details>
+        )}
+
+        {/* SKU */}
+        <p class="mt-4 text-[10px] text-[var(--color-text-muted)] uppercase tracking-wider">
+          SKU: {product.sku}
+        </p>
+      </div>
+    </div>
+
+    {/* İlgili ürünler */}
+    {related.length > 0 && (
+      <section class="mt-20 pt-12 border-t border-[var(--color-border)]/60">
+        <h2 class="font-display text-2xl font-semibold mb-6">İlgili Ürünler</h2>
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
+          {related.map((p) => (
+            <ProductCard product={p} />
+          ))}
+        </div>
+      </section>
+    )}
+  </section>
+</Base>

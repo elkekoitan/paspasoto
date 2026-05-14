@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 600" preserveAspectRatio="xMidYMid slice">
+  <defs>
+    <linearGradient id="g" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#7c2d92"/>
+      <stop offset="100%" stop-color="#4c1d5c"/>
+    </linearGradient>
+    <radialGradient id="r" cx="50%" cy="50%" r="60%">
+      <stop offset="0%" stop-color="#e879f9" stop-opacity="0.25"/>
+      <stop offset="100%" stop-color="#e879f9" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect width="600" height="600" fill="url(#g)"/>
+  <rect width="600" height="600" fill="url(#r)"/>
+  <text x="300" y="280" font-family="-apple-system, Segoe UI, Inter, sans-serif" font-size="180" text-anchor="middle" fill="#ffffff" opacity="0.9">🌸</text>
+  <g font-family="-apple-system, Segoe UI, Inter, sans-serif" font-size="22" font-weight="600" fill="#ffffff" text-anchor="middle" opacity="0.95">
+    <text x="300" y="480">Ocean Breeze Klips Parfüm</text>
+  </g>
+  <text x="300" y="570" font-family="-apple-system, Segoe UI, Inter, sans-serif" font-size="12" text-anchor="middle" fill="#e879f9" font-weight="700" letter-spacing="4" opacity="0.85">CARMAT</text>
+</svg>

@@ -1,0 +1,125 @@
+---
+export const prerender = true
+import Base from '@layouts/Base.astro'
+import { CATEGORY_META, ALL_SIMPLE_PRODUCTS } from '@lib/catalog-extra'
+
+/** Ana kategori hub — 6 kategori kartı */
+const ALL_CATEGORIES = [
+  {
+    name: 'Oto Paspas',
+    description: 'Aracınıza özel kalıplanmış EVA paspas — 10 renk + 18 kenarlık + marka logosu',
+    emoji: '🪟',
+    href: '/konfigurator',
+    cta: 'Tasarla',
+    image: '/assets/mats/hero/default.webp',
+    primary: true,
+  },
+  {
+    name: 'Oto Kılıf',
+    description: 'Koltuk + direksiyon kılıfları — yakında satışa sunulacak, ön sipariş alıyoruz',
+    emoji: '🧥',
+    href: '/konfigurator/koltuk',
+    cta: 'Ön Sipariş',
+    soon: true,
+  },
+  {
+    ...CATEGORY_META['screen-protector'],
+    cta: 'Keşfet',
+    count: ALL_SIMPLE_PRODUCTS.filter((p) => p.category === 'screen-protector').length,
+  },
+  {
+    ...CATEGORY_META.perfume,
+    cta: 'Keşfet',
+    count: ALL_SIMPLE_PRODUCTS.filter((p) => p.category === 'perfume').length,
+  },
+  {
+    ...CATEGORY_META.chemical,
+    cta: 'Keşfet',
+    count: ALL_SIMPLE_PRODUCTS.filter((p) => p.category === 'chemical').length,
+  },
+  {
+    ...CATEGORY_META.bag,
+    cta: 'Keşfet',
+    count: ALL_SIMPLE_PRODUCTS.filter((p) => p.category === 'bag').length,
+  },
+]
+---
+
+<Base
+  title="Tüm Ürünler — Aracın için Her Şey"
+  description="Paspas, kılıf, ekran koruyucu, parfüm, kimya temizleyici ve organizer çantalar. Aracının iç mekânı için tek noktadan kalite."
+>
+  <section class="container-page py-12 md:py-20">
+    <header class="max-w-3xl mb-12 md:mb-16">
+      <p class="text-sm text-[var(--color-primary)] font-medium uppercase tracking-wider">Tüm Kategoriler</p>
+      <h1 class="mt-2 font-display text-4xl md:text-5xl font-semibold tracking-tight">
+        Aracın için <span class="text-[var(--color-primary)]">her şey</span>.
+      </h1>
+      <p class="mt-4 text-[var(--color-text-soft)] text-lg leading-relaxed">
+        Aracına özel paspas tasarladık, üstüne premium aksesuarları da ekledik.
+        Tek noktadan kaliteli oto aksesuar.
+      </p>
+    </header>
+
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 md:gap-6">
+      {ALL_CATEGORIES.map((cat) => (
+        <a
+          href={cat.href}
+          class={[
+            'group relative overflow-hidden rounded-3xl border bg-[var(--color-surface)] transition-all hover:-translate-y-1 hover:shadow-2xl',
+            cat.primary
+              ? 'border-[var(--color-primary)]/40 hover:border-[var(--color-primary)] hover:shadow-[var(--color-primary)]/20'
+              : 'border-[var(--color-border)]/60 hover:border-[var(--color-primary)]/60 hover:shadow-[var(--color-primary)]/10',
+            'aspect-[4/5] flex flex-col'
+          ].join(' ')}
+        >
+          {/* Görsel/Gradient */}
+          <div class="relative flex-1 overflow-hidden bg-gradient-to-br from-[var(--color-surface-2)] to-[var(--color-surface)]">
+            {cat.image ? (
+              <img
+                src={cat.image}
+                alt={cat.name}
+                loading="lazy"
+                decoding="async"
+                class="size-full object-cover group-hover:scale-105 transition-transform duration-700"
+              />
+            ) : (
+              <div class="absolute inset-0 grid place-items-center">
+                <span class="text-9xl opacity-80">{cat.emoji}</span>
+              </div>
+            )}
+            {cat.soon && (
+              <span class="absolute top-3 right-3 px-2.5 py-1 rounded-full bg-[var(--color-primary)] text-black text-[10px] font-bold uppercase tracking-wider">
+                Yakında
+              </span>
+            )}
+            {cat.count !== undefined && (
+              <span class="absolute top-3 right-3 px-2.5 py-1 rounded-full bg-black/60 backdrop-blur-md text-white text-[10px] font-bold uppercase tracking-wider">
+                {cat.count} ürün
+              </span>
+            )}
+            {cat.primary && (
+              <span class="absolute top-3 right-3 px-2.5 py-1 rounded-full bg-[var(--color-primary)] text-black text-[10px] font-bold uppercase tracking-wider">
+                Ana Ürün
+              </span>
+            )}
+          </div>
+
+          {/* Bilgi */}
+          <div class="p-5 md:p-6">
+            <h2 class="font-display text-xl md:text-2xl font-semibold tracking-tight">
+              {cat.name}
+            </h2>
+            <p class="mt-2 text-sm text-[var(--color-text-muted)] leading-relaxed line-clamp-2">
+              {cat.description}
+            </p>
+            <div class="mt-4 inline-flex items-center gap-1.5 text-sm font-semibold text-[var(--color-primary)] group-hover:gap-2.5 transition-all">
+              {cat.cta}
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7" /></svg>
+            </div>
+          </div>
+        </a>
+      ))}
+    </div>
+  </section>
+</Base>

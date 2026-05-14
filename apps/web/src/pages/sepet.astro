@@ -1,0 +1,18 @@
+---
+export const prerender = true
+import Base from '@layouts/Base.astro'
+import CartSummary from '@components/cart/CartSummary.tsx'
+---
+
+<Base title="Sepetim — Carmat" description="Sepetinizdeki ürünleri inceleyin ve ödemeye geçin.">
+  <section class="container-page py-10 md:py-16">
+    <header class="mb-8">
+      <p class="text-sm text-[var(--color-primary)] font-medium uppercase tracking-wider">Sepetim</p>
+      <h1 class="mt-2 font-display text-3xl md:text-4xl font-semibold tracking-tight">
+        Sepetinizdeki ürünler
+      </h1>
+    </header>
+
+    <CartSummary client:only="preact" />
+  </section>
+</Base>
