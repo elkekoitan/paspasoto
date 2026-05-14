@@ -1,21 +1,57 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 600" preserveAspectRatio="xMidYMid slice">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 800" preserveAspectRatio="xMidYMid slice">
   <defs>
-    <linearGradient id="g" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0%" stop-color="#1e3a8a"/>
-      <stop offset="100%" stop-color="#0c1d4d"/>
-    </linearGradient>
-    <radialGradient id="r" cx="50%" cy="50%" r="60%">
-      <stop offset="0%" stop-color="#60a5fa" stop-opacity="0.25"/>
-      <stop offset="100%" stop-color="#60a5fa" stop-opacity="0"/>
+    <radialGradient id="bg" cx="50%" cy="40%" r="80%">
+      <stop offset="0%" stop-color="#164e63"/>
+      <stop offset="100%" stop-color="#082f49"/>
     </radialGradient>
+    <radialGradient id="spot" cx="50%" cy="35%" r="30%">
+      <stop offset="0%" stop-color="rgba(255,255,255,0.18)"/>
+      <stop offset="100%" stop-color="rgba(255,255,255,0)"/>
+    </radialGradient>
+    <linearGradient id="glassGradient" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="rgba(255,255,255,0.18)"/>
+      <stop offset="100%" stop-color="rgba(255,255,255,0)"/>
+    </linearGradient>
+    <filter id="softShadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur in="SourceAlpha" stdDeviation="6"/>
+      <feOffset dx="0" dy="8"/>
+      <feComponentTransfer><feFuncA type="linear" slope="0.5"/></feComponentTransfer>
+      <feMerge>
+        <feMergeNode/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
   </defs>
-  <rect width="600" height="600" fill="url(#g)"/>
-  <rect width="600" height="600" fill="url(#r)"/>
-  <text x="300" y="280" font-family="-apple-system, Segoe UI, Inter, sans-serif" font-size="180" text-anchor="middle" fill="#ffffff" opacity="0.9">📱</text>
-  <g font-family="-apple-system, Segoe UI, Inter, sans-serif" font-size="22" font-weight="600" fill="#ffffff" text-anchor="middle" opacity="0.95">
-    <text x="300" y="466">Gösterge Paneli Ekran</text>
-    <text x="300" y="494">Koruyucu</text>
+
+  <!-- Background -->
+  <rect width="800" height="800" fill="url(#bg)"/>
+  <rect width="800" height="800" fill="url(#spot)"/>
+
+  <!-- Floor shadow under product -->
+  <ellipse cx="400" cy="680" rx="160" ry="20" fill="rgba(0,0,0,0.5)" opacity="0.6"/>
+
+  <!-- Product silhouette -->
+  <g filter="url(#softShadow)">
+    
+    <!-- Tablet body -->
+    <rect x="200" y="200" width="400" height="400" rx="20" fill="#0a0a12" stroke="#1f1f28" stroke-width="3"/>
+    <!-- Screen bezel -->
+    <rect x="220" y="220" width="360" height="360" rx="6" fill="#0c0c14"/>
+    <!-- Screen content/display -->
+    <rect x="230" y="230" width="340" height="340" rx="2" fill="#22d3ee" opacity="0.65"/>
+    <!-- Tempered glass overlay (slight gloss) -->
+    <rect x="230" y="230" width="340" height="340" rx="2" fill="url(#glassGradient)"/>
+    <!-- Reflection -->
+    <path d="M 230 230 L 380 230 L 280 460 L 230 460 Z" fill="rgba(255,255,255,0.15)"/>
+    <!-- 9H badge -->
+    <circle cx="540" cy="260" r="30" fill="rgba(0,0,0,0.7)" stroke="rgba(255,255,255,0.3)" stroke-width="1.5"/>
+    <text x="540" y="268" font-family="Inter, sans-serif" font-size="20" font-weight="800" fill="#22d3ee" text-anchor="middle">9H</text>
+    <!-- Bottom bezel speaker mark -->
+    <rect x="380" y="585" width="40" height="3" rx="1.5" fill="rgba(255,255,255,0.2)"/>
+  
   </g>
-  <text x="300" y="570" font-family="-apple-system, Segoe UI, Inter, sans-serif" font-size="12" text-anchor="middle" fill="#60a5fa" font-weight="700" letter-spacing="4" opacity="0.85">CARMAT</text>
+
+  <!-- Bottom brand mark -->
+  <text x="400" y="755" font-family="-apple-system, Inter, sans-serif" font-size="11" text-anchor="middle" fill="rgba(255,255,255,0.4)" font-weight="700" letter-spacing="4">CARMAT</text>
 </svg>

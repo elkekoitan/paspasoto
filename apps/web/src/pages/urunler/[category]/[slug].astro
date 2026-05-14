@@ -89,6 +89,7 @@ function renderInline(s: string): string {
             loading="eager"
             decoding="sync"
             class="size-full object-cover"
+            onerror={`this.onerror=null;this.src='/assets/products/${product.category}/${product.slug}.svg'`}
           />
           {product.badges && product.badges.length > 0 && (
             <div class="absolute top-4 left-4 flex flex-col gap-1.5">

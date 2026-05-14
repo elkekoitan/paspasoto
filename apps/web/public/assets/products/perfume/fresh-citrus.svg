@@ -1,20 +1,61 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 600" preserveAspectRatio="xMidYMid slice">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 800" preserveAspectRatio="xMidYMid slice">
   <defs>
-    <linearGradient id="g" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0%" stop-color="#7c2d92"/>
-      <stop offset="100%" stop-color="#4c1d5c"/>
-    </linearGradient>
-    <radialGradient id="r" cx="50%" cy="50%" r="60%">
-      <stop offset="0%" stop-color="#e879f9" stop-opacity="0.25"/>
-      <stop offset="100%" stop-color="#e879f9" stop-opacity="0"/>
+    <radialGradient id="bg" cx="50%" cy="40%" r="80%">
+      <stop offset="0%" stop-color="#854d0e"/>
+      <stop offset="100%" stop-color="#422006"/>
     </radialGradient>
+    <radialGradient id="spot" cx="50%" cy="35%" r="30%">
+      <stop offset="0%" stop-color="rgba(255,255,255,0.18)"/>
+      <stop offset="100%" stop-color="rgba(255,255,255,0)"/>
+    </radialGradient>
+    <linearGradient id="glassGradient" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="rgba(255,255,255,0.18)"/>
+      <stop offset="100%" stop-color="rgba(255,255,255,0)"/>
+    </linearGradient>
+    <filter id="softShadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur in="SourceAlpha" stdDeviation="6"/>
+      <feOffset dx="0" dy="8"/>
+      <feComponentTransfer><feFuncA type="linear" slope="0.5"/></feComponentTransfer>
+      <feMerge>
+        <feMergeNode/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
   </defs>
-  <rect width="600" height="600" fill="url(#g)"/>
-  <rect width="600" height="600" fill="url(#r)"/>
-  <text x="300" y="280" font-family="-apple-system, Segoe UI, Inter, sans-serif" font-size="180" text-anchor="middle" fill="#ffffff" opacity="0.9">🌸</text>
-  <g font-family="-apple-system, Segoe UI, Inter, sans-serif" font-size="22" font-weight="600" fill="#ffffff" text-anchor="middle" opacity="0.95">
-    <text x="300" y="480">Fresh Citrus Spray Parfüm</text>
+
+  <!-- Background -->
+  <rect width="800" height="800" fill="url(#bg)"/>
+  <rect width="800" height="800" fill="url(#spot)"/>
+
+  <!-- Floor shadow under product -->
+  <ellipse cx="400" cy="680" rx="160" ry="20" fill="rgba(0,0,0,0.5)" opacity="0.6"/>
+
+  <!-- Product silhouette -->
+  <g filter="url(#softShadow)">
+    
+    <!-- Nozzle/spray head -->
+    <rect x="350" y="160" width="100" height="40" rx="4" fill="#1a1a22"/>
+    <rect x="370" y="200" width="60" height="50" fill="#2a2a32" stroke="#3a3a40"/>
+    <!-- Body (can) -->
+    <rect x="310" y="250" width="180" height="380" rx="8" fill="#f59e0b" stroke="rgba(0,0,0,0.2)" stroke-width="2"/>
+    <!-- Highlight -->
+    <rect x="320" y="260" width="20" height="360" fill="rgba(255,255,255,0.3)" rx="2"/>
+    <!-- Top label band -->
+    <rect x="310" y="290" width="180" height="40" fill="rgba(0,0,0,0.4)"/>
+    <!-- Main label area -->
+    <rect x="330" y="380" width="140" height="180" rx="4" fill="rgba(255,255,255,0.92)" stroke="rgba(0,0,0,0.1)"/>
+    <!-- Label content lines -->
+    <rect x="350" y="400" width="100" height="14" fill="#0a0a12" rx="2"/>
+    <rect x="350" y="425" width="80" height="8" fill="rgba(10,10,18,0.6)" rx="1"/>
+    <rect x="350" y="445" width="100" height="6" fill="rgba(10,10,18,0.3)"/>
+    <rect x="350" y="460" width="90" height="6" fill="rgba(10,10,18,0.3)"/>
+    <!-- Volume tag -->
+    <rect x="350" y="510" width="100" height="40" rx="3" fill="#f59e0b"/>
+    <text x="400" y="538" font-family="Inter, sans-serif" font-size="20" font-weight="700" fill="white" text-anchor="middle">500ml</text>
+  
   </g>
-  <text x="300" y="570" font-family="-apple-system, Segoe UI, Inter, sans-serif" font-size="12" text-anchor="middle" fill="#e879f9" font-weight="700" letter-spacing="4" opacity="0.85">CARMAT</text>
+
+  <!-- Bottom brand mark -->
+  <text x="400" y="755" font-family="-apple-system, Inter, sans-serif" font-size="11" text-anchor="middle" fill="rgba(255,255,255,0.4)" font-weight="700" letter-spacing="4">CARMAT</text>
 </svg>

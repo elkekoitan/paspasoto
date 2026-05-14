@@ -30,6 +30,7 @@ export default function ProductCard({ product }: { product: SimpleProduct }) {
           loading="lazy"
           decoding="async"
           class="size-full object-cover group-hover:scale-105 transition-transform duration-700"
+          onerror={`this.onerror=null;this.src='/assets/products/${product.category}/${product.slug}.svg'`}
         />
         {/* Sol üst: rozetler */}
         {product.badges && product.badges.length > 0 && (

@@ -56,7 +56,7 @@ export const SCREEN_PROTECTORS: SimpleProduct[] = [
     name: '9 inç Multimedya Ekran Koruyucu — 9H Temperli Cam',
     price: 249,
     oldPrice: 349,
-    image: `${ASSET}/screen-protector/tempered-9h-9-inch.svg`,
+    image: 'https://images.unsplash.com/photo-1606664515524-ed2f786a0bd6?w=800&q=85',
     shortDescription: 'Çizilmeye dirençli 9H temperli cam ekran koruyucu, parmak izi karşıtı, ultra ince.',
     description: `Aracınızın multimedya ekranını günlük çizilmeden, toz birikimine ve hafif darbelere karşı korur. 9H sertlikteki temperli cam, anahtar ve toka gibi metal nesnelerin çiziklerine dayanıklıdır.
 
@@ -88,7 +88,7 @@ export const SCREEN_PROTECTORS: SimpleProduct[] = [
     name: '10 inç Multimedya Ekran Koruyucu — 9H Temperli Cam',
     price: 279,
     oldPrice: 379,
-    image: `${ASSET}/screen-protector/tempered-9h-10-inch.svg`,
+    image: 'https://images.unsplash.com/photo-1551830820-330a71b99659?w=800&q=85',
     shortDescription: '10 inç sınıfı multimedya ekranları için 9H sertliğinde premium cam koruyucu.',
     description: `10 inç multimedya ekranlar için tasarlanmış 9H sertliğinde temperli cam ekran koruyucu. Audi, BMW, Mercedes, Tesla Model 3 ve benzeri araçların büyük navigasyon ekranlarıyla uyumludur.
 
@@ -115,7 +115,7 @@ export const SCREEN_PROTECTORS: SimpleProduct[] = [
     category: 'screen-protector',
     name: '9 inç Mat Yüzeyli Anti-Glare Ekran Koruyucu',
     price: 199,
-    image: `${ASSET}/screen-protector/matte-anti-glare-9-inch.svg`,
+    image: 'https://images.unsplash.com/photo-1543465077-db45d34b88a5?w=800&q=85',
     shortDescription: 'Mat yüzey, güneş yansıması yok. Parmak izi tutmaz, gündüz kullanımı için ideal.',
     description: `Cam parlaklığı yerine mat yüzey tercih edenler için. Doğrudan güneş ışığı altında bile ekranın net okunmasını sağlar. Mat doku parmak izi göstermez ve uzun yolculuklarda göz yorgunluğunu azaltır.
 
@@ -136,7 +136,7 @@ Polikarbonat film tabanlı, 0.2mm ince, hassasiyet kaybı yoktur.`,
     category: 'screen-protector',
     name: '9 inç Gizlilik (Privacy) Ekran Koruyucu',
     price: 329,
-    image: `${ASSET}/screen-protector/privacy-9-inch.svg`,
+    image: 'https://images.unsplash.com/photo-1549399542-7e3f8b79c341?w=800&q=85',
     shortDescription: 'Yandan bakışı engelleyen privacy filtreli ekran koruyucu — sürücü hariç kimse göremez.',
     description: `±30° dışından bakana ekran siyah görünür. Yolcular veya yan araçlardakiler navigasyon/mesaj içeriğini göremez. Aynı zamanda 9H sertlik ile çizilmeye karşı korur.
 
@@ -157,7 +157,7 @@ Privacy filtreli temperli cam, 4 katmanlı yapı.`,
     category: 'screen-protector',
     name: 'Gösterge Paneli (Kombi) Ekran Koruyucu',
     price: 229,
-    image: `${ASSET}/screen-protector/gauge-cluster-protector.svg`,
+    image: 'https://images.unsplash.com/photo-1494976388531-d1058494cdd8?w=800&q=85',
     shortDescription: 'Sürücü gösterge paneli için kesilmiş özel ekran koruyucu — dijital kombi koruması.',
     description: `Dijital gösterge paneliniz (sanal kokpit / TFT kombi) için araca özel kesilmiş ekran koruyucu. Hassas dokunmatik kontrol gerektirmediği için maksimum 9H sertlik kullanılmıştır. UV filtreli — güneşte renk solması olmaz.
 
@@ -179,7 +179,7 @@ Marka/model belirtin, uyumlu kesim olduğundan emin olalım.`,
     name: '12.3 inç Büyük Ekran Koruyucu (Mercedes, Tesla)',
     price: 399,
     oldPrice: 499,
-    image: `${ASSET}/screen-protector/tempered-9h-12-inch.svg`,
+    image: 'https://images.unsplash.com/photo-1583121274602-3e2820c69888?w=800&q=85',
     shortDescription: 'Premium araç sınıfı 12.3 inç multimedya/dijital ekran için 9H temperli cam.',
     description: `Mercedes MBUX, BMW iDrive 8, Tesla Model 3/Y, Audi MMI gibi 12.3+ inç büyük ekran sistemleri için.
 
@@ -210,7 +210,7 @@ export const PERFUMES: SimpleProduct[] = [
     name: 'Midnight Oud — Klips Oto Parfüm',
     price: 149,
     oldPrice: 199,
-    image: `${ASSET}/perfume/midnight-oud.svg`,
+    image: 'https://images.unsplash.com/photo-1541643600914-78b084683601?w=800&q=85',
     shortDescription: 'Doğu kökenli oud + sandal ağacı + amber. Lüks, erkeksi, kalıcı oda kokusu hissi.',
     description: `**Notalar:** üst → bergamot, biber · kalp → oud, sandal ağacı · dip → amber, vanil
 
@@ -234,7 +234,7 @@ Premium klips tasarımı: havalandırma ızgarasına tek dokunuşla takılır, a
     category: 'perfume',
     name: 'Fresh Citrus — Spray Oto Parfüm',
     price: 99,
-    image: `${ASSET}/perfume/fresh-citrus.svg`,
+    image: 'https://images.unsplash.com/photo-1592945403244-b3fbafd7f539?w=800&q=85',
     shortDescription: 'Bergamot, limon, deniz tuzu. Ferah, gündüz aracı için ideal sprey formül.',
     description: `**Notalar:** üst → bergamot, mandalina · kalp → deniz tuzu, beyaz çiçek · dip → misk, sedir
 
@@ -256,7 +256,7 @@ Premium klips tasarımı: havalandırma ızgarasına tek dokunuşla takılır, a
     category: 'perfume',
     name: 'Leather & Tobacco — Premium Klips Parfüm',
     price: 169,
-    image: `${ASSET}/perfume/leather-tobacco.svg`,
+    image: 'https://images.unsplash.com/photo-1615634260167-c8cdede054de?w=800&q=85',
     shortDescription: 'Hakiki deri + tütün yaprağı. Lüks araç içi hissi.',
     description: `**Notalar:** deri, tütün, vetiver, dumanlı vanilya
 
@@ -277,7 +277,7 @@ Premium araçların orijinal "yeni deri kokusu" hissini taklit eder. Klips forma
     category: 'perfume',
     name: 'Vanilla Cream — Yumuşak Klips Parfüm',
     price: 139,
-    image: `${ASSET}/perfume/vanilla-cream.svg`,
+    image: 'https://images.unsplash.com/photo-1585386959984-a4155224a1ad?w=800&q=85',
     shortDescription: 'Vanilya, beyaz şeker, hindistancevizi. Tatlı, sıcak, kadınsı.',
     description: `**Notalar:** vanilya, hindistancevizi, beyaz şeker, sandal ağacı
 
@@ -297,7 +297,7 @@ Sıcak ve hoş, ev kokusu hissi veren tatlı bir kompozisyon. Klips, 8ml.`,
     category: 'perfume',
     name: 'Ocean Breeze — Hava Filtresi Klipsi',
     price: 119,
-    image: `${ASSET}/perfume/ocean-breeze.svg`,
+    image: 'https://images.unsplash.com/photo-1547887537-6158d64c35b3?w=800&q=85',
     shortDescription: 'Deniz tuzu, çam, beyaz çiçek. Temiz, ferah, yaz hissi.',
     description: `**Notalar:** deniz tuzu, çam, beyaz çiçek, beyaz misk
 
@@ -318,7 +318,7 @@ Yaz aylarında klimayla birlikte aktive olan ferah formül. Hassas burunlar içi
     name: 'Parfüm Üçlü Set — Klasik Koleksiyon',
     price: 299,
     oldPrice: 447,
-    image: `${ASSET}/perfume/spray-set-trio.svg`,
+    image: 'https://images.unsplash.com/photo-1523293182086-7651a899d37f?w=800&q=85',
     shortDescription: '3 farklı koku tek pakette — Oud + Deri & Tütün + Vanilya. Hediyelik şık kutu.',
     description: `Üç en sevilen kokumuzu özel hediyelik kutuda. Mevsimine ve havana göre değiştirebilirsin:
 - **Midnight Oud** (gece, gala)
@@ -348,7 +348,7 @@ export const CHEMICALS: SimpleProduct[] = [
     name: 'İç Temizleyici Spray — Plastik & Deri & Vinyl 500ml',
     price: 189,
     oldPrice: 249,
-    image: `${ASSET}/chemical/interior-cleaner-500ml.svg`,
+    image: 'https://images.unsplash.com/photo-1607301406259-dfb186e15de8?w=800&q=85',
     shortDescription: 'Tek üründe iç plastik, deri, vinyl, tekstil temizliği. Mat finiş bırakır, parlatma yapmaz.',
     description: `Araç iç mekânın en zor yerleri için profesyonel formül:
 - Konsol plastikleri ve gösterge paneli — toz + parmak izi
@@ -376,7 +376,7 @@ Kullanım: yüzeye 20-25cm mesafeden sık, mikrofiberle ovala, kuru bezle parlat
     category: 'chemical',
     name: 'Katran ve Asfalt Sökücü Sprey 300ml',
     price: 159,
-    image: `${ASSET}/chemical/tar-remover-300ml.svg`,
+    image: 'https://images.unsplash.com/photo-1532974297617-c0f05fe48bff?w=800&q=85',
     shortDescription: 'Boyaya zarar vermeden asfalt katranı, çam reçinesi, kuş pisliği söker.',
     description: `Yaz aylarında en sık karşılaşılan kabuslar:
 - Yol katranı (siyah lekeler)
@@ -400,7 +400,7 @@ Solvent bazlı ama orijinal boyayı **yormaz**. 5 dakika bekle, sünger/mikrofib
     category: 'chemical',
     name: 'Cam Temizleyici — Çizgisiz Finish 750ml',
     price: 129,
-    image: `${ASSET}/chemical/glass-cleaner-750ml.svg`,
+    image: 'https://images.unsplash.com/photo-1607604276583-eef5d076aa5f?w=800&q=85',
     shortDescription: 'Cam yüzeylerde sıfır çizgi, sıfır leke. Tütün dumanı kalıntısı + nikotin sarı leke söker.',
     description: `Amonyak içeren ama tente-tinted cam ile uyumlu formül. Kuruma izi bırakmaz.
 - İç camlar (özellikle tütün kullanılan araçlarda nikotin tabakası)
@@ -424,7 +424,7 @@ Kullanım: 2-3 sıkma, mikrofiber havlu ile düz hareketlerle sil. Ikinci kuru h
     category: 'chemical',
     name: 'Deri Bakım & Besleme Kremi 250ml',
     price: 219,
-    image: `${ASSET}/chemical/leather-conditioner-250ml.svg`,
+    image: 'https://images.unsplash.com/photo-1612965110667-4175024b0dcc?w=800&q=85',
     shortDescription: 'Deri koltuk + direksiyon + vites topuzu. Çatlama önler, nemlendirir, mat finiş.',
     description: `Doğal lanolin + jojoba yağı bazlı krem formül. Aylık bakımda deriyi yumuşatır, çatlama ve solmayı önler.
 
@@ -448,7 +448,7 @@ Tüm doğal/sentetik deri uyumlu. Renkli derilere çekinme — renk değişimi y
     category: 'chemical',
     name: 'Motor Yıkama Köpüğü — Yağ Sökücü 1L',
     price: 269,
-    image: `${ASSET}/chemical/engine-degreaser-1l.svg`,
+    image: 'https://images.unsplash.com/photo-1607082348824-0a96f2a4b9da?w=800&q=85',
     shortDescription: 'Motor bloğu ve çevresi için aktif köpük yağ sökücü. Profesyonel atölye formülü.',
     description: `Bloktaki birikmiş yağ, gres, kirleri çözer. Köpük formundadır — dikey yüzeyde tutunur, akmaz.
 
@@ -471,7 +471,7 @@ Atölye/oto-yıkamacı formülü; ev kullanımında **dikkatli olun**. Eldivenle
     name: 'Oto Bakım Başlangıç Seti — 4 Ürün Paket',
     price: 599,
     oldPrice: 826,
-    image: `${ASSET}/chemical/detailing-kit-starter.svg`,
+    image: 'https://images.unsplash.com/photo-1610461888750-10bfc601b874?w=800&q=85',
     shortDescription: 'İç temizleyici + Cam temizleyici + Deri kremi + Mikrofiber bez set. %28 paket indirimi.',
     description: `Aracı kendi başına detaylı bakım yapmak isteyenler için tam başlangıç paketi:
 
@@ -503,7 +503,7 @@ export const BAGS: SimpleProduct[] = [
     name: 'Bagaj Organizer — Deluxe Katlanabilir 3 Bölmeli',
     price: 449,
     oldPrice: 599,
-    image: `${ASSET}/bag/bagaj-organizer-deluxe.svg`,
+    image: 'https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=800&q=85',
     shortDescription: 'Bagajda eşyaların kaymasını engeller. 3 ayrı bölme, katlanabilir, su geçirmez taban.',
     description: `Bagajda **yiyecek torbası, çamaşır, alışveriş, çocuk eşyası** ayrı ayrı dursun, her dönüşte devrilmesin.
 
@@ -533,7 +533,7 @@ export const BAGS: SimpleProduct[] = [
     category: 'bag',
     name: 'Koltuk Arkası Organizer — Tablet & Çocuk Eşyaları',
     price: 199,
-    image: `${ASSET}/bag/koltuk-arkasi-organizer.svg`,
+    image: 'https://images.unsplash.com/photo-1590874103328-eac38a683ce7?w=800&q=85',
     shortDescription: 'Ön koltuk arkasına geçer. Tablet tutucu + 6 cep. Çocuklu aile için kurtarıcı.',
     description: `Arka koltuktaki çocuklar için **tüm eşyaları bir yerde**: tablet, kitap, biberon, ıslak mendil, oyuncak.
 
@@ -560,7 +560,7 @@ Standart araç koltuklarına %95 uyumlu. Spor koltuklar için ölçü iletilebil
     category: 'bag',
     name: "Yan Cep Konsol Organizer — Deri Görünümlü 2'li",
     price: 159,
-    image: `${ASSET}/bag/yan-cep-konsol-organizer.svg`,
+    image: 'https://images.unsplash.com/photo-1564422170194-896b89110ef8?w=800&q=85',
     shortDescription: 'Ön koltuk yanına geçer. Telefon, cüzdan, anahtar düşmesin. PU deri, 2 adet (sürücü + yolcu).',
     description: `Ön koltuk ile orta konsol arasındaki **boşluğa düşen telefon/anahtar** sorununu çözer. 2 adet (sürücü + yolcu) PU deri kaplamalı organizer.
 
@@ -583,7 +583,7 @@ Standart araç koltuklarına %95 uyumlu. Spor koltuklar için ölçü iletilebil
     category: 'bag',
     name: 'Manyetik Mini Çöp Torbası — Konsol Yanına',
     price: 89,
-    image: `${ASSET}/bag/cop-torbasi-magnetic.svg`,
+    image: 'https://images.unsplash.com/photo-1581605405669-fcdf81165afa?w=800&q=85',
     shortDescription: 'Manyetik tutuculu mini çöp torbası. Araç içi temiz kalsın.',
     description: `Konsol yan yüzeyine manyetik olarak yapışır (metal yüzey gerekir, plastik bölgelere çift taraflı bant adaptör dahil).
 
@@ -609,7 +609,7 @@ Yolculukta atılan kraker paketi, ıslak mendil, peçete için ideal.`,
     category: 'bag',
     name: 'Bagaj Eşya Tutucu File — Esnek Elastik',
     price: 119,
-    image: `${ASSET}/bag/bagaj-net-fileli.svg`,
+    image: 'https://images.unsplash.com/photo-1591561954557-26941169b49e?w=800&q=85',
     shortDescription: 'Bagajda eşyaların kaymasını engelleyen elastik file ağ.',
     description: `Bagaj tabanına 4 ankraj noktasından gerilir. 90 × 70 cm elastik file, ağır eşyayı bile sabit tutar.
 
@@ -632,7 +632,7 @@ Yolculukta atılan kraker paketi, ıslak mendil, peçete için ideal.`,
     category: 'bag',
     name: 'Piknik / Termal Bagaj Çantası — 25 Litre',
     price: 299,
-    image: `${ASSET}/bag/piknik-bagaj-cantasi.svg`,
+    image: 'https://images.unsplash.com/photo-1545194445-dddb8f4487c6?w=800&q=85',
     shortDescription: 'Termal yalıtımlı 25L bagaj çantası. Piknik, kamp, market alışverişi.',
     description: `25 litre termal yalıtımlı çanta. Soğuk içecekler 6 saat soğuk kalır (donmuş paket ile). Sıcak yemek 4 saat sıcak.
 
