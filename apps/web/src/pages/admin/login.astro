@@ -3,6 +3,14 @@ export const prerender = false
 import '../../styles/globals.css'
 
 const error = Astro.url.searchParams.get('error')
+const errorMessage =
+  error === 'invalid'
+    ? 'Kullanıcı adı veya şifre hatalı.'
+    : error === 'missing'
+      ? 'Kullanıcı adı ve şifre zorunlu.'
+      : error
+        ? 'Giriş başarısız. Tekrar deneyin.'
+        : ''
 ---
 
 <!doctype html>
@@ -25,7 +33,7 @@ const error = Astro.url.searchParams.get('error')
         <div class="text-center mb-10">
           <img src="/logo.png" alt="Carmat" class="h-16 w-auto mx-auto object-contain drop-shadow-[0_0_15px_rgba(255,255,255,0.1)]" />
           <h1 class="mt-5 font-display text-xl font-semibold text-[var(--color-text-soft)]">Yönetim Paneli</h1>
-          <p class="mt-2 text-sm text-[var(--color-text-muted)]">Atölye sipariş takip paneli</p>
+          <p class="mt-2 text-sm text-[var(--color-text-muted)]">Patron ve personel girişi</p>
         </div>
 
         <form
@@ -34,24 +42,36 @@ const error = Astro.url.searchParams.get('error')
           class="rounded-2xl bg-[var(--color-surface)] border border-[var(--color-border)]/60 p-6 space-y-4"
         >
           <div>
-            <label for="password" class="block text-sm font-medium mb-1.5">Yönetici Şifresi</label>
+            <label for="username" class="block text-sm font-medium mb-1.5">Kullanıcı Adı</label>
             <input
-              id="password"
-              name="password"
-              type="password"
+              id="username"
+              name="username"
+              type="text"
+              autocomplete="username"
               required
               autofocus
+              placeholder="patron veya personel adı"
               class="w-full px-4 py-3 rounded-lg bg-[var(--color-surface-2)] border border-[var(--color-border)] focus:border-[var(--color-primary)] outline-none text-sm"
             />
           </div>
 
-          {
-            error && (
-              <p class="text-sm text-[var(--color-danger)] text-center">
-                Hatalı şifre. Tekrar deneyin.
-              </p>
-            )
-          }
+          <div>
+            <label for="password" class="block text-sm font-medium mb-1.5">Şifre</label>
+            <input
+              id="password"
+              name="password"
+              type="password"
+              autocomplete="current-password"
+              required
+              class="w-full px-4 py-3 rounded-lg bg-[var(--color-surface-2)] border border-[var(--color-border)] focus:border-[var(--color-primary)] outline-none text-sm"
+            />
+          </div>
+
+          {errorMessage && (
+            <p class="text-sm text-[var(--color-danger)] text-center">
+              {errorMessage}
+            </p>
+          )}
 
           <button
             type="submit"

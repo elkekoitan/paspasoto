@@ -1,13 +1,19 @@
 ---
 export const prerender = false
 import AdminLayout from '@layouts/AdminLayout.astro'
-import { getSession } from '../../server/auth'
+import { getCurrentUser } from '../../server/auth'
 import { listOrders, PRODUCTION_TIMELINE, PAYMENT_METHOD_LABELS, type OrderStatus } from '../../server/db'
+import { listUsers } from '../../server/users'
 import { formatTRY, formatDateTime } from '@lib/format'
 
-if (!getSession(Astro.cookies)) return Astro.redirect('/admin/login')
+const me = getCurrentUser(Astro.cookies)
+if (!me) return Astro.redirect('/admin/login')
+// Personel kullanıcı kendi dashboard'una yönlendirilir
+if (me.role === 'staff') return Astro.redirect('/admin/personel')
 
 const orders = listOrders()
+const allUsers = listUsers()
+const staffUsers = allUsers.filter((u) => u.role === 'staff' && u.active)
 const now = Date.now()
 const day = 24 * 60 * 60 * 1000
 
@@ -70,6 +76,20 @@ for (const o of orders) methodTally.set(o.paymentMethod, (methodTally.get(o.paym
 const methodList = [...methodTally.entries()]
   .map(([k, v]) => ({ key: k, label: PAYMENT_METHOD_LABELS[k as keyof typeof PAYMENT_METHOD_LABELS] ?? k, count: v }))
   .sort((a, b) => b.count - a.count)
+
+/* Personel performansı — bu ay */
+const staffPerformance = staffUsers.map((u) => {
+  const myOrders = last30.filter((o) => o.createdBy === u.id)
+  return {
+    id: u.id,
+    username: u.username,
+    displayName: u.displayName,
+    orderCount: myOrders.length,
+    revenue: myOrders.reduce((s, o) => s + o.total, 0),
+    lastLoginAt: u.lastLoginAt,
+  }
+}).sort((a, b) => b.revenue - a.revenue)
+const maxStaffRevenue = Math.max(1, ...staffPerformance.map((s) => s.revenue))
 
 /* Müşteriler */
 const customers = new Map<string, { name: string; phone: string; orderCount: number; total: number }>()
@@ -358,6 +378,46 @@ const paidPercent = totalRevenue ? Math.round((paidRevenue / totalRevenue) * 100
         )}
       </section>
     </div>
+
+    {/* Personel Performansı (patron için) */}
+    <section class="mb-12 rounded-2xl bg-[var(--color-surface)] border border-[var(--color-border)]/60 p-5 md:p-6 animate-in fade-in slide-in-from-bottom-4 duration-700">
+      <header class="mb-4 flex items-end justify-between gap-3 flex-wrap">
+        <div>
+          <h3 class="font-display font-semibold text-base">Personel Performansı (Bu Ay)</h3>
+          <p class="text-[11px] text-[var(--color-text-muted)] mt-0.5">Personel başına kestiği sipariş sayısı + toplam ciro</p>
+        </div>
+        <a href="/admin/patron/personel" class="text-xs text-[var(--color-primary)] hover:underline">
+          Personel Yönetimi →
+        </a>
+      </header>
+      {staffPerformance.length === 0 ? (
+        <p class="text-sm text-[var(--color-text-muted)] text-center py-6">
+          Henüz personel eklenmedi.
+          <a href="/admin/patron/personel" class="text-[var(--color-primary)] hover:underline ml-2">Personel Ekle →</a>
+        </p>
+      ) : (
+        <ul class="space-y-3">
+          {staffPerformance.map((s) => (
+            <li>
+              <div class="flex items-baseline justify-between mb-1.5">
+                <span class="text-sm font-medium">
+                  {s.displayName}
+                  <span class="text-[10px] text-[var(--color-text-muted)] ml-1.5">@{s.username}</span>
+                </span>
+                <span class="text-xs tabular-nums">
+                  <span class="text-[var(--color-text-soft)]">{s.orderCount} sipariş</span>
+                  <span class="mx-2 text-[var(--color-text-muted)]">·</span>
+                  <span class="text-[var(--color-primary)] font-semibold">{formatTRY(s.revenue)}</span>
+                </span>
+              </div>
+              <div class="h-2 rounded-full bg-[var(--color-surface-2)] overflow-hidden">
+                <div class="h-full bg-gradient-to-r from-[var(--color-primary)] to-[var(--color-primary-hover)]" style={`width: ${(s.revenue / maxStaffRevenue) * 100}%`}></div>
+              </div>
+            </li>
+          ))}
+        </ul>
+      )}
+    </section>
 
     {/* Son siparişler */}
     <div class="rounded-2xl bg-[var(--color-surface)] border border-[var(--color-border)]/60 overflow-hidden shadow-xl animate-in fade-in slide-in-from-bottom-4 duration-1000 delay-700" style="animation-fill-mode: backwards;">

@@ -1,0 +1,28 @@
+---
+export const prerender = false
+import AdminLayout from '@layouts/AdminLayout.astro'
+import { getCurrentUser } from '../../../server/auth'
+import UserManager from '@components/admin/UserManager.tsx'
+
+const me = getCurrentUser(Astro.cookies)
+if (!me) return Astro.redirect('/admin/login')
+if (me.role !== 'patron') return new Response('Forbidden', { status: 403 })
+---
+
+<AdminLayout title="Personel" current="personel">
+  <div class="p-6 md:p-10 max-w-4xl mx-auto">
+    <header class="mb-8">
+      <p class="text-[10px] uppercase tracking-[0.25em] text-[var(--color-primary)] font-bold">
+        Patron / Personel Yönetimi
+      </p>
+      <h1 class="mt-2 font-display text-3xl font-bold tracking-tight">
+        Personel Hesapları
+      </h1>
+      <p class="mt-2 text-sm text-[var(--color-text-soft)]">
+        Dükkân kasası kullanıcıları. Personel sayfaya kendi adıyla giriş yapar, kestiği siparişler ona atanır.
+      </p>
+    </header>
+
+    <UserManager client:only="preact" />
+  </div>
+</AdminLayout>

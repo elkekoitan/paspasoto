@@ -1,11 +1,13 @@
 ---
 export const prerender = false
 import AdminLayout from '@layouts/AdminLayout.astro'
-import { getSession } from '../../../server/auth'
+import { getCurrentUser } from '../../../server/auth'
 import { getStockBySku, listMovements } from '../../../server/stock'
 import { formatDateTime } from '@lib/format'
 
-if (!getSession(Astro.cookies)) return Astro.redirect('/admin/login')
+const _me = getCurrentUser(Astro.cookies)
+if (!_me) return Astro.redirect('/admin/login')
+if (_me.role !== 'patron') return new Response('Forbidden', { status: 403 })
 
 const sku = Astro.params.sku!
 const item = getStockBySku(sku)

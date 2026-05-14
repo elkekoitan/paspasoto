@@ -1,0 +1,88 @@
+---
+export const prerender = false
+import AdminLayout from '@layouts/AdminLayout.astro'
+import { getCurrentUser } from '../../../server/auth'
+import { listOrders } from '../../../server/db'
+import { formatTRY, formatDateTime } from '@lib/format'
+
+const me = getCurrentUser(Astro.cookies)
+if (!me) return Astro.redirect('/admin/login')
+
+const all = listOrders()
+const myOrders = all.filter((o) => o.createdBy === me.id)
+
+const totalRevenue = myOrders.reduce((s, o) => s + o.total, 0)
+
+const STATUS_CHIP: Record<string, string> = {
+  received: 'bg-blue-500/15 text-blue-400 border-blue-500/30',
+  in_production: 'bg-amber-500/15 text-amber-400 border-amber-500/30',
+  ready: 'bg-cyan-500/15 text-cyan-400 border-cyan-500/30',
+  delivered: 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30',
+  cancelled: 'bg-red-500/15 text-red-400 border-red-500/30',
+}
+const STATUS_LABEL: Record<string, string> = {
+  received: 'Alındı',
+  in_production: 'Üretimde',
+  ready: 'Hazır',
+  delivered: 'Teslim',
+  cancelled: 'İptal',
+}
+---
+
+<AdminLayout title="Siparişlerim" current="personel-orders">
+  <div class="p-6 md:p-10 max-w-7xl mx-auto">
+    <header class="mb-6 flex items-end justify-between gap-3 flex-wrap">
+      <div>
+        <p class="text-[10px] uppercase tracking-[0.25em] text-[var(--color-primary)] font-bold">{me.displayName}</p>
+        <h1 class="mt-2 font-display text-3xl font-bold tracking-tight">Tüm Siparişlerim</h1>
+        <p class="mt-2 text-sm text-[var(--color-text-soft)]">
+          {myOrders.length} sipariş · Toplam ciro: <span class="text-[var(--color-primary)] font-semibold">{formatTRY(totalRevenue)}</span>
+        </p>
+      </div>
+      <a
+        href="/admin/orders/new"
+        class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold bg-[var(--color-primary)] text-black"
+      >
+        + Yeni Sipariş
+      </a>
+    </header>
+
+    <section class="rounded-2xl bg-[var(--color-surface)] border border-[var(--color-border)]/60 overflow-hidden">
+      {myOrders.length === 0 ? (
+        <div class="p-12 text-center text-[var(--color-text-muted)]">Henüz sipariş yok.</div>
+      ) : (
+        <table class="w-full text-sm">
+          <thead class="text-[10px] uppercase tracking-wider text-[var(--color-text-muted)] font-semibold border-b border-[var(--color-border)]/40">
+            <tr>
+              <th class="px-5 py-3 text-left">Sipariş No</th>
+              <th class="px-5 py-3 text-left">Müşteri</th>
+              <th class="px-5 py-3 text-left">Tarih</th>
+              <th class="px-5 py-3 text-left">Durum</th>
+              <th class="px-5 py-3 text-right">Toplam</th>
+            </tr>
+          </thead>
+          <tbody>
+            {myOrders.map((o) => (
+              <tr class="border-b border-[var(--color-border)]/30 hover:bg-[var(--color-surface-2)]/60">
+                <td class="px-5 py-3">
+                  <a href={`/admin/orders/${o.orderNo}`} class="font-mono text-xs text-[var(--color-primary)] hover:underline">{o.orderNo}</a>
+                </td>
+                <td class="px-5 py-3">
+                  <div class="font-medium">{o.customer.fullName}</div>
+                  <div class="text-[10px] text-[var(--color-text-muted)]">{o.customer.phone}</div>
+                </td>
+                <td class="px-5 py-3 text-xs text-[var(--color-text-muted)] whitespace-nowrap">{formatDateTime(o.createdAt)}</td>
+                <td class="px-5 py-3">
+                  <span class={`px-2 py-0.5 rounded-full text-[10px] font-semibold border ${STATUS_CHIP[o.productionStatus] ?? ''}`}>
+                    {STATUS_LABEL[o.productionStatus] ?? o.productionStatus}
+                  </span>
+                </td>
+                <td class="px-5 py-3 text-right font-semibold tabular-nums">{formatTRY(o.total)}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
+    </section>
+  </div>
+</AdminLayout>

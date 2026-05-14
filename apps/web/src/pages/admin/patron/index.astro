@@ -1,0 +1,6 @@
+---
+export const prerender = false
+// /admin/patron → /admin (patron dashboard mevcut admin index'inde)
+// Login API role-based redirect için bu route'a yönlendiriyor.
+return Astro.redirect('/admin', 302)
+---

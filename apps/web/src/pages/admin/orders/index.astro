@@ -1,11 +1,12 @@
 ---
 export const prerender = false
 import AdminLayout from '@layouts/AdminLayout.astro'
-import { getSession } from '../../../server/auth'
+import { getCurrentUser } from '../../../server/auth'
 import { listOrders, PRODUCTION_TIMELINE, type OrderStatus } from '../../../server/db'
 import { formatTRY, formatDateTime } from '@lib/format'
 
-if (!getSession(Astro.cookies)) return Astro.redirect('/admin/login')
+const me = getCurrentUser(Astro.cookies)
+if (!me) return Astro.redirect('/admin/login')
 
 const params = Astro.url.searchParams
 const filter = params.get('filter') ?? 'all'
@@ -17,8 +18,13 @@ const toStr = params.get('to') ?? ''
 const q = params.get('q') ?? ''
 const sort = params.get('sort') ?? 'date-desc'
 
-// Sadece kesin siparişler — ön talepler "Talepler" sekmesinde
-const all = listOrders().filter((o) => (o.kind ?? 'order') === 'order')
+// Sadece kesin siparişler — quote artık kaldırıldı, defensive filter
+let all = listOrders().filter((o) => (o.kind ?? 'order') === 'order')
+
+// Personel sadece kendi kestiği siparişleri görür
+if (me.role === 'staff') {
+  all = all.filter((o) => o.createdBy === me.id)
+}
 
 // 1) Filtre chip mantığı (önceki davranış korunuyor)
 let filtered = all

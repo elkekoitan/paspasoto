@@ -1,12 +1,14 @@
 ---
 export const prerender = false
 import AdminLayout from '@layouts/AdminLayout.astro'
-import { getSession } from '../../../server/auth'
+import { getCurrentUser } from '../../../server/auth'
 import { listEvents } from '../../../server/integrations/events-log'
 import { listMappings } from '../../../server/integrations/trendyol-mapping'
 import { formatDateTime } from '@lib/format'
 
-if (!getSession(Astro.cookies)) return Astro.redirect('/admin/login')
+const _me = getCurrentUser(Astro.cookies)
+if (!_me) return Astro.redirect('/admin/login')
+if (_me.role !== 'patron') return new Response('Forbidden', { status: 403 })
 
 const events = listEvents(50)
 const trendyolMappings = listMappings('trendyol')

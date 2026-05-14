@@ -1,26 +1,33 @@
 import type { APIRoute } from 'astro'
 import { listOrders, insertOrder, generateOrderNo, generateToken, type Order } from '../../../server/db'
-import { requireAdmin } from '../../../server/auth'
+import { requireAuth, requireRole } from '../../../server/auth'
 
 export const prerender = false
 
-/** GET /api/orders — admin only, tüm siparişler (en yeni önce). */
+/** GET /api/orders — Patron tümünü, personel sadece kendi siparişlerini görür. */
 export const GET: APIRoute = async ({ cookies }) => {
+  let auth
   try {
-    requireAdmin(cookies)
+    auth = requireAuth(cookies)
   } catch (r) {
     return r as Response
   }
-  return new Response(JSON.stringify(listOrders()), {
+  let result = listOrders()
+  // Personel sadece kendi siparişlerini görür
+  if (auth.user.role === 'staff') {
+    result = result.filter((o) => o.createdBy === auth.user.id)
+  }
+  return new Response(JSON.stringify(result), {
     status: 200,
     headers: { 'Content-Type': 'application/json' },
   })
 }
 
-/** POST /api/orders — admin only, yeni sipariş oluştur (KOBİ panelden). */
+/** POST /api/orders — Patron VEYA personel kasası, yeni sipariş oluştur. */
 export const POST: APIRoute = async ({ cookies, request }) => {
+  let auth
   try {
-    requireAdmin(cookies)
+    auth = requireRole(cookies, ['patron', 'staff'])
   } catch (r) {
     return r as Response
   }
@@ -31,6 +38,7 @@ export const POST: APIRoute = async ({ cookies, request }) => {
   const order: Order = {
     orderNo: body.orderNo ?? generateOrderNo(),
     accessToken: generateToken(),
+    channel: 'physical_store',
     customer: body.customer,
     shippingAddress: body.shippingAddress,
     items: body.items ?? [],
@@ -48,13 +56,16 @@ export const POST: APIRoute = async ({ cookies, request }) => {
     internalNote: body.internalNote,
     cargoCompany: body.cargoCompany,
     cargoTrackingNo: body.cargoTrackingNo,
+    // Kasada siparişi kesen kullanıcı bilgisi
+    createdBy: auth.user.id,
+    cashierStaffId: auth.user.id,
     createdAt: now,
     events: [
       {
         status: body.productionStatus ?? 'received',
         at: now,
-        note: 'Sipariş atölyemizde oluşturuldu.',
-        by: 'admin',
+        note: `Sipariş ${auth.user.displayName} tarafından kasada açıldı.`,
+        by: auth.user.username,
       },
     ],
   }

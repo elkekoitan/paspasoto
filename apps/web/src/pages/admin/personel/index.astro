@@ -1,0 +1,144 @@
+---
+export const prerender = false
+import AdminLayout from '@layouts/AdminLayout.astro'
+import { getCurrentUser } from '../../../server/auth'
+import { listOrders } from '../../../server/db'
+import { formatTRY, formatDateTime } from '@lib/format'
+
+const me = getCurrentUser(Astro.cookies)
+if (!me) return Astro.redirect('/admin/login')
+// Patron kendi paneline gitmeli
+if (me.role === 'patron') return Astro.redirect('/admin')
+
+const all = listOrders()
+const myOrders = all.filter((o) => o.createdBy === me.id)
+
+const now = Date.now()
+const day = 24 * 60 * 60 * 1000
+const todayStart = new Date()
+todayStart.setHours(0, 0, 0, 0)
+const todayTs = todayStart.getTime()
+
+const todayOrders = myOrders.filter((o) => o.createdAt >= todayTs)
+const todayRevenue = todayOrders.reduce((s, o) => s + o.total, 0)
+const todayPaid = todayOrders.reduce((s, o) => s + o.paidAmount, 0)
+
+const last7 = myOrders.filter((o) => now - o.createdAt < 7 * day)
+const last30 = myOrders.filter((o) => now - o.createdAt < 30 * day)
+
+const STATUS_CHIP: Record<string, string> = {
+  received: 'bg-blue-500/15 text-blue-400 border-blue-500/30',
+  in_production: 'bg-amber-500/15 text-amber-400 border-amber-500/30',
+  ready: 'bg-cyan-500/15 text-cyan-400 border-cyan-500/30',
+  delivered: 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30',
+  cancelled: 'bg-red-500/15 text-red-400 border-red-500/30',
+}
+const STATUS_LABEL: Record<string, string> = {
+  received: 'Alındı',
+  in_production: 'Üretimde',
+  ready: 'Hazır',
+  delivered: 'Teslim',
+  cancelled: 'İptal',
+}
+---
+
+<AdminLayout title="Personel Paneli" current="personel-dashboard">
+  <div class="p-6 md:p-10 max-w-7xl mx-auto">
+    <header class="flex items-end justify-between gap-4 mb-8 flex-wrap">
+      <div>
+        <p class="text-[10px] uppercase tracking-[0.25em] text-[var(--color-primary)] font-bold">
+          Personel Paneli
+        </p>
+        <h1 class="mt-2 font-display text-3xl font-bold tracking-tight">
+          Hoş geldin, {me.displayName} 👋
+        </h1>
+        <p class="mt-2 text-sm text-[var(--color-text-soft)]">
+          Bugün <span class="text-white font-semibold">{todayOrders.length}</span> sipariş kestin · <span class="text-[var(--color-primary)]">{formatTRY(todayRevenue)}</span> ciro
+        </p>
+      </div>
+      <a
+        href="/admin/orders/new"
+        class="inline-flex items-center gap-2 px-6 py-3 rounded-xl text-sm font-bold bg-[var(--color-primary)] text-black hover:bg-[var(--color-primary)]/90 transition-all hover:scale-105"
+      >
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+        Yeni Sipariş (Kasa)
+      </a>
+    </header>
+
+    {/* Hızlı kasa metrikleri */}
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-10">
+      <div class="p-5 rounded-2xl bg-[var(--color-surface)] border border-[var(--color-border)]/60">
+        <div class="text-[10px] uppercase tracking-[0.2em] text-[var(--color-text-muted)] font-bold">Bugün</div>
+        <div class="mt-2 font-display text-3xl font-bold tabular-nums">{todayOrders.length}</div>
+        <div class="text-[11px] text-[var(--color-text-soft)] mt-0.5">sipariş</div>
+      </div>
+      <div class="p-5 rounded-2xl bg-[var(--color-surface)] border border-[var(--color-border)]/60">
+        <div class="text-[10px] uppercase tracking-[0.2em] text-[var(--color-text-muted)] font-bold">Bugünkü Ciro</div>
+        <div class="mt-2 font-display text-2xl font-bold tabular-nums text-[var(--color-primary)]">{formatTRY(todayRevenue)}</div>
+        <div class="text-[11px] text-[var(--color-text-soft)] mt-0.5">tahsil: {formatTRY(todayPaid)}</div>
+      </div>
+      <div class="p-5 rounded-2xl bg-[var(--color-surface)] border border-[var(--color-border)]/60">
+        <div class="text-[10px] uppercase tracking-[0.2em] text-[var(--color-text-muted)] font-bold">Bu Hafta</div>
+        <div class="mt-2 font-display text-3xl font-bold tabular-nums">{last7.length}</div>
+        <div class="text-[11px] text-[var(--color-text-soft)] mt-0.5">{formatTRY(last7.reduce((s, o) => s + o.total, 0))}</div>
+      </div>
+      <div class="p-5 rounded-2xl bg-[var(--color-surface)] border border-[var(--color-border)]/60">
+        <div class="text-[10px] uppercase tracking-[0.2em] text-[var(--color-text-muted)] font-bold">Bu Ay</div>
+        <div class="mt-2 font-display text-3xl font-bold tabular-nums">{last30.length}</div>
+        <div class="text-[11px] text-[var(--color-text-soft)] mt-0.5">{formatTRY(last30.reduce((s, o) => s + o.total, 0))}</div>
+      </div>
+    </div>
+
+    {/* Son siparişlerim */}
+    <section class="rounded-2xl bg-[var(--color-surface)] border border-[var(--color-border)]/60 overflow-hidden">
+      <div class="flex items-center justify-between p-5 border-b border-[var(--color-border)]/60">
+        <h2 class="font-display text-lg font-semibold">Son Siparişlerim</h2>
+        <a href="/admin/personel/siparislerim" class="text-xs text-[var(--color-text-muted)] hover:text-[var(--color-primary)]">
+          Tümünü gör →
+        </a>
+      </div>
+      {myOrders.length === 0 ? (
+        <div class="p-12 text-center">
+          <p class="text-[var(--color-text-muted)] mb-4">Henüz sipariş kesmedin.</p>
+          <a href="/admin/orders/new" class="text-[var(--color-primary)] hover:underline text-sm">
+            İlk siparişini kes →
+          </a>
+        </div>
+      ) : (
+        <div class="overflow-x-auto">
+          <table class="w-full text-sm">
+            <thead class="text-[10px] uppercase tracking-wider text-[var(--color-text-muted)] font-semibold border-b border-[var(--color-border)]/40">
+              <tr>
+                <th class="px-5 py-3 text-left">Sipariş No</th>
+                <th class="px-5 py-3 text-left">Müşteri</th>
+                <th class="px-5 py-3 text-left">Tarih</th>
+                <th class="px-5 py-3 text-left">Durum</th>
+                <th class="px-5 py-3 text-right">Toplam</th>
+              </tr>
+            </thead>
+            <tbody>
+              {myOrders.slice(0, 10).map((o) => (
+                <tr class="border-b border-[var(--color-border)]/30 hover:bg-[var(--color-surface-2)]/60">
+                  <td class="px-5 py-3">
+                    <a href={`/admin/orders/${o.orderNo}`} class="font-mono text-xs text-[var(--color-primary)] hover:underline">{o.orderNo}</a>
+                  </td>
+                  <td class="px-5 py-3">
+                    <div class="font-medium">{o.customer.fullName}</div>
+                    <div class="text-[10px] text-[var(--color-text-muted)]">{o.customer.phone}</div>
+                  </td>
+                  <td class="px-5 py-3 text-xs text-[var(--color-text-muted)] whitespace-nowrap">{formatDateTime(o.createdAt)}</td>
+                  <td class="px-5 py-3">
+                    <span class={`px-2 py-0.5 rounded-full text-[10px] font-semibold border ${STATUS_CHIP[o.productionStatus] ?? ''}`}>
+                      {STATUS_LABEL[o.productionStatus] ?? o.productionStatus}
+                    </span>
+                  </td>
+                  <td class="px-5 py-3 text-right font-semibold tabular-nums">{formatTRY(o.total)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </section>
+  </div>
+</AdminLayout>
