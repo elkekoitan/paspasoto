@@ -11,7 +11,8 @@ import {
   type SimpleProduct,
   type SimpleCategory,
 } from '../lib/catalog-extra'
-import { getAllProductOverrides, type ProductOverride } from './content'
+import { getAllProductOverrides, listCustomProducts, type ProductOverride } from './content'
+import type { CustomProduct } from '../lib/content-types'
 
 function merge(p: SimpleProduct, o?: ProductOverride): SimpleProduct {
   if (!o) return p
@@ -29,10 +30,30 @@ function merge(p: SimpleProduct, o?: ProductOverride): SimpleProduct {
   }
 }
 
-/** Tüm aktif ürünler (override merged). */
+function customToSimple(cp: CustomProduct): SimpleProduct {
+  return {
+    id: cp.id,
+    slug: cp.slug,
+    category: cp.category,
+    name: cp.name,
+    price: cp.price,
+    oldPrice: cp.oldPrice,
+    image: cp.image,
+    gallery: cp.gallery,
+    shortDescription: cp.shortDescription,
+    description: cp.description,
+    stock: cp.stock,
+    sku: cp.sku,
+    badges: cp.badges,
+    active: cp.active,
+  }
+}
+
+/** Tüm aktif ürünler (override merged + admin tarafından eklenen custom ürünler). */
 export function getMergedProducts(): SimpleProduct[] {
   const overrides = getAllProductOverrides()
-  return STATIC_PRODUCTS.map((p) => merge(p, overrides[p.id]))
+  const customs = listCustomProducts().map(customToSimple)
+  return [...STATIC_PRODUCTS.map((p) => merge(p, overrides[p.id])), ...customs]
 }
 
 export function getMergedProductsByCategory(category: SimpleCategory): SimpleProduct[] {

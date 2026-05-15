@@ -10,9 +10,9 @@
  */
 import { existsSync, mkdirSync, readFileSync, writeFileSync, renameSync } from 'node:fs'
 import { resolve } from 'node:path'
-import type { ProductOverride, SwatchOverride, SwatchType, ContentDB } from '../lib/content-types'
+import type { ProductOverride, SwatchOverride, SwatchType, ContentDB, CustomProduct } from '../lib/content-types'
 
-export type { ProductOverride, SwatchOverride, SwatchType, ContentDB } from '../lib/content-types'
+export type { ProductOverride, SwatchOverride, SwatchType, ContentDB, CustomProduct } from '../lib/content-types'
 
 const DATA_DIR = process.env.DATA_DIR ?? resolve(process.cwd(), '.data')
 const FILE = resolve(DATA_DIR, 'content.json')
@@ -20,6 +20,7 @@ const FILE = resolve(DATA_DIR, 'content.json')
 function emptyDB(): ContentDB {
   return {
     products: {},
+    customProducts: [],
     swatches: { mat: {}, border: {}, heel: {}, logo: {}, emblem: {} },
     meta: { version: 1, updatedAt: Date.now() },
   }
@@ -41,6 +42,7 @@ function read(): ContentDB {
     // legacy uyumluluk — eksik swatch tipleri için boş objeleri ekle
     raw.swatches = { mat: {}, border: {}, heel: {}, logo: {}, emblem: {}, ...raw.swatches }
     raw.products = raw.products ?? {}
+    raw.customProducts = raw.customProducts ?? []
     return raw
   } catch {
     return emptyDB()
@@ -117,4 +119,44 @@ export async function deleteSwatchOverride(type: SwatchType, id: string): Promis
   const db = read()
   if (db.swatches[type]) delete db.swatches[type][id]
   await write(db)
+}
+
+/* -------------------- Custom Products (admin'in eklediği yeni ürünler) -------------------- */
+
+export function listCustomProducts(): CustomProduct[] {
+  return read().customProducts
+}
+
+export async function createCustomProduct(
+  input: Omit<CustomProduct, 'id' | 'createdAt' | 'updatedAt'>,
+): Promise<CustomProduct> {
+  const db = read()
+  const now = Date.now()
+  const product: CustomProduct = {
+    ...input,
+    id: 'cp-' + now.toString(36) + Math.random().toString(36).slice(2, 5),
+    createdAt: now,
+    updatedAt: now,
+  }
+  db.customProducts.push(product)
+  await write(db)
+  return product
+}
+
+export async function updateCustomProduct(id: string, patch: Partial<CustomProduct>): Promise<CustomProduct | null> {
+  const db = read()
+  const idx = db.customProducts.findIndex((p) => p.id === id)
+  if (idx === -1) return null
+  db.customProducts[idx] = { ...db.customProducts[idx], ...patch, id, updatedAt: Date.now() }
+  await write(db)
+  return db.customProducts[idx]
+}
+
+export async function deleteCustomProduct(id: string): Promise<boolean> {
+  const db = read()
+  const before = db.customProducts.length
+  db.customProducts = db.customProducts.filter((p) => p.id !== id)
+  if (db.customProducts.length === before) return false
+  await write(db)
+  return true
 }

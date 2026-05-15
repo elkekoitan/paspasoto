@@ -6,12 +6,18 @@
  *  - Konfigüratör: 4 swatch tipi (mat/border/heel/logo) — her biri için imageUrl override
  */
 import { useState } from 'preact/hooks'
-import type { ContentDB, ProductOverride, SwatchType, SwatchOverride } from '../../lib/content-types'
+import type { ContentDB, ProductOverride, SwatchType, SwatchOverride, CustomProduct } from '../../lib/content-types'
 import type { SimpleProduct } from '../../lib/catalog-extra'
 import { MAT_COLORS, BORDER_COLORS, HEEL_PADS, BRANDS } from '../../lib/catalog'
 import { formatTRY } from '../../lib/format'
 
-type Tab = 'products' | 'swatches'
+type Tab = 'products' | 'custom' | 'swatches'
+const CATEGORY_OPTIONS = [
+  { value: 'screen-protector', label: 'Multimedya Ekran Koruyucu' },
+  { value: 'perfume', label: 'Oto Parfüm' },
+  { value: 'chemical', label: 'Oto Kimya' },
+  { value: 'bag', label: 'Çanta / Organizer' },
+] as const
 
 interface Props {
   initialOverrides: ContentDB
@@ -22,8 +28,13 @@ export default function ContentManager({ initialOverrides, products }: Props) {
   const [tab, setTab] = useState<Tab>('products')
   const [overrides, setOverrides] = useState<ContentDB>(initialOverrides)
   const [search, setSearch] = useState('')
+  const [showAddCustom, setShowAddCustom] = useState(false)
 
-  const filteredProducts = products.filter(
+  // Sadece statik (kod-içi) ürünleri "products" tab'de göster
+  // Custom ürünler ayrı tab'de yönetilir
+  const staticOnly = products.filter((p) => !p.id.toString().startsWith('cp-'))
+
+  const filteredProducts = staticOnly.filter(
     (p) =>
       !search ||
       p.name.toLowerCase().includes(search.toLowerCase()) ||
@@ -33,9 +44,10 @@ export default function ContentManager({ initialOverrides, products }: Props) {
   return (
     <div>
       {/* Tabs */}
-      <div class="flex gap-2 mb-6 border-b border-[var(--color-border)]/60">
+      <div class="flex gap-2 mb-6 border-b border-[var(--color-border)]/60 overflow-x-auto">
         {[
-          { key: 'products', label: '🛍 Basit Ürünler', count: products.length },
+          { key: 'products', label: '🛍 Hazır Ürünler', count: staticOnly.length },
+          { key: 'custom', label: '➕ Eklediklerim', count: overrides.customProducts?.length ?? 0 },
           { key: 'swatches', label: '🎨 Konfigüratör Asseti', count: MAT_COLORS.length + BORDER_COLORS.length + HEEL_PADS.length },
         ].map((t) => (
           <button
@@ -100,6 +112,30 @@ export default function ContentManager({ initialOverrides, products }: Props) {
             />
           ))}
         </div>
+      )}
+
+      {tab === 'custom' && (
+        <CustomProductsTab
+          customProducts={overrides.customProducts ?? []}
+          showAdd={showAddCustom}
+          onToggleAdd={() => setShowAddCustom(!showAddCustom)}
+          onAdded={(p) => {
+            setOverrides((prev) => ({ ...prev, customProducts: [...(prev.customProducts ?? []), p] }))
+            setShowAddCustom(false)
+          }}
+          onUpdated={(p) => {
+            setOverrides((prev) => ({
+              ...prev,
+              customProducts: (prev.customProducts ?? []).map((x) => x.id === p.id ? p : x),
+            }))
+          }}
+          onDeleted={(id) => {
+            setOverrides((prev) => ({
+              ...prev,
+              customProducts: (prev.customProducts ?? []).filter((x) => x.id !== id),
+            }))
+          }}
+        />
       )}
 
       {tab === 'swatches' && (
@@ -298,6 +334,320 @@ function ProductRow({ product, override, onSave, onReset }: ProductRowProps) {
         </div>
       )}
     </div>
+  )
+}
+
+/* ---------------- Custom Products Tab ---------------- */
+
+interface CustomProductsTabProps {
+  customProducts: CustomProduct[]
+  showAdd: boolean
+  onToggleAdd: () => void
+  onAdded: (p: CustomProduct) => void
+  onUpdated: (p: CustomProduct) => void
+  onDeleted: (id: string) => void
+}
+
+function CustomProductsTab({ customProducts, showAdd, onToggleAdd, onAdded, onUpdated, onDeleted }: CustomProductsTabProps) {
+  return (
+    <div>
+      <div class="mb-4 flex items-end justify-between gap-3 flex-wrap">
+        <div class="text-sm text-[var(--color-text-soft)] max-w-2xl">
+          Kod dokunmadan yeni ürün ekleyebilirsiniz. Eklenen ürünler hemen
+          tüm site genelinde (ürün listeleri, carousel, kategori sayfası,
+          ürün detayı) gözükür.
+        </div>
+        <button
+          type="button"
+          onClick={onToggleAdd}
+          class="px-4 py-2.5 rounded-lg bg-[var(--color-primary)] text-black font-bold text-sm hover:opacity-90 whitespace-nowrap"
+        >
+          {showAdd ? '✕ Formu Kapat' : '+ Yeni Ürün Ekle'}
+        </button>
+      </div>
+
+      {showAdd && <CustomProductForm onAdded={onAdded} />}
+
+      {customProducts.length === 0 ? (
+        <div class="text-center py-16 text-[var(--color-text-muted)] rounded-2xl border-2 border-dashed border-[var(--color-border)]/40">
+          Henüz manuel eklenmiş ürün yok.<br />
+          "+ Yeni Ürün Ekle" ile başlayın.
+        </div>
+      ) : (
+        <ul class="space-y-3">
+          {customProducts.map((p) => (
+            <CustomProductRow
+              key={p.id}
+              product={p}
+              onUpdate={async (patch) => {
+                const res = await fetch(`/api/admin/content/custom-products/${p.id}`, {
+                  method: 'PATCH',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify(patch),
+                })
+                if (res.ok) {
+                  const updated = await res.json()
+                  onUpdated(updated)
+                  return true
+                }
+                return false
+              }}
+              onDelete={async () => {
+                if (!confirm(`"${p.name}" ürününü silmek istediğinize emin misiniz?\n\nBu işlem geri alınamaz. Site genelinden hemen kalkar.`)) return
+                const res = await fetch(`/api/admin/content/custom-products/${p.id}`, { method: 'DELETE' })
+                if (res.ok) onDeleted(p.id)
+              }}
+            />
+          ))}
+        </ul>
+      )}
+    </div>
+  )
+}
+
+function CustomProductForm({ onAdded }: { onAdded: (p: CustomProduct) => void }) {
+  const [name, setName] = useState('')
+  const [slug, setSlug] = useState('')
+  const [category, setCategory] = useState<CustomProduct['category']>('perfume')
+  const [price, setPrice] = useState<number>(0)
+  const [oldPrice, setOldPrice] = useState<number | ''>('')
+  const [image, setImage] = useState('')
+  const [shortDescription, setShortDescription] = useState('')
+  const [description, setDescription] = useState('')
+  const [stock, setStock] = useState<number>(10)
+  const [badges, setBadges] = useState<Set<string>>(new Set())
+  const [submitting, setSubmitting] = useState(false)
+  const [err, setErr] = useState<string | null>(null)
+
+  function autoSlug(s: string) {
+    return s
+      .toLowerCase()
+      .replace(/ç/g, 'c').replace(/ğ/g, 'g').replace(/ı/g, 'i')
+      .replace(/ö/g, 'o').replace(/ş/g, 's').replace(/ü/g, 'u')
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-+|-+$/g, '')
+      .slice(0, 50)
+  }
+
+  async function handleSubmit(e: Event) {
+    e.preventDefault()
+    setErr(null)
+    if (!name.trim() || !category) {
+      setErr('Ad ve kategori zorunlu')
+      return
+    }
+    const finalSlug = slug.trim() || autoSlug(name)
+    setSubmitting(true)
+    const res = await fetch('/api/admin/content/custom-products', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        slug: finalSlug,
+        category,
+        name: name.trim(),
+        price,
+        oldPrice: oldPrice === '' ? undefined : Number(oldPrice),
+        image: image.trim(),
+        shortDescription: shortDescription.trim(),
+        description: description.trim(),
+        stock,
+        badges: Array.from(badges),
+        active: true,
+      }),
+    })
+    setSubmitting(false)
+    if (res.ok) {
+      const product = await res.json()
+      onAdded(product)
+      // Reset
+      setName(''); setSlug(''); setPrice(0); setOldPrice(''); setImage('')
+      setShortDescription(''); setDescription(''); setStock(10); setBadges(new Set())
+    } else {
+      const data = await res.json().catch(() => ({}))
+      setErr(data?.error ?? 'Eklenemedi')
+    }
+  }
+
+  function toggleBadge(b: string) {
+    setBadges((prev) => {
+      const next = new Set(prev)
+      if (next.has(b)) next.delete(b)
+      else next.add(b)
+      return next
+    })
+  }
+
+  return (
+    <form onSubmit={handleSubmit} class="rounded-2xl border-2 border-dashed border-[var(--color-primary)]/40 bg-[var(--color-surface)] p-4 md:p-5 mb-5 space-y-3">
+      <h3 class="font-semibold text-base">Yeni Ürün Bilgileri</h3>
+
+      <div class="grid sm:grid-cols-2 gap-3">
+        <Field label="Ürün Adı *">
+          <input type="text" value={name} onInput={(e) => { setName((e.target as HTMLInputElement).value); if (!slug) setSlug(autoSlug((e.target as HTMLInputElement).value)) }} placeholder="örn: Vanilla Premium Parfüm" class={inp} required />
+        </Field>
+        <Field label="Kategori *">
+          <select value={category} onChange={(e) => setCategory((e.target as HTMLSelectElement).value as any)} class={inp}>
+            {CATEGORY_OPTIONS.map((c) => <option value={c.value}>{c.label}</option>)}
+          </select>
+        </Field>
+        <Field label="Slug (URL anahtarı, otomatik üretilir)">
+          <input type="text" value={slug} onInput={(e) => setSlug((e.target as HTMLInputElement).value)} placeholder="vanilla-premium" class={inp} />
+        </Field>
+        <Field label="Fiyat (₺) *">
+          <input type="number" step="0.01" value={price} onInput={(e) => setPrice(parseFloat((e.target as HTMLInputElement).value) || 0)} class={inp} required />
+        </Field>
+        <Field label="İndirim Öncesi Fiyat (opsiyonel — gösterimde üstü çizilir)">
+          <input type="number" step="0.01" value={oldPrice} onInput={(e) => { const v = (e.target as HTMLInputElement).value; setOldPrice(v === '' ? '' : parseFloat(v)) }} class={inp} />
+        </Field>
+        <Field label="Stok (adet) *">
+          <input type="number" value={stock} onInput={(e) => setStock(parseInt((e.target as HTMLInputElement).value) || 0)} class={inp} required />
+        </Field>
+      </div>
+
+      <Field label="Görsel URL (Pexels, Unsplash, Imgur, kendi sunucunuz...)">
+        <div class="flex gap-3">
+          {image && <div class="size-20 rounded-lg overflow-hidden bg-[var(--color-bg)] shrink-0 ring-1 ring-[var(--color-border)]/60"><img src={image} alt="" class="size-full object-cover" onError={(e: any) => e.currentTarget.style.opacity = '0.3'} /></div>}
+          <input type="url" value={image} onInput={(e) => setImage((e.target as HTMLInputElement).value)} placeholder="https://images.pexels.com/..." class={inp} />
+        </div>
+      </Field>
+
+      <Field label="Kısa Açıklama (1-2 cümle, kart üzerinde)">
+        <textarea value={shortDescription} onInput={(e) => setShortDescription((e.target as HTMLTextAreaElement).value)} rows={2} class={`${inp} resize-none`} />
+      </Field>
+
+      <Field label="Tam Açıklama (Markdown — **kalın**, - liste, yeni paragraf için boş satır)">
+        <textarea value={description} onInput={(e) => setDescription((e.target as HTMLTextAreaElement).value)} rows={6} class={`${inp} resize-y font-mono text-xs`} />
+      </Field>
+
+      <div>
+        <div class="text-xs font-medium mb-2 text-[var(--color-text-soft)]">Rozetler (opsiyonel)</div>
+        <div class="flex flex-wrap gap-2">
+          {[
+            { v: 'new', label: '✨ Yeni' },
+            { v: 'best-seller', label: '⭐ Çok Satan' },
+            { v: 'discount', label: '🏷 İndirim' },
+            { v: 'limited', label: 'Sınırlı' },
+            { v: 'premium', label: '👑 Premium' },
+          ].map((b) => (
+            <button
+              key={b.v}
+              type="button"
+              onClick={() => toggleBadge(b.v)}
+              class={[
+                'px-3 py-1.5 rounded-full text-xs font-semibold border transition-colors',
+                badges.has(b.v)
+                  ? 'border-[var(--color-primary)] bg-[var(--color-primary-soft)] text-[var(--color-primary)]'
+                  : 'border-[var(--color-border)] text-[var(--color-text-soft)] hover:text-[var(--color-text)]',
+              ].join(' ')}
+            >
+              {b.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {err && <div class="p-2 rounded-lg bg-red-500/10 border border-red-500/30 text-xs text-red-300">{err}</div>}
+
+      <button type="submit" disabled={submitting || !name.trim()} class="w-full px-5 py-3 rounded-lg bg-[var(--color-primary)] text-black font-bold text-sm disabled:opacity-50">
+        {submitting ? 'Ekleniyor…' : '+ Ürünü Kaydet'}
+      </button>
+    </form>
+  )
+}
+
+function CustomProductRow({ product, onUpdate, onDelete }: { product: CustomProduct; onUpdate: (patch: Partial<CustomProduct>) => Promise<boolean>; onDelete: () => void }) {
+  const [open, setOpen] = useState(false)
+  const [name, setName] = useState(product.name)
+  const [price, setPrice] = useState(product.price)
+  const [stock, setStock] = useState(product.stock)
+  const [image, setImage] = useState(product.image)
+  const [shortDescription, setShortDescription] = useState(product.shortDescription)
+  const [description, setDescription] = useState(product.description)
+  const [active, setActive] = useState(product.active)
+  const [saving, setSaving] = useState(false)
+  const [savedFlash, setSavedFlash] = useState(false)
+
+  async function save() {
+    setSaving(true)
+    const ok = await onUpdate({ name, price, stock, image, shortDescription, description, active })
+    setSaving(false)
+    if (ok) {
+      setSavedFlash(true)
+      setTimeout(() => setSavedFlash(false), 1800)
+    }
+  }
+
+  return (
+    <li class="rounded-2xl border border-[var(--color-border)]/60 bg-[var(--color-surface)] overflow-hidden">
+      <button
+        type="button"
+        onClick={() => setOpen(!open)}
+        class="w-full p-3 md:p-4 flex items-center gap-3 hover:bg-[var(--color-surface-2)] transition-colors text-left"
+      >
+        <div class="size-14 rounded-lg overflow-hidden bg-[var(--color-surface-2)] shrink-0">
+          {image && <img src={image} alt="" class="size-full object-cover" loading="lazy" />}
+        </div>
+        <div class="flex-1 min-w-0">
+          <div class="flex items-center gap-2">
+            <h3 class="font-semibold text-sm truncate">{product.name}</h3>
+            {!product.active && <span class="text-[9px] px-1.5 py-0.5 rounded-full bg-zinc-500/20 text-zinc-400 font-bold uppercase">PASİF</span>}
+          </div>
+          <p class="text-[11px] text-[var(--color-text-muted)] truncate">
+            {product.category} · {product.slug} · {formatTRY(product.price)} · {product.stock} adet
+          </p>
+        </div>
+        <span class="text-xs text-[var(--color-text-muted)]">{open ? '▴' : '▾'}</span>
+      </button>
+
+      {open && (
+        <div class="p-4 md:p-5 pt-2 space-y-3 border-t border-[var(--color-border)]/40 bg-[var(--color-surface-2)]/30">
+          <Field label="Ürün Adı">
+            <input type="text" value={name} onInput={(e) => setName((e.target as HTMLInputElement).value)} class={inp} />
+          </Field>
+          <Field label="Görsel URL">
+            <div class="flex gap-3">
+              {image && <div class="size-20 rounded-lg overflow-hidden bg-[var(--color-bg)] shrink-0 ring-1 ring-[var(--color-border)]/60"><img src={image} alt="" class="size-full object-cover" /></div>}
+              <input type="url" value={image} onInput={(e) => setImage((e.target as HTMLInputElement).value)} class={inp} />
+            </div>
+          </Field>
+          <Field label="Kısa Açıklama">
+            <textarea value={shortDescription} onInput={(e) => setShortDescription((e.target as HTMLTextAreaElement).value)} rows={2} class={`${inp} resize-none`} />
+          </Field>
+          <Field label="Tam Açıklama (Markdown)">
+            <textarea value={description} onInput={(e) => setDescription((e.target as HTMLTextAreaElement).value)} rows={6} class={`${inp} resize-y font-mono text-xs`} />
+          </Field>
+          <div class="grid grid-cols-2 gap-3">
+            <Field label="Fiyat (₺)">
+              <input type="number" step="0.01" value={price} onInput={(e) => setPrice(parseFloat((e.target as HTMLInputElement).value) || 0)} class={inp} />
+            </Field>
+            <Field label="Stok">
+              <input type="number" value={stock} onInput={(e) => setStock(parseInt((e.target as HTMLInputElement).value) || 0)} class={inp} />
+            </Field>
+          </div>
+          <label class="flex items-center gap-2 text-sm">
+            <input type="checkbox" checked={active} onChange={(e) => setActive((e.target as HTMLInputElement).checked)} class="accent-[var(--color-primary)]" />
+            <span>Site genelinde görünür (aktif)</span>
+          </label>
+          <div class="flex items-center justify-between gap-3 pt-2">
+            <button type="button" onClick={onDelete} class="text-xs text-red-400 hover:text-red-300">
+              🗑 Ürünü Tamamen Sil
+            </button>
+            <button
+              type="button"
+              onClick={save}
+              disabled={saving}
+              class={[
+                'px-5 py-2.5 rounded-lg text-sm font-bold transition-colors',
+                savedFlash ? 'bg-emerald-500 text-white' : 'bg-[var(--color-primary)] text-black hover:opacity-90',
+                saving && 'opacity-50',
+              ].join(' ')}
+            >
+              {savedFlash ? '✓ Kaydedildi' : saving ? 'Kaydediliyor…' : '💾 Kaydet'}
+            </button>
+          </div>
+        </div>
+      )}
+    </li>
   )
 }
 

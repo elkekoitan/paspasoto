@@ -3,23 +3,28 @@ import '../styles/globals.css'
 
 interface Props {
   title?: string
-  current?: 'dashboard' | 'orders' | 'new' | 'quotes' | 'stock' | 'icerik' | 'hammadde'
+  current?: 'dashboard' | 'orders' | 'new' | 'quotes' | 'stock' | 'icerik' | 'hammadde' | 'personel' | 'entegrasyonlar'
 }
 const { title = 'Yönetim', current = 'dashboard' } = Astro.props
 
-const NAV = [
-  { key: 'dashboard', href: '/admin', label: 'Gösterge', icon: 'M3 12l9-9 9 9M5 10v10h4v-6h6v6h4V10' },
-  { key: 'quotes', href: '/admin/talepler', label: 'Talepler', icon: 'M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z', badge: 'quotes' as const },
-  { key: 'orders', href: '/admin/orders', label: 'Siparişler', icon: 'M9 11l3 3 8-8M3 12a9 9 0 1 0 18 0 9 9 0 0 0-18 0z' },
-  { key: 'stock', href: '/admin/stok', label: 'Stok', icon: 'M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z M3.27 6.96 12 12.01l8.73-5.05 M12 22.08V12', badge: 'stock' as const },
-  { key: 'icerik', href: '/admin/icerik', label: 'İçerik', icon: 'M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2zM14 3v6h6M16 13H8M16 17H8M10 9H8' },
-  { key: 'hammadde', href: '/admin/hammadde', label: 'Hammadde', icon: 'M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16zM7 8l5 3 5-3M7 12l5 3 5-3' },
-  { key: 'new', href: '/admin/orders/new', label: 'Yeni Sipariş', icon: 'M12 5v14M5 12h14' },
-]
-
-// Talepler badge — bekleyen ön talep sayısı
+import { getCurrentUser } from '../server/auth'
 import { listOrders } from '../server/db'
 import { getCriticalItems } from '../server/stock'
+
+const me = getCurrentUser(Astro.cookies)
+const isPatron = me?.role === 'patron'
+
+const NAV = [
+  { key: 'dashboard', href: '/admin', label: 'Gösterge', icon: 'M3 12l9-9 9 9M5 10v10h4v-6h6v6h4V10', patronOnly: false },
+  { key: 'quotes', href: '/admin/talepler', label: 'Talepler', icon: 'M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z', badge: 'quotes' as const, patronOnly: false },
+  { key: 'orders', href: '/admin/orders', label: 'Siparişler', icon: 'M9 11l3 3 8-8M3 12a9 9 0 1 0 18 0 9 9 0 0 0-18 0z', patronOnly: false },
+  { key: 'stock', href: '/admin/stok', label: 'Stok', icon: 'M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z M3.27 6.96 12 12.01l8.73-5.05 M12 22.08V12', badge: 'stock' as const, patronOnly: true },
+  { key: 'hammadde', href: '/admin/hammadde', label: 'Hammadde', icon: 'M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16zM7 8l5 3 5-3M7 12l5 3 5-3', patronOnly: true },
+  { key: 'icerik', href: '/admin/icerik', label: 'Ürünler', icon: 'M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2zM14 3v6h6M16 13H8M16 17H8M10 9H8', patronOnly: true },
+  { key: 'personel', href: '/admin/patron/personel', label: 'Personel', icon: 'M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2M12 7a4 4 0 1 1-8 0 4 4 0 0 1 8 0M22 21v-2a4 4 0 0 0-3-3.87M18 3.13a4 4 0 0 1 0 7.75', patronOnly: true },
+  { key: 'new', href: '/admin/orders/new', label: 'Yeni Sipariş', icon: 'M12 5v14M5 12h14', patronOnly: false },
+].filter((n) => !n.patronOnly || isPatron)
+
 const allOrders = listOrders()
 const pendingQuotes = allOrders.filter((o) => o.kind === 'quote' && o.productionStatus === 'received').length
 const criticalStockCount = (() => { try { return getCriticalItems().length } catch { return 0 } })()
@@ -258,12 +263,25 @@ const criticalStockCount = (() => { try { return getCriticalItems().length } cat
     {/* MOBILE MENU SHEET — bottom nav 'Menü' butonuna basınca açılır */}
     <div id="adminMenuSheet" class="md:hidden hidden fixed inset-0 z-[55]">
       <div data-close="menu" class="absolute inset-0 bg-black/60 backdrop-blur-sm"></div>
-      <div class="absolute bottom-0 left-0 right-0 bg-[var(--color-surface)] rounded-t-3xl border-t border-[var(--color-border)] p-5 pb-[calc(20px+env(safe-area-inset-bottom))] space-y-2">
+      <div class="absolute bottom-0 left-0 right-0 bg-[var(--color-surface)] rounded-t-3xl border-t border-[var(--color-border)] p-5 pb-[calc(20px+env(safe-area-inset-bottom))] space-y-2 max-h-[80vh] overflow-y-auto">
         <div class="size-12 h-1.5 bg-[var(--color-border)] rounded-full mx-auto mb-3"></div>
         <a href="/admin" class="flex items-center gap-3 px-3 py-3 rounded-xl text-sm font-semibold bg-[var(--color-surface-2)] hover:bg-[var(--color-border)]/40">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12l9-9 9 9M5 10v10h4v-6h6v6h4V10" /></svg>
           Gösterge Paneli (Analiz)
         </a>
+        {isPatron && (
+          <>
+            <a href="/admin/icerik" class="flex items-center gap-3 px-3 py-3 rounded-xl text-sm font-semibold bg-[var(--color-surface-2)] hover:bg-[var(--color-border)]/40">
+              <span>🛍</span> Ürün Yönetimi
+            </a>
+            <a href="/admin/hammadde" class="flex items-center gap-3 px-3 py-3 rounded-xl text-sm font-semibold bg-[var(--color-surface-2)] hover:bg-[var(--color-border)]/40">
+              <span>📦</span> Hammadde Takip
+            </a>
+            <a href="/admin/patron/personel" class="flex items-center gap-3 px-3 py-3 rounded-xl text-sm font-semibold bg-[var(--color-surface-2)] hover:bg-[var(--color-border)]/40">
+              <span>👥</span> Personel Yönetimi
+            </a>
+          </>
+        )}
         <a href="/admin/entegrasyonlar" class="flex items-center gap-3 px-3 py-3 rounded-xl text-sm bg-[var(--color-surface-2)] hover:bg-[var(--color-border)]/40">
           <span>🛒</span> E-Ticaret Entegrasyonları
         </a>
