@@ -11,6 +11,7 @@ import type { SimpleProduct } from '../../lib/catalog-extra'
 import { MAT_COLORS, BORDER_COLORS, HEEL_PADS, BRANDS } from '../../lib/catalog'
 import { formatTRY } from '../../lib/format'
 import ImageUploadField from './ImageUploadField'
+import MultiImageUpload from './MultiImageUpload'
 
 type Tab = 'site' | 'products' | 'custom' | 'swatches'
 const CATEGORY_OPTIONS = [
@@ -215,7 +216,12 @@ interface ProductRowProps {
 
 function ProductRow({ product, override, onSave, onReset }: ProductRowProps) {
   const [open, setOpen] = useState(false)
-  const [image, setImage] = useState(override?.image ?? product.image)
+  // images dizisi = [ana görsel, ...galeri]. İlk eleman product.image, kalanlar product.gallery
+  const initialImages = [
+    override?.image ?? product.image,
+    ...((override?.gallery ?? product.gallery ?? []) as string[]),
+  ].filter(Boolean)
+  const [images, setImages] = useState<string[]>(initialImages)
   const [shortDescription, setShortDescription] = useState(override?.shortDescription ?? product.shortDescription)
   const [description, setDescription] = useState(override?.description ?? product.description)
   const [price, setPrice] = useState<number>(override?.price ?? product.price)
@@ -227,7 +233,14 @@ function ProductRow({ product, override, onSave, onReset }: ProductRowProps) {
 
   async function handleSave() {
     setSaving(true)
-    const ok = await onSave({ image, shortDescription, description, price, stock })
+    const ok = await onSave({
+      image: images[0] ?? '',
+      gallery: images.slice(1),
+      shortDescription,
+      description,
+      price,
+      stock,
+    })
     setSaving(false)
     if (ok) {
       setSavedFlash(true)
@@ -261,14 +274,12 @@ function ProductRow({ product, override, onSave, onReset }: ProductRowProps) {
 
       {open && (
         <div class="p-4 md:p-5 pt-2 space-y-3 border-t border-[var(--color-border)]/40 bg-[var(--color-surface-2)]/30">
-          {/* Görsel — dosya yükle veya URL */}
-          <Field label="Ana Görsel">
-            <ImageUploadField
-              value={image}
-              onChange={setImage}
-              aspect="square"
-              previewSize={88}
-              placeholder="Dosya yükleyin veya URL yapıştırın"
+          {/* Ürün görselleri — max 7 */}
+          <Field label="Ürün Görselleri (max 7 — ilk eleman ana görsel)">
+            <MultiImageUpload
+              images={images}
+              max={7}
+              onChange={setImages}
             />
           </Field>
 
@@ -500,7 +511,7 @@ function CustomProductForm({ onAdded }: { onAdded: (p: CustomProduct) => void })
   const [category, setCategory] = useState<CustomProduct['category']>('perfume')
   const [price, setPrice] = useState<number>(0)
   const [oldPrice, setOldPrice] = useState<number | ''>('')
-  const [image, setImage] = useState('')
+  const [images, setImages] = useState<string[]>([])
   const [shortDescription, setShortDescription] = useState('')
   const [description, setDescription] = useState('')
   const [stock, setStock] = useState<number>(10)
@@ -536,7 +547,8 @@ function CustomProductForm({ onAdded }: { onAdded: (p: CustomProduct) => void })
         name: name.trim(),
         price,
         oldPrice: oldPrice === '' ? undefined : Number(oldPrice),
-        image: image.trim(),
+        image: images[0] ?? '',
+        gallery: images.slice(1),
         shortDescription: shortDescription.trim(),
         description: description.trim(),
         stock,
@@ -549,7 +561,7 @@ function CustomProductForm({ onAdded }: { onAdded: (p: CustomProduct) => void })
       const product = await res.json()
       onAdded(product)
       // Reset
-      setName(''); setSlug(''); setPrice(0); setOldPrice(''); setImage('')
+      setName(''); setSlug(''); setPrice(0); setOldPrice(''); setImages([])
       setShortDescription(''); setDescription(''); setStock(10); setBadges(new Set())
     } else {
       const data = await res.json().catch(() => ({}))
@@ -593,13 +605,8 @@ function CustomProductForm({ onAdded }: { onAdded: (p: CustomProduct) => void })
         </Field>
       </div>
 
-      <Field label="Ürün Görseli">
-        <ImageUploadField
-          value={image}
-          onChange={setImage}
-          aspect="square"
-          previewSize={96}
-        />
+      <Field label="Ürün Görselleri (max 7 — ilk eleman ana görsel)">
+        <MultiImageUpload images={images} max={7} onChange={setImages} />
       </Field>
 
       <Field label="Kısa Açıklama (1-2 cümle, kart üzerinde)">
@@ -651,7 +658,7 @@ function CustomProductRow({ product, onUpdate, onDelete }: { product: CustomProd
   const [name, setName] = useState(product.name)
   const [price, setPrice] = useState(product.price)
   const [stock, setStock] = useState(product.stock)
-  const [image, setImage] = useState(product.image)
+  const [images, setImages] = useState<string[]>([product.image, ...(product.gallery ?? [])].filter(Boolean))
   const [shortDescription, setShortDescription] = useState(product.shortDescription)
   const [description, setDescription] = useState(product.description)
   const [active, setActive] = useState(product.active)
@@ -660,7 +667,16 @@ function CustomProductRow({ product, onUpdate, onDelete }: { product: CustomProd
 
   async function save() {
     setSaving(true)
-    const ok = await onUpdate({ name, price, stock, image, shortDescription, description, active })
+    const ok = await onUpdate({
+      name,
+      price,
+      stock,
+      image: images[0] ?? '',
+      gallery: images.slice(1),
+      shortDescription,
+      description,
+      active,
+    })
     setSaving(false)
     if (ok) {
       setSavedFlash(true)
@@ -675,8 +691,13 @@ function CustomProductRow({ product, onUpdate, onDelete }: { product: CustomProd
         onClick={() => setOpen(!open)}
         class="w-full p-3 md:p-4 flex items-center gap-3 hover:bg-[var(--color-surface-2)] transition-colors text-left"
       >
-        <div class="size-14 rounded-lg overflow-hidden bg-[var(--color-surface-2)] shrink-0">
-          {image && <img src={image} alt="" class="size-full object-cover" loading="lazy" />}
+        <div class="size-14 rounded-lg overflow-hidden bg-[var(--color-surface-2)] shrink-0 relative">
+          {images[0] && <img src={images[0]} alt="" class="size-full object-cover" loading="lazy" />}
+          {images.length > 1 && (
+            <span class="absolute bottom-0.5 right-0.5 px-1 py-0 rounded text-[9px] font-bold bg-black/70 text-white">
+              +{images.length - 1}
+            </span>
+          )}
         </div>
         <div class="flex-1 min-w-0">
           <div class="flex items-center gap-2">
@@ -695,8 +716,8 @@ function CustomProductRow({ product, onUpdate, onDelete }: { product: CustomProd
           <Field label="Ürün Adı">
             <input type="text" value={name} onInput={(e) => setName((e.target as HTMLInputElement).value)} class={inp} />
           </Field>
-          <Field label="Ürün Görseli">
-            <ImageUploadField value={image} onChange={setImage} aspect="square" previewSize={88} />
+          <Field label="Ürün Görselleri (max 7)">
+            <MultiImageUpload images={images} max={7} onChange={setImages} />
           </Field>
           <Field label="Kısa Açıklama">
             <textarea value={shortDescription} onInput={(e) => setShortDescription((e.target as HTMLTextAreaElement).value)} rows={2} class={`${inp} resize-none`} />
