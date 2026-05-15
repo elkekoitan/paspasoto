@@ -19,7 +19,7 @@ const PAYMENT_OPTIONS: Array<{ value: PaymentMethod; label: string; desc: string
   { value: 'havale', label: '🏦 Havale / EFT', desc: 'Banka bilgileri sipariş sonrası iletilir' },
   { value: 'elden-nakit', label: '💵 Dükkânda Nakit', desc: 'Konya atölyemizden teslim alırken nakit' },
   { value: 'elden-kart', label: '💳 Dükkânda Kart (POS)', desc: 'Konya atölyemizden teslim alırken POS' },
-  { value: 'iyzico', label: '💻 Online Kredi Kartı', desc: 'Çok Yakında — iyzico ile güvenli ödeme', disabled: true, badge: 'Yakında' },
+  { value: 'iyzico', label: '💳 Online Kredi Kartı (iyzico)', desc: 'iyzico güvenli ödeme — anında onay, 3D Secure' },
 ]
 
 export default function CheckoutForm() {
@@ -73,6 +73,31 @@ export default function CheckoutForm() {
         throw new Error(msg || 'Sipariş gönderilemedi.')
       }
       const data = await res.json()
+      // iyzico seçildiyse → hosted checkout page'e yönlendir
+      if (paymentMethod === 'iyzico') {
+        const initRes = await fetch('/api/payments/iyzico/init', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ orderNo: data.orderNo }),
+        })
+        if (initRes.ok) {
+          const initData = await initRes.json()
+          if (initData.paymentPageUrl) {
+            clearCart()
+            window.location.href = initData.paymentPageUrl
+            return
+          }
+        }
+        // Hata varsa kullanıcıya bilgilendirme
+        const errMsg = initRes.status === 503
+          ? 'iyzico henüz aktif değil. Lütfen başka bir ödeme yöntemi seçin.'
+          : 'Online ödeme başlatılamadı. Lütfen tekrar deneyin.'
+        setError(errMsg)
+        // Sipariş yine de oluştu — admin manuel ele alır
+        setResult({ orderNo: data.orderNo, accessToken: data.accessToken })
+        clearCart()
+        return
+      }
       setResult({ orderNo: data.orderNo, accessToken: data.accessToken })
       clearCart()
     } catch (err: any) {

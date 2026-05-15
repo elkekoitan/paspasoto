@@ -128,7 +128,14 @@ export type LogoPlacement =
 /** Logo yönlendirmesi — yatay (uzun kenar yatay) veya dikey (uzun kenar dikey) */
 export type LogoOrientation = 'horizontal' | 'vertical'
 /** Topukluk konum tercihi */
-export type HeelPosition = 'driver-only' | 'passenger-only' | 'both' | 'none'
+/** Topukluk seçimi — basit ekle/ekleme.
+ *  'on'  → topukluk eklensin (atölye standart sürücü tarafına koyar)
+ *  'off' → topukluk eklenmesin
+ *
+ *  Backward-compat: eski 'driver-only', 'both', 'passenger-only' değerleri
+ *  okuma sırasında 'on' olarak yorumlanır; 'none' → 'off'.
+ */
+export type HeelPosition = 'on' | 'off' | 'driver-only' | 'passenger-only' | 'both' | 'none'
 
 export type MatLogoConfig = {
   position: MatPosition

@@ -4,6 +4,7 @@ import Header from '@components/layout/Header.astro'
 import BrandStrip from '@components/layout/BrandStrip.astro'
 import Footer from '@components/layout/Footer.astro'
 import MobileBottomNav from '@components/layout/MobileBottomNav.astro'
+import MobileStickyCart from '@components/layout/MobileStickyCart.tsx'
 
 interface Props {
   title?: string
@@ -95,6 +96,7 @@ const ogImageUrl = new URL(ogImage, SITE_URL).toString()
     <div class="hidden md:block"><Footer /></div>
 
     <MobileBottomNav />
+    <MobileStickyCart client:only="preact" />
 
     {/* PWA Install Smart Banner — tepeden kayan otomatik davet (admin sayfaları hariç) */}
     {!Astro.url.pathname.startsWith('/admin') && (

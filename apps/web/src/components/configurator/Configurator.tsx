@@ -90,7 +90,8 @@ export type LogoPlacement =
   | 'bottom-left' | 'bottom-center' | 'bottom-right'
   | 'top' | 'middle' | 'bottom'  // legacy alias
 /** Topukluk konum tercihi */
-export type HeelPosition = 'driver-only' | 'passenger-only' | 'both' | 'none'
+/** Topukluk: ekle ('on') veya ekleme ('off'). Legacy değerler korunur (on='driver-only'|'both', off='none') */
+export type HeelPosition = 'on' | 'off' | 'driver-only' | 'passenger-only' | 'both' | 'none'
 
 /** Logo yönlendirmesi — yatay (default) veya dikey (90° rotated) */
 export type LogoOrientation = 'horizontal' | 'vertical'
@@ -129,7 +130,7 @@ export default function Configurator() {
   const [matColor, setMatColor] = useState<MatColor | null>(MAT_COLORS[0]!)
   const [borderColor, setBorderColor] = useState<BorderColor | null>(BORDER_COLORS[13]!)
   const [heelPad, setHeelPad] = useState<HeelPad | null>(HEEL_PADS[0]!)
-  const [heelPosition, setHeelPosition] = useState<HeelPosition>('driver-only')
+  const [heelPosition, setHeelPosition] = useState<HeelPosition>('on')
   const [logos, setLogos] = useState<MatLogoConfig[]>(
     (['driver', 'passenger', 'leftRear', 'rightRear', 'trunk'] as MatPosition[]).map((p) => ({
       position: p,
@@ -186,8 +187,7 @@ export default function Configurator() {
   const totalPrice = useMemo(() => {
     let total = product?.basePrice ?? 0
     total += heelPad?.pricePremium ?? 0
-    // Topukluk: 'both' = +100₺ (yolcu paspasına ek), 'passenger-only' = +0 (yer değişimi)
-    if (heelPosition === 'both') total += 100
+    // Topukluk eklenmesi standart fiyatta (ek ücret yok)
     // Logo: her aktif (brandSlug != null) pozisyon için +150₺ (premium-leather) / +250₺ (metal-plate)
     const activePositions = positionsFor(product?.parts ?? 0, !!product?.includesTrunk)
     const logoCount = logos.filter(
@@ -229,7 +229,8 @@ export default function Configurator() {
     const activeLogos = logos.filter((l) => activePositions.includes(l.position))
     const logoQty = activeLogos.filter((l) => l.brandSlug !== null).length
     const firstLogoBrand = activeLogos.find((l) => l.brandSlug !== null)?.brandSlug ?? null
-    const heelPassengerLegacy = heelPosition === 'both' || heelPosition === 'passenger-only'
+    // Eski şema legacy field — yeni sade 'on'/'off' ile artık her iki tarafa konmuyor
+    const heelPassengerLegacy = false
 
     const configPayload: Record<string, unknown> = {
       brandSlug: brand.slug, brandName: brand.name,
@@ -1265,33 +1266,32 @@ function HeelPadStep({
         })}
       </div>
 
-      {/* Konum: sürücü / yolcu / ikisi / yok */}
+      {/* Topukluk Ekle / Eklemiyorum — sade 2 seçenek */}
       <div class="mt-6">
-        <div class="text-[10px] uppercase tracking-[0.2em] text-white/50 font-bold mb-2">Topukluk Konumu</div>
+        <div class="text-[10px] uppercase tracking-[0.2em] text-white/50 font-bold mb-2">Topukluk Tercihi</div>
         <div class="grid grid-cols-2 gap-2">
           {([
-            { v: 'driver-only', label: 'Sadece Sürücü', desc: 'Standart', extra: 0 },
-            { v: 'passenger-only', label: 'Sadece Yolcu', desc: 'Yer değiştirir', extra: 0 },
-            { v: 'both', label: 'Her İkisi', desc: '+₺100', extra: 100 },
-            { v: 'none', label: 'İstemiyorum', desc: 'Düz paspas', extra: 0 },
+            { v: 'on', label: '✓ Topukluk Ekle', desc: 'Sürücü paspasına standart' },
+            { v: 'off', label: '✗ Eklemiyorum', desc: 'Düz paspas' },
           ] as const).map((opt) => {
-            const active = heelPosition === opt.v
+            // Legacy değer normalizasyonu: 'driver-only'/'both'/'passenger-only' → 'on'; 'none' → 'off'
+            const normalized: 'on' | 'off' =
+              heelPosition === 'off' || heelPosition === 'none' ? 'off' : 'on'
+            const active = normalized === opt.v
             return (
               <button
                 key={opt.v}
                 type="button"
                 onClick={() => onPositionChange(opt.v)}
                 class={[
-                  'p-3 rounded-xl border text-left transition-all',
+                  'p-4 rounded-xl border text-left transition-all min-h-[56px]',
                   active
                     ? 'border-white bg-white/15 ring-2 ring-white/30'
                     : 'border-white/10 bg-white/5 hover:border-white/30',
                 ].join(' ')}
               >
                 <div class="text-sm font-semibold">{opt.label}</div>
-                <div class={['text-[10px] mt-0.5', opt.extra > 0 ? 'text-amber-400' : 'text-white/50'].join(' ')}>
-                  {opt.desc}
-                </div>
+                <div class="text-[11px] mt-0.5 text-white/60">{opt.desc}</div>
               </button>
             )
           })}
@@ -1557,10 +1557,13 @@ function LogoStep({
 
 /* -------------------- Summary step -------------------- */
 const HEEL_LABEL: Record<HeelPosition, string> = {
-  'driver-only': 'Sadece sürücü',
-  'passenger-only': 'Sadece yolcu',
-  both: 'Sürücü + yolcu',
-  none: 'Topukluk yok',
+  on: 'Eklendi',
+  off: 'Yok',
+  // Legacy
+  'driver-only': 'Eklendi',
+  'passenger-only': 'Eklendi',
+  both: 'Eklendi',
+  none: 'Yok',
 }
 
 function SummaryStep({
@@ -1595,14 +1598,67 @@ function SummaryStep({
       ? `Tüm paspaslar (${activePositions.length})`
       : activeLogos.map((l) => POSITION_LABELS[l.position]).join(', ')
 
+  // Tip uyumu için set slug → silüet seçim
+  const setSlugForPreview = product.slug === 'bagaj-only'
+    ? 'bagaj-only'
+    : product.slug === '4lu-set'
+      ? '4lu-set'
+      : '5li-set'
+
   return (
     <div>
-      <header class="mb-5">
-        <h2 class="font-display text-2xl font-semibold">Paspasınız hazır.</h2>
+      <header class="mb-4">
+        <h2 class="font-display text-2xl md:text-3xl font-semibold">Paspasınız hazır.</h2>
         <p class="mt-2 text-sm text-white/60">
-          Aşağıdaki kombinasyonu onayla, atölyemiz aynı gün üretime başlasın.
+          Aşağıda son haline bakın, beğenirseniz sepete ekleyin.
         </p>
       </header>
+
+      {/* Büyük preview kartı — bitmiş paspas görseli */}
+      <div class="mb-5 rounded-2xl bg-gradient-to-br from-[#1a1a22] to-[#0b0b0f] border border-white/10 overflow-hidden">
+        <div class="aspect-[16/9] relative">
+          <svg
+            class="absolute inset-0 size-full"
+            viewBox="0 0 1600 900"
+            preserveAspectRatio="xMidYMid meet"
+          >
+            <defs>
+              <pattern id="summaryDiamond" x="0" y="0" width="14" height="14" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+                <rect width="14" height="14" fill="transparent" />
+                <line x1="0" y1="7" x2="14" y2="7" stroke="rgba(0,0,0,0.2)" stroke-width="0.8" />
+              </pattern>
+            </defs>
+            {(() => {
+              const shapes = setSlugForPreview === 'bagaj-only'
+                ? [{ x: 400, y: 250, w: 800, h: 400, rx: 30 }]
+                : setSlugForPreview === '4lu-set'
+                  ? [
+                      { x: 200, y: 180, w: 520, h: 280, rx: 24 },
+                      { x: 880, y: 180, w: 520, h: 280, rx: 24 },
+                      { x: 280, y: 500, w: 440, h: 220, rx: 20 },
+                      { x: 880, y: 500, w: 440, h: 220, rx: 20 },
+                    ]
+                  : [
+                      { x: 130, y: 140, w: 480, h: 240, rx: 24 },
+                      { x: 990, y: 140, w: 480, h: 240, rx: 24 },
+                      { x: 200, y: 410, w: 410, h: 200, rx: 20 },
+                      { x: 990, y: 410, w: 410, h: 200, rx: 20 },
+                      { x: 480, y: 640, w: 640, h: 200, rx: 20 },
+                    ]
+              return shapes.map((s, idx) => (
+                <g key={idx}>
+                  <rect x={s.x} y={s.y} width={s.w} height={s.h} rx={s.rx} ry={s.rx} fill={matColor.hex} />
+                  <rect x={s.x} y={s.y} width={s.w} height={s.h} rx={s.rx} ry={s.rx} fill="url(#summaryDiamond)" />
+                  <rect x={s.x} y={s.y} width={s.w} height={s.h} rx={s.rx} ry={s.rx} fill="none" stroke={borderColor.hex} stroke-width="14" />
+                </g>
+              ))
+            })()}
+          </svg>
+          <div class="absolute top-3 left-3 px-2.5 py-1 rounded-full bg-black/60 backdrop-blur-md text-[10px] uppercase tracking-wider font-bold text-white/90">
+            ✓ Tasarımınız hazır
+          </div>
+        </div>
+      </div>
 
       <dl class="space-y-2 text-sm">
         <Row label="Araç" value={`${brand.name} ${model.name} (${model.chassisCode}, ${model.yearStart}-${model.yearEnd})`} />
@@ -1611,8 +1667,8 @@ function SummaryStep({
         <Row label="Kenarlık" value={borderColor.name} swatchUrl={borderColor.swatchUrl} />
         <Row
           label="Topukluk"
-          value={`${heelPad.name} · ${HEEL_LABEL[heelPosition]}`}
-          swatchUrl={heelPad.swatchUrl}
+          value={heelPosition === 'off' || heelPosition === 'none' ? 'Eklenmedi' : `${heelPad.name} · Eklendi`}
+          swatchUrl={heelPosition === 'off' || heelPosition === 'none' ? undefined : heelPad.swatchUrl}
         />
         <Row label="Amblem" value={logoSummary} />
       </dl>
@@ -1626,7 +1682,7 @@ function SummaryStep({
         {[
           { icon: '🛡️', label: '2 Yıl Garanti', sub: 'Üretici güvencesi' },
           { icon: '🚚', label: 'Kargo Dahil', sub: 'Tüm Türkiye' },
-          { icon: '⏱️', label: '5–7 İş Günü', sub: 'Aynı gün üretim' },
+          { icon: '⏱️', label: '2–3 İş Günü', sub: 'Aynı gün üretim' },
           { icon: '↩️', label: '14 Gün İade', sub: 'Beğenmezsen iade' },
         ].map((b) => (
           <article class="rounded-xl border border-white/10 bg-white/5 p-2.5 text-center">
@@ -1650,9 +1706,10 @@ function SummaryStep({
         <button
           type="button"
           onClick={onAddToCart}
-          class="px-6 py-3.5 rounded-xl text-sm font-semibold bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] text-[var(--color-bg)] transition-all hover:shadow-[var(--shadow-glow)] whitespace-nowrap"
+          class="px-7 py-4 min-h-[60px] rounded-xl text-base font-bold bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] text-[var(--color-bg)] transition-all hover:shadow-[var(--shadow-glow)] hover:scale-[1.02] whitespace-nowrap inline-flex items-center gap-2"
         >
-          Teklif İste
+          🛒 Sepete Ekle
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
         </button>
       </div>
 
@@ -1669,8 +1726,8 @@ function SummaryStep({
             { step: '1', label: 'Onay', sub: 'Bugün', dot: 'bg-[var(--color-primary)]' },
             { step: '2', label: 'Üretim', sub: 'Aynı gün', dot: 'bg-white/30' },
             { step: '3', label: 'Kalite', sub: '3. gün', dot: 'bg-white/30' },
-            { step: '4', label: 'Kargo', sub: '5. gün', dot: 'bg-white/30' },
-            { step: '5', label: 'Teslim', sub: '7. gün', dot: 'bg-white/30' },
+            { step: '4', label: 'Kargo', sub: '3. gün', dot: 'bg-white/30' },
+            { step: '5', label: 'Teslim', sub: '4-5. gün', dot: 'bg-white/30' },
           ].map((s, i, arr) => (
             <li class="relative">
               {i < arr.length - 1 && (
