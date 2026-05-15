@@ -1,23 +1,18 @@
 /**
  * CheckoutForm — Sepet + adres + ödeme yöntemi → /api/orders/checkout
  */
-import { useState } from 'preact/hooks'
+import { useMemo, useState } from 'preact/hooks'
 import { useStore } from '@nanostores/preact'
 import { cartStore, cartTotal, clearCart } from '../../lib/cart'
 import { formatTRY } from '../../lib/format'
 import AddressAutocomplete from './AddressAutocomplete'
+import { TR_PROVINCES, getDistricts } from '../../lib/tr-locations'
 
 // Astro PUBLIC_ env değişkenleri build sırasında inject edilir.
 // (Yoksa undefined kalır → autocomplete fallback'e düşer.)
 const GMAPS_API_KEY =
   // @ts-ignore — import.meta.env Astro tarafında PUBLIC_ prefix'iyle expose edilir
   (import.meta as any).env?.PUBLIC_GOOGLE_MAPS_API_KEY as string | undefined
-
-const TR_CITIES = [
-  'Adana', 'Ankara', 'Antalya', 'Balıkesir', 'Bursa', 'Denizli', 'Diyarbakır', 'Erzurum',
-  'Eskişehir', 'Gaziantep', 'Hatay', 'İstanbul', 'İzmir', 'Kayseri', 'Kocaeli', 'Konya',
-  'Malatya', 'Manisa', 'Mersin', 'Sakarya', 'Samsun', 'Şanlıurfa', 'Trabzon', 'Diğer',
-]
 
 type PaymentMethod = 'elden-nakit' | 'elden-kart' | 'havale' | 'kapida' | 'iyzico'
 
@@ -46,6 +41,11 @@ export default function CheckoutForm() {
   const [submitting, setSubmitting] = useState(false)
   const [result, setResult] = useState<{ orderNo: string; accessToken: string } | null>(null)
   const [error, setError] = useState('')
+  const [acceptDistance, setAcceptDistance] = useState(false)
+  const [acceptPreInfo, setAcceptPreInfo] = useState(false)
+
+  // İl değişince ilçe listesi yeniden hesaplanır
+  const districts = useMemo(() => getDistricts(city), [city])
 
   async function handleSubmit(e: Event) {
     e.preventDefault()
@@ -56,6 +56,10 @@ export default function CheckoutForm() {
     }
     if (!fullName.trim() || !phone.trim() || !city.trim() || !district.trim() || !addressLine.trim()) {
       setError('Lütfen ad, telefon ve adres bilgilerini eksiksiz doldurun.')
+      return
+    }
+    if (!acceptDistance || !acceptPreInfo) {
+      setError('Devam etmek için Mesafeli Satış Sözleşmesi ve Ön Bilgilendirme Formu\'nu okuyup onaylamanız gerekir.')
       return
     }
     setSubmitting(true)
@@ -190,13 +194,32 @@ export default function CheckoutForm() {
           <h2 class="font-display text-lg font-semibold mb-4">Teslimat Adresi</h2>
           <div class="grid sm:grid-cols-2 gap-3">
             <Field label="İl *">
-              <select value={city} onChange={(e) => setCity((e.target as HTMLSelectElement).value)} class={inpClass} required>
+              <select
+                value={city}
+                onChange={(e) => {
+                  const next = (e.target as HTMLSelectElement).value
+                  setCity(next)
+                  // İl değişince ilçe sıfırlanır
+                  setDistrict('')
+                }}
+                class={inpClass}
+                required
+              >
                 <option value="">İl seçin...</option>
-                {TR_CITIES.map((c) => <option value={c}>{c}</option>)}
+                {TR_PROVINCES.map((c) => <option value={c}>{c}</option>)}
               </select>
             </Field>
             <Field label="İlçe *">
-              <input type="text" value={district} onInput={(e) => setDistrict((e.target as HTMLInputElement).value)} class={inpClass} required />
+              <select
+                value={district}
+                onChange={(e) => setDistrict((e.target as HTMLSelectElement).value)}
+                class={inpClass}
+                required
+                disabled={!city}
+              >
+                <option value="">{city ? 'İlçe seçin...' : 'Önce il seçin'}</option>
+                {districts.map((d) => <option value={d}>{d}</option>)}
+              </select>
             </Field>
             <Field label="Adres *" class="sm:col-span-2">
               <AddressAutocomplete
@@ -266,6 +289,43 @@ export default function CheckoutForm() {
                 </div>
               </label>
             ))}
+          </div>
+        </section>
+
+        {/* Yasal onaylar — iyzico zorunluluğu, mesafeli satış kanunu */}
+        <section class="rounded-2xl border border-[var(--color-border)]/60 bg-[var(--color-surface)] p-5 md:p-6">
+          <h2 class="font-display text-lg font-semibold mb-4">Yasal Onaylar</h2>
+          <div class="space-y-3">
+            <label class="flex items-start gap-3 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={acceptPreInfo}
+                onChange={(e) => setAcceptPreInfo((e.target as HTMLInputElement).checked)}
+                class="mt-1 size-4 accent-[var(--color-primary)] shrink-0"
+              />
+              <span class="text-sm leading-relaxed">
+                <a href="/yasal/on-bilgilendirme" target="_blank" rel="noopener" class="text-[var(--color-primary)] hover:underline font-semibold">
+                  Ön Bilgilendirme Formu
+                </a>'nu okudum, anladım ve onaylıyorum.
+              </span>
+            </label>
+            <label class="flex items-start gap-3 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={acceptDistance}
+                onChange={(e) => setAcceptDistance((e.target as HTMLInputElement).checked)}
+                class="mt-1 size-4 accent-[var(--color-primary)] shrink-0"
+              />
+              <span class="text-sm leading-relaxed">
+                <a href="/yasal/mesafeli-satis" target="_blank" rel="noopener" class="text-[var(--color-primary)] hover:underline font-semibold">
+                  Mesafeli Satış Sözleşmesi
+                </a>'ni okudum, kabul ediyorum. (14 gün cayma hakkım saklıdır.)
+              </span>
+            </label>
+            <p class="text-[11px] text-[var(--color-text-muted)] mt-2 pl-7">
+              Kişisel verileriniz <a href="/yasal/kvkk" target="_blank" rel="noopener" class="underline hover:text-[var(--color-primary)]">KVKK Aydınlatma Metni</a>
+              {' '}kapsamında işlenmektedir. <a href="/yasal/gizlilik" target="_blank" rel="noopener" class="underline hover:text-[var(--color-primary)]">Gizlilik Politikası</a>.
+            </p>
           </div>
         </section>
 

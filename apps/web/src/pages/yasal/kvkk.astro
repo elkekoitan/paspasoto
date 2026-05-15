@@ -1,0 +1,89 @@
+---
+import Legal from '@layouts/Legal.astro'
+---
+
+<Legal title="KVKK Aydınlatma Metni">
+  <p>
+    Bülent Aksu — Carmat ("Şirket", "biz") olarak, kişisel verilerinizin güvenliğine önem veriyoruz.
+    İşbu Aydınlatma Metni, <strong>6698 sayılı Kişisel Verilerin Korunması Kanunu</strong> ("KVKK")
+    kapsamında, veri sorumlusu sıfatıyla kişisel verilerinizi nasıl işlediğimiz hakkında sizi
+    bilgilendirmek amacıyla hazırlanmıştır.
+  </p>
+
+  <h2>1. Veri Sorumlusu</h2>
+  <ul>
+    <li><strong>Ünvan:</strong> Bülent Aksu — Carmat</li>
+    <li><strong>Adres:</strong> Fevzi Çakmak Mah. 10733. Sk. No: 1, Karatay / Konya</li>
+    <li><strong>İletişim:</strong> destek@carmat.com.tr · +90 544 710 81 15</li>
+  </ul>
+
+  <h2>2. İşlenen Kişisel Veriler</h2>
+  <p>Carmat tarafından işlenen kişisel veri kategorileri:</p>
+  <ul>
+    <li><strong>Kimlik:</strong> Ad, soyad.</li>
+    <li><strong>İletişim:</strong> Telefon, e-posta, teslimat adresi (il, ilçe, mahalle, sokak).</li>
+    <li><strong>Konum:</strong> Sipariş sırasında haritadan seçilirse adres koordinatı (lat/lng).</li>
+    <li><strong>Müşteri İşlem:</strong> Sipariş numarası, ürün bilgileri, sipariş tutarı, ödeme şekli,
+      sipariş geçmişi.</li>
+    <li><strong>İşlem Güvenliği:</strong> IP adresi, tarayıcı türü, çerez verileri, oturum bilgileri.</li>
+    <li><strong>Ödeme:</strong> Ödeme yöntemi bilgisi (kart numarası tarafımızda saklanmaz; iyzico tarafından
+      PCI-DSS standartlarında işlenir).</li>
+  </ul>
+
+  <h2>3. İşleme Amaçları ve Hukuki Sebep</h2>
+  <table class="w-full text-sm my-4 border-collapse">
+    <thead>
+      <tr class="border-b border-[var(--color-border)]">
+        <th class="text-left py-2 font-semibold">Amaç</th>
+        <th class="text-left py-2 font-semibold">Hukuki Sebep (KVKK m.5)</th>
+      </tr>
+    </thead>
+    <tbody class="text-[var(--color-text-soft)]">
+      <tr class="border-b border-[var(--color-border)]/30"><td class="py-2">Sipariş alma, üretim, teslimat</td><td class="py-2">Sözleşmenin kurulması ve ifası</td></tr>
+      <tr class="border-b border-[var(--color-border)]/30"><td class="py-2">Ödeme tahsilatı</td><td class="py-2">Sözleşmenin ifası, hukuki yükümlülük</td></tr>
+      <tr class="border-b border-[var(--color-border)]/30"><td class="py-2">Fatura, muhasebe, vergi</td><td class="py-2">Hukuki yükümlülük</td></tr>
+      <tr class="border-b border-[var(--color-border)]/30"><td class="py-2">Müşteri hizmetleri, şikayet</td><td class="py-2">Meşru menfaat</td></tr>
+      <tr class="border-b border-[var(--color-border)]/30"><td class="py-2">Ürün/kampanya bilgilendirmesi</td><td class="py-2">Açık rıza (opt-in)</td></tr>
+      <tr><td class="py-2">Bilgi güvenliği, dolandırıcılık</td><td class="py-2">Meşru menfaat</td></tr>
+    </tbody>
+  </table>
+
+  <h2>4. Verilerin Aktarıldığı Taraflar</h2>
+  <ul>
+    <li><strong>Kargo şirketleri</strong> (Yurtiçi, Aras, MNG, Sürat, PTT veya Kargonomi gateway) — sevkiyat için.</li>
+    <li><strong>Ödeme kuruluşu:</strong> iyzico (Iyzi Ödeme ve Elektronik Para Hizmetleri A.Ş.) — kart bilgisi
+      bizim tarafımıza ulaşmaz; doğrudan iyzico'da işlenir.</li>
+    <li><strong>Muhasebe / mali müşavir</strong> — yasal yükümlülükler.</li>
+    <li><strong>Sunucu sağlayıcısı</strong> (Rabisu Hosting, Türkiye) — sitenin barındırılması.</li>
+    <li><strong>Yetkili kamu kurum ve kuruluşları</strong> — yasal talep halinde.</li>
+  </ul>
+  <p>Yurt dışına veri aktarımı yapılmamaktadır. Google Maps Places API (adres autocomplete) kullanımı sırasında
+  yazdığınız metin Google'a sorgu olarak gönderilir; bu sorgu Google'ın gizlilik politikası kapsamındadır.</p>
+
+  <h2>5. Saklama Süresi</h2>
+  <ul>
+    <li>Sipariş ve fatura verileri: <strong>10 yıl</strong> (Vergi Usul Kanunu).</li>
+    <li>Müşteri hesap bilgileri: hesap aktif olduğu sürece + kapanma sonrası 3 yıl.</li>
+    <li>İletişim/bülten kayıtları: rıza iptal edilene kadar.</li>
+    <li>Log/güvenlik kayıtları: 2 yıl.</li>
+  </ul>
+
+  <h2>6. KVKK Madde 11 — Haklarınız</h2>
+  <p>İlgili kişi olarak Şirket'e başvurarak aşağıdaki haklarınızı kullanabilirsiniz:</p>
+  <ul>
+    <li>Verilerinizin işlenip işlenmediğini öğrenme</li>
+    <li>İşleme amaçlarını ve verilerin amacına uygun kullanılıp kullanılmadığını öğrenme</li>
+    <li>Aktarıldığı üçüncü kişileri öğrenme</li>
+    <li>Eksik/yanlış işlenmişse düzeltilmesini isteme</li>
+    <li>KVKK m.7'deki şartlar dahilinde silinmesini/yok edilmesini isteme</li>
+    <li>Otomatik analize itiraz etme</li>
+    <li>Kanuna aykırı işleme nedeniyle zarara uğramışsanız tazminat talep etme</li>
+  </ul>
+
+  <h2>7. Başvuru</h2>
+  <p>
+    Yukarıdaki haklarınızı kullanmak için <a href="mailto:destek@carmat.com.tr">destek@carmat.com.tr</a>
+    adresine yazılı veya kayıtlı elektronik posta ile başvurabilirsiniz. Başvurunuz en geç <strong>30 gün</strong>
+    içinde yanıtlanır.
+  </p>
+</Legal>

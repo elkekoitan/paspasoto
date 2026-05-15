@@ -1,0 +1,61 @@
+---
+/**
+ * CookieConsent — KVKK/ePrivacy uyumlu basit çerez bildirim banner'ı.
+ *
+ * LocalStorage'da 'cmt_cookie_consent' = 'accepted' veya 'declined' tutar.
+ * Yanıt verilene kadar banner görünür.
+ * Sadece HTML + küçük inline JS — preact ihtiyacı yok.
+ */
+---
+
+<div
+  id="cookie-consent"
+  class="fixed inset-x-0 bottom-0 z-[60] hidden p-3 md:p-4"
+  role="dialog"
+  aria-live="polite"
+  aria-label="Çerez Bildirim Bandı"
+>
+  <div class="max-w-5xl mx-auto rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)]/95 backdrop-blur-md shadow-2xl p-4 md:p-5 grid md:grid-cols-[1fr_auto] gap-3 md:gap-5 items-center">
+    <div class="text-sm leading-relaxed text-[var(--color-text-soft)]">
+      <strong class="text-[var(--color-text)]">🍪 Bu site çerez kullanır.</strong>
+      Sepet, oturum ve site performansı için zorunlu çerezleri her zaman kullanırız.
+      İşlevsellik ve analiz çerezleri için onayınızı rica ederiz.
+      Detay için <a href="/yasal/cerez" class="text-[var(--color-primary)] underline">Çerez Politikası</a>.
+    </div>
+    <div class="flex flex-wrap gap-2 justify-end">
+      <button
+        type="button"
+        id="cookie-decline"
+        class="px-4 py-2 rounded-lg text-xs font-medium border border-[var(--color-border)] hover:bg-[var(--color-surface-2)]"
+      >
+        Sadece Zorunlular
+      </button>
+      <button
+        type="button"
+        id="cookie-accept"
+        class="px-4 py-2 rounded-lg text-xs font-semibold bg-[var(--color-primary)] text-black hover:opacity-90"
+      >
+        Tümünü Kabul Et
+      </button>
+    </div>
+  </div>
+</div>
+
+<script is:inline>
+  (function () {
+    var KEY = 'cmt_cookie_consent'
+    var el = document.getElementById('cookie-consent')
+    if (!el) return
+    try {
+      var v = localStorage.getItem(KEY)
+      if (v === 'accepted' || v === 'declined') return // Zaten karar verilmiş
+    } catch (_) {}
+    el.classList.remove('hidden')
+    function set(val) {
+      try { localStorage.setItem(KEY, val) } catch (_) {}
+      el.classList.add('hidden')
+    }
+    document.getElementById('cookie-accept').addEventListener('click', function () { set('accepted') })
+    document.getElementById('cookie-decline').addEventListener('click', function () { set('declined') })
+  })()
+</script>

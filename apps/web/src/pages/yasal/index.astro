@@ -1,0 +1,36 @@
+---
+import Base from '@layouts/Base.astro'
+
+const docs = [
+  { href: '/yasal/mesafeli-satis', title: 'Mesafeli Satış Sözleşmesi', desc: 'Online sipariş sürecini düzenleyen sözleşme.' },
+  { href: '/yasal/on-bilgilendirme', title: 'Ön Bilgilendirme Formu', desc: 'Sipariş öncesi bilgilendirme — yasal zorunluluk.' },
+  { href: '/yasal/iade-cayma', title: 'İade ve Cayma Hakkı', desc: '14 gün cayma hakkı ve iade prosedürü.' },
+  { href: '/yasal/kvkk', title: 'KVKK Aydınlatma Metni', desc: 'Kişisel verilerin korunması — Aydınlatma Yükümlülüğü.' },
+  { href: '/yasal/gizlilik', title: 'Gizlilik Politikası', desc: 'Verilerinizi nasıl topluyor, saklıyor, kullanıyoruz.' },
+  { href: '/yasal/cerez', title: 'Çerez Politikası', desc: 'Sitede kullanılan çerezler ve tercih yönetimi.' },
+]
+---
+
+<Base title="Yasal Bilgilendirme | Carmat" description="Mesafeli satış, KVKK, gizlilik, çerez, iade politikaları">
+  <section class="container-page py-12 md:py-16 max-w-3xl">
+    <header class="mb-10">
+      <h1 class="font-display text-3xl md:text-4xl font-bold tracking-tight">Yasal Bilgilendirme</h1>
+      <p class="mt-3 text-[var(--color-text-soft)]">
+        Carmat (Bülent Aksu) tarafından işletilen carmat.com.tr sitesinin tüm yasal metinleri.
+      </p>
+    </header>
+    <ul class="space-y-3">
+      {docs.map((d) => (
+        <li>
+          <a
+            href={d.href}
+            class="block p-4 rounded-2xl border border-[var(--color-border)]/60 bg-[var(--color-surface)] hover:border-[var(--color-primary)]/60 hover:bg-[var(--color-surface-2)] transition-colors"
+          >
+            <div class="font-semibold text-base">{d.title}</div>
+            <div class="text-sm text-[var(--color-text-muted)] mt-0.5">{d.desc}</div>
+          </a>
+        </li>
+      ))}
+    </ul>
+  </section>
+</Base>

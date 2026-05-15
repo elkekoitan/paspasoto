@@ -1,0 +1,27 @@
+---
+import Base from './Base.astro'
+interface Props {
+  title: string
+  updated?: string
+}
+const { title, updated = '2026-05-15' } = Astro.props
+---
+
+<Base title={`${title} | Carmat`} description={`Carmat ${title} - yasal metin`}>
+  <section class="container-page py-12 md:py-16 max-w-3xl">
+    <nav class="text-xs text-[var(--color-text-muted)] mb-4">
+      <a href="/" class="hover:text-[var(--color-primary)]">Ana sayfa</a>
+      <span class="mx-2">/</span>
+      <a href="/yasal" class="hover:text-[var(--color-primary)]">Yasal</a>
+      <span class="mx-2">/</span>
+      <span>{title}</span>
+    </nav>
+    <header class="mb-8 pb-6 border-b border-[var(--color-border)]/60">
+      <h1 class="font-display text-3xl md:text-4xl font-bold tracking-tight">{title}</h1>
+      <p class="mt-2 text-xs text-[var(--color-text-muted)]">Son güncelleme: {updated}</p>
+    </header>
+    <article class="prose prose-invert max-w-none space-y-4 leading-relaxed text-[var(--color-text-soft)] [&_h2]:font-display [&_h2]:text-xl [&_h2]:font-semibold [&_h2]:mt-8 [&_h2]:mb-3 [&_h2]:text-[var(--color-text)] [&_h3]:font-semibold [&_h3]:mt-6 [&_h3]:mb-2 [&_h3]:text-[var(--color-text)] [&_ul]:list-disc [&_ul]:pl-6 [&_ul]:space-y-1.5 [&_ol]:list-decimal [&_ol]:pl-6 [&_ol]:space-y-1.5 [&_strong]:text-[var(--color-text)] [&_a]:text-[var(--color-primary)] [&_a]:underline">
+      <slot />
+    </article>
+  </section>
+</Base>

@@ -28,10 +28,12 @@ const COLS = [
   {
     title: 'Yasal',
     links: [
-      { href: '/kvkk-aydinlatma', label: 'KVKK Aydınlatma' },
-      { href: '/gizlilik-politikasi', label: 'Gizlilik Politikası' },
-      { href: '/mesafeli-satis-sozlesmesi', label: 'Mesafeli Satış Sözleşmesi' },
-      { href: '/cerez-politikasi', label: 'Çerez Politikası' },
+      { href: '/yasal/mesafeli-satis', label: 'Mesafeli Satış Sözleşmesi' },
+      { href: '/yasal/on-bilgilendirme', label: 'Ön Bilgilendirme Formu' },
+      { href: '/yasal/iade-cayma', label: 'İade ve Cayma Hakkı' },
+      { href: '/yasal/kvkk', label: 'KVKK Aydınlatma' },
+      { href: '/yasal/gizlilik', label: 'Gizlilik Politikası' },
+      { href: '/yasal/cerez', label: 'Çerez Politikası' },
     ],
   },
 ]
@@ -110,14 +112,21 @@ const year = new Date().getFullYear()
       }
     </div>
 
-    <div class="mt-12 pt-6 border-t border-[var(--color-border)]/60 flex flex-col sm:flex-row justify-between gap-3 text-xs text-[var(--color-text-muted)]">
-      <p>© {year} Carmat — Tüm hakları saklıdır.</p>
-      <a
-        href="https://maps.google.com/?q=Fevzi+%C3%87akmak+Mah.+10733.+Sk.+No+1+Karatay+Konya"
-        target="_blank"
-        rel="noopener"
-        class="hover:text-[var(--color-primary)]"
-      >Fevzi Çakmak Mah. 10733. Sk. No: 1 · Karatay / Konya</a>
+    <div class="mt-12 pt-6 border-t border-[var(--color-border)]/60 grid gap-3 text-xs text-[var(--color-text-muted)]">
+      <div class="flex flex-col sm:flex-row justify-between gap-3">
+        <p>© {year} Carmat — Tüm hakları saklıdır.</p>
+        <a
+          href="https://maps.google.com/?q=Fevzi+%C3%87akmak+Mah.+10733.+Sk.+No+1+Karatay+Konya"
+          target="_blank"
+          rel="noopener"
+          class="hover:text-[var(--color-primary)]"
+        >Fevzi Çakmak Mah. 10733. Sk. No: 1 · Karatay / Konya</a>
+      </div>
+      <div class="flex flex-wrap gap-x-4 gap-y-1 leading-relaxed">
+        <span><strong class="text-[var(--color-text-soft)]">Ünvan:</strong> Bülent Aksu — Carmat</span>
+        <span><strong class="text-[var(--color-text-soft)]">Tel:</strong> +90 544 710 81 15</span>
+        <span><strong class="text-[var(--color-text-soft)]">E-posta:</strong> destek@carmat.com.tr</span>
+      </div>
     </div>
   </div>
 </footer>

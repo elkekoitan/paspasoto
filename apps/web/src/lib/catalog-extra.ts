@@ -1035,36 +1035,42 @@ export function getProductById(id: string): SimpleProduct | null {
   return ALL_SIMPLE_PRODUCTS.find((p) => p.id === id) ?? null
 }
 
-/** Kategori meta — UI için (icon, başlık, alt başlık) */
+/** Kategori meta — UI için (icon, başlık, alt başlık, görsel) */
 export const CATEGORY_META: Record<SimpleCategory, {
   name: string
   description: string
   emoji: string
   href: string
+  /** Kategori showcase'inde kullanılan büyük foto (Pexels CDN). */
+  image: string
 }> = {
   'screen-protector': {
     name: 'Multimedya Ekran Koruyucu',
     description: '9H temperli cam ile multimedya, navigasyon ve gösterge panel ekranlarınızı koruyun',
     emoji: '📱',
     href: '/urunler/ekran-koruyucu',
+    image: 'https://images.pexels.com/photos/8305346/pexels-photo-8305346.jpeg?auto=compress&cs=tinysrgb&w=1200',
   },
   perfume: {
     name: 'Oto Parfüm',
     description: 'Premium klips ve sprey oto parfümleri — kalıcı, alerjen-test edilmiş kokular',
     emoji: '🌸',
     href: '/urunler/parfum',
+    image: 'https://images.pexels.com/photos/11711835/pexels-photo-11711835.jpeg?auto=compress&cs=tinysrgb&w=1200',
   },
   chemical: {
     name: 'Oto Kimya & Bakım',
     description: 'İç temizleyici, cam temizleyici, deri bakım ve detay temizlik ürünleri',
     emoji: '🧪',
     href: '/urunler/kimya',
+    image: 'https://images.pexels.com/photos/4488636/pexels-photo-4488636.jpeg?auto=compress&cs=tinysrgb&w=1200',
   },
   bag: {
     name: 'Çanta & Organizer',
     description: 'Bagaj organizer, koltuk arkası, yan cep — aracın içinde her şey düzenli',
     emoji: '🎒',
     href: '/urunler/canta',
+    image: 'https://images.pexels.com/photos/6873090/pexels-photo-6873090.jpeg?auto=compress&cs=tinysrgb&w=1200',
   },
 }
 
