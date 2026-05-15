@@ -34,9 +34,9 @@ export const POST: APIRoute = async ({ request, redirect }) => {
     return redirect(`/odeme/sonuc?status=failure&orderNo=${encodeURIComponent(result.orderNo)}`, 303)
   }
 
-  // SUCCESS — order'ı güncelle
+  // SUCCESS — order'ı güncelle (idempotent: zaten ödenmişse tekrar update etme)
   const order = getByOrderNo(result.orderNo)
-  if (order) {
+  if (order && order.paymentStatus !== 'tamamlandi') {
     await updateOrder(
       order.orderNo,
       {
@@ -67,7 +67,8 @@ export const GET: APIRoute = async ({ url, redirect }) => {
     return redirect(`/odeme/sonuc?status=failure${reason}`, 303)
   }
   const order = getByOrderNo(result.orderNo)
-  if (order) {
+  // Idempotent: zaten tamamlandı ise tekrar update etmiyoruz
+  if (order && order.paymentStatus !== 'tamamlandi') {
     await updateOrder(order.orderNo, {
       paymentStatus: 'tamamlandi',
       paidAmount: result.paidAmount,
