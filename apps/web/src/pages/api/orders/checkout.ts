@@ -9,7 +9,7 @@ import {
 } from '../../../server/db'
 import { sendPush } from '../../../server/push'
 import { sendQuoteReceivedMail, sendAdminNewQuoteMail } from '../../../server/mail'
-import { getProductById } from '../../../lib/catalog-extra'
+import { getMergedProductById as getProductById } from '../../../server/catalog-merged'
 
 export const prerender = false
 

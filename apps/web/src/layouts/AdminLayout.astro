@@ -3,7 +3,7 @@ import '../styles/globals.css'
 
 interface Props {
   title?: string
-  current?: 'dashboard' | 'orders' | 'new' | 'quotes' | 'stock'
+  current?: 'dashboard' | 'orders' | 'new' | 'quotes' | 'stock' | 'icerik' | 'hammadde'
 }
 const { title = 'Yönetim', current = 'dashboard' } = Astro.props
 
@@ -12,6 +12,8 @@ const NAV = [
   { key: 'quotes', href: '/admin/talepler', label: 'Talepler', icon: 'M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z', badge: 'quotes' as const },
   { key: 'orders', href: '/admin/orders', label: 'Siparişler', icon: 'M9 11l3 3 8-8M3 12a9 9 0 1 0 18 0 9 9 0 0 0-18 0z' },
   { key: 'stock', href: '/admin/stok', label: 'Stok', icon: 'M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z M3.27 6.96 12 12.01l8.73-5.05 M12 22.08V12', badge: 'stock' as const },
+  { key: 'icerik', href: '/admin/icerik', label: 'İçerik', icon: 'M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2zM14 3v6h6M16 13H8M16 17H8M10 9H8' },
+  { key: 'hammadde', href: '/admin/hammadde', label: 'Hammadde', icon: 'M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16zM7 8l5 3 5-3M7 12l5 3 5-3' },
   { key: 'new', href: '/admin/orders/new', label: 'Yeni Sipariş', icon: 'M12 5v14M5 12h14' },
 ]
 

@@ -8,13 +8,14 @@
  * Hepsi dairesel showcase + snap horizontal scroll kullanır.
  */
 import ProductCarousel from './ProductCarousel.astro'
-import { ALL_SIMPLE_PRODUCTS } from '@lib/catalog-extra'
+import { getMergedProducts } from '../../server/catalog-merged'
 
-const bestSellers = ALL_SIMPLE_PRODUCTS.filter((p) => p.badges?.includes('best-seller') && p.active).slice(0, 10)
-const discounted = ALL_SIMPLE_PRODUCTS.filter((p) => p.badges?.includes('discount') && p.active).slice(0, 10)
+const ALL = getMergedProducts()
+const bestSellers = ALL.filter((p) => p.badges?.includes('best-seller') && p.active).slice(0, 10)
+const discounted = ALL.filter((p) => p.badges?.includes('discount') && p.active).slice(0, 10)
 
 // Diğer ürünler: best-seller veya discount değil OLAN aktif ürünler
-const otherProducts = ALL_SIMPLE_PRODUCTS.filter(
+const otherProducts = ALL.filter(
   (p) => p.active && !p.badges?.includes('best-seller') && !p.badges?.includes('discount'),
 ).slice(0, 12)
 ---

@@ -1,0 +1,34 @@
+---
+export const prerender = false
+import AdminLayout from '@layouts/AdminLayout.astro'
+import { getSession } from '../../server/auth'
+import { listMaterials, getLowStockMaterials } from '../../server/materials'
+import MaterialsManager from '@components/admin/MaterialsManager.tsx'
+
+if (!getSession(Astro.cookies)) return Astro.redirect('/admin/login')
+
+const items = listMaterials()
+const lowCount = getLowStockMaterials().length
+---
+
+<AdminLayout title="Hammadde Takip" current="hammadde">
+  <div class="p-4 md:p-8 max-w-7xl mx-auto">
+    <header class="mb-6">
+      <p class="text-xs uppercase tracking-[0.2em] text-[var(--color-primary)] font-semibold">Admin</p>
+      <h1 class="mt-1 font-display text-2xl md:text-3xl font-bold flex items-center gap-3">
+        Hammadde Takip
+        {lowCount > 0 && (
+          <span class="text-xs px-2 py-1 rounded-full bg-red-500/20 text-red-300 font-bold uppercase tracking-wider">
+            {lowCount} düşük stok
+          </span>
+        )}
+      </h1>
+      <p class="mt-2 text-sm text-[var(--color-text-soft)] max-w-2xl">
+        EVA foam ruloları, kenarlık şeritleri, topukluk malzemesi, iplik vb.
+        atölye stoğunu burada takip edin. Her hammadde için giriş (satın alma),
+        çıkış (üretimde kullanım) ve düzeltme hareketleri kaydedilir.
+      </p>
+    </header>
+    <MaterialsManager initial={items} client:load />
+  </div>
+</AdminLayout>

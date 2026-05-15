@@ -5,7 +5,8 @@
  */
 import Base from '@layouts/Base.astro'
 import ProductCard from './ProductCard.tsx'
-import { getProductsByCategory, CATEGORY_META, type SimpleCategory } from '@lib/catalog-extra'
+import { CATEGORY_META, type SimpleCategory } from '@lib/catalog-extra'
+import { getMergedProductsByCategory } from '../../server/catalog-merged'
 
 type Props = {
   category: SimpleCategory
@@ -13,7 +14,7 @@ type Props = {
 
 const { category } = Astro.props as Props
 const meta = CATEGORY_META[category]
-const products = getProductsByCategory(category)
+const products = getMergedProductsByCategory(category)
 
 const breadcrumbs = [
   { label: 'Ana Sayfa', href: '/' },

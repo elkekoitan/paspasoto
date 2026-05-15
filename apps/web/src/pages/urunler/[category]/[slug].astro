@@ -1,27 +1,23 @@
 ---
-export const prerender = true
+// SSR — admin overrides anlık devreye girer
+export const prerender = false
 import Base from '@layouts/Base.astro'
 import AddToCartButton from '@components/cart/AddToCartButton.tsx'
 import ProductCard from '@components/products/ProductCard.tsx'
 import {
-  ALL_SIMPLE_PRODUCTS,
   CATEGORY_META,
-  getProductsByCategory,
   type SimpleProduct,
   type SimpleCategory,
 } from '@lib/catalog-extra'
+import { getMergedProductBySlug, getMergedProductsByCategory } from '../../../server/catalog-merged'
 import { formatTRY } from '@lib/format'
 
-export async function getStaticPaths() {
-  return ALL_SIMPLE_PRODUCTS.map((p) => ({
-    params: { category: p.category, slug: p.slug },
-    props: { product: p },
-  }))
-}
+const { slug } = Astro.params
+const product = slug ? getMergedProductBySlug(slug) : null
+if (!product) return new Response('Ürün bulunamadı', { status: 404 })
 
-const { product } = Astro.props as { product: SimpleProduct }
 const meta = CATEGORY_META[product.category as SimpleCategory]
-const related = getProductsByCategory(product.category as SimpleCategory)
+const related = getMergedProductsByCategory(product.category as SimpleCategory)
   .filter((p) => p.id !== product.id)
   .slice(0, 4)
 
