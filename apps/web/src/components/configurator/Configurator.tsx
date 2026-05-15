@@ -331,9 +331,9 @@ export default function Configurator() {
                   {step === 'model' && brand && <ModelStep brand={brand} models={models} selected={model} selectedTrim={trim} onSelect={(m, t) => { setModel(m); setTrim(t ?? null); setStep('product'); }} onBack={() => setStep('brand')} />}
                   {step === 'product' && <ProductStep products={PRODUCTS} selected={product} onSelect={(p) => { setProduct(p); setStep('mat'); }} />}
                   {step === 'mat' && (
-                    <SwatchStep title="Paspas Zemin Rengi" description="Paspasın havuzlu kısmının zemin rengi. Tüm paspaslar Diamond (Elmas) dokuyla üretilir." colors={MAT_COLORS} selected={matColor?.id} onSelect={(c) => { setMatColor(c); setStep('border'); }} />
+                    <SwatchStep title="Paspas Zemin Rengi" description="Paspasın havuzlu kısmının zemin rengi. Tüm paspaslar Diamond (Elmas) dokuyla üretilir. Seçim sonrası arka plandaki paspas önizlemesi anında güncellenir; emin olunca aşağıdan 'Devam' a bas." colors={MAT_COLORS} selected={matColor?.id} onSelect={(c) => setMatColor(c)} />
                   )}
-                  {step === 'border' && <SwatchStep title="Kenarlık Rengi" description="Paspasın çevresini saran biye/kenarlık şeridi." colors={BORDER_COLORS} selected={borderColor?.id} onSelect={(c) => { setBorderColor(c); setStep('heel'); }} big={false} />}
+                  {step === 'border' && <SwatchStep title="Kenarlık Rengi" description="Paspasın çevresini saran biye/kenarlık şeridi. Mat rengiyle uyumunu önizlemeden kontrol edip 'Devam' a basın." colors={BORDER_COLORS} selected={borderColor?.id} onSelect={(c) => setBorderColor(c)} big={false} />}
                   {step === 'heel' && <HeelPadStep pads={HEEL_PADS} selected={heelPad} onSelect={setHeelPad} heelPosition={heelPosition} onPositionChange={setHeelPosition} onContinue={() => setStep('logo')} />}
                   {step === 'logo' && (
                     <>

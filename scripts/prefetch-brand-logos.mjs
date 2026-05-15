@@ -80,6 +80,47 @@ const FILIPPO_BASE = 'https://cdn.jsdelivr.net/gh/filippofilip95/car-logos-datas
 const FILIPPO_MAP = {
   hongqi: 'hongqi',
   mahindra: 'mahindra',
+  // Çin markaları
+  geely: 'geely',
+  haval: 'haval',
+  nio: 'nio',
+  zeekr: 'zeekr',
+  xpeng: 'xpeng',
+  leapmotor: 'leapmotor',
+  voyah: 'voyah',
+  tank: 'tank',
+  omoda: 'omoda',
+  jaecoo: 'jaecoo',
+  exeed: 'exeed',
+  gac: 'gac',
+  dfsk: 'dfsk',
+  maxus: 'maxus',
+  baic: 'baic',
+  foton: 'foton',
+  'great-wall': 'great-wall',
+  changan: 'changan',
+  dongfeng: 'dongfeng',
+  skywell: 'skywell',
+  // Lüks / niş
+  ds: 'ds',
+  'aston-martin': 'aston-martin',
+  bentley: 'bentley',
+  ferrari: 'ferrari',
+  lamborghini: 'lamborghini',
+  maserati: 'maserati',
+  mclaren: 'mclaren',
+  'rolls-royce': 'rolls-royce',
+  bugatti: 'bugatti',
+  lancia: 'lancia',
+  // Diğer
+  lada: 'lada',
+  tata: 'tata',
+  // Türkiye markaları
+  karsan: 'karsan',
+  otokar: 'otokar',
+  temsa: 'temsa',
+  bmc: 'bmc',
+  anadol: 'anadol',
 }
 
 /**
