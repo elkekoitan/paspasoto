@@ -1,55 +1,58 @@
 ---
 /**
- * FeaturedProducts — "Çok Satan" + "İndirimde" iki carousel bölümü.
- * catalog-extra.ts'den badges['best-seller'|'discount'] ürünleri filtreler.
+ * FeaturedProducts — Ana sayfa için 3 yatay carousel:
+ *  - Çok Satan (best-seller)
+ *  - İndirimde (discount)
+ *  - Diğer Ürünlerimiz (kalan tüm aktif ürünler, karışık)
+ *
+ * Hepsi dairesel showcase + snap horizontal scroll kullanır.
  */
-import ProductCard from '@components/products/ProductCard.tsx'
+import ProductCarousel from './ProductCarousel.astro'
 import { ALL_SIMPLE_PRODUCTS } from '@lib/catalog-extra'
 
-const bestSellers = ALL_SIMPLE_PRODUCTS.filter((p) => p.badges?.includes('best-seller') && p.active).slice(0, 4)
-const discounted = ALL_SIMPLE_PRODUCTS.filter((p) => p.badges?.includes('discount') && p.active).slice(0, 4)
+const bestSellers = ALL_SIMPLE_PRODUCTS.filter((p) => p.badges?.includes('best-seller') && p.active).slice(0, 10)
+const discounted = ALL_SIMPLE_PRODUCTS.filter((p) => p.badges?.includes('discount') && p.active).slice(0, 10)
+
+// Diğer ürünler: best-seller veya discount değil OLAN aktif ürünler
+const otherProducts = ALL_SIMPLE_PRODUCTS.filter(
+  (p) => p.active && !p.badges?.includes('best-seller') && !p.badges?.includes('discount'),
+).slice(0, 12)
 ---
 
-<section class="bg-[var(--color-bg)] py-12 md:py-16">
-  <div class="container-page space-y-12 md:space-y-16">
-    {/* ÇOK SATAN */}
-    {bestSellers.length > 0 && (
-      <div>
-        <header class="flex items-end justify-between gap-3 mb-5 md:mb-7">
-          <div>
-            <span class="text-[11px] uppercase tracking-[0.2em] text-amber-400 font-bold">⭐ Çok Satan</span>
-            <h2 class="mt-1 font-display text-2xl md:text-4xl font-bold tracking-tight">
-              Müşterilerimizin tercihi
-            </h2>
-          </div>
-          <a href="/urunler" class="text-sm text-[var(--color-primary)] hover:underline font-semibold whitespace-nowrap">
-            Tümü →
-          </a>
-        </header>
-        <div class="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-5">
-          {bestSellers.map((p) => <ProductCard product={p} />)}
-        </div>
-      </div>
-    )}
+<div class="bg-[var(--color-bg)]">
+  {bestSellers.length > 0 && (
+    <ProductCarousel
+      title="Müşterilerimizin Tercihi"
+      subtitle="Atölyemizden en çok sevilen ve önerilen ürünler."
+      eyebrow="⭐ ÇOK SATAN"
+      products={bestSellers}
+      accent="amber"
+      href="/urunler"
+      hrefLabel="Tümünü gör"
+    />
+  )}
 
-    {/* İNDİRİMDE */}
-    {discounted.length > 0 && (
-      <div>
-        <header class="flex items-end justify-between gap-3 mb-5 md:mb-7">
-          <div>
-            <span class="text-[11px] uppercase tracking-[0.2em] text-rose-400 font-bold">🏷️ Bu hafta indirimde</span>
-            <h2 class="mt-1 font-display text-2xl md:text-4xl font-bold tracking-tight">
-              Kaçırılmayacak fırsatlar
-            </h2>
-          </div>
-          <a href="/urunler" class="text-sm text-[var(--color-primary)] hover:underline font-semibold whitespace-nowrap">
-            Tümü →
-          </a>
-        </header>
-        <div class="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-5">
-          {discounted.map((p) => <ProductCard product={p} />)}
-        </div>
-      </div>
-    )}
-  </div>
-</section>
+  {discounted.length > 0 && (
+    <ProductCarousel
+      title="Bu Hafta İndirimde"
+      subtitle="Sınırlı süreyle özel fiyatlarla — sepete eklemeden kaçırma."
+      eyebrow="🏷️ FIRSAT"
+      products={discounted}
+      accent="rose"
+      href="/urunler"
+      hrefLabel="Tümünü gör"
+    />
+  )}
+
+  {otherProducts.length > 0 && (
+    <ProductCarousel
+      title="Diğer Ürünlerimiz"
+      subtitle="Aracın için seçilmiş premium aksesuarlar."
+      eyebrow="🛍 KATALOG"
+      products={otherProducts}
+      accent="primary"
+      href="/urunler"
+      hrefLabel="Tüm kataloğu gör"
+    />
+  )}
+</div>

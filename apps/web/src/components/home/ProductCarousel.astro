@@ -1,0 +1,136 @@
+---
+/**
+ * ProductCarousel — Yatay kayan yuvarlak ürün showcase.
+ *
+ * Mobile: snap-x horizontal scroll. Desktop: scroll oklar + smooth scroll.
+ * Her ürün: dairesel görsel + isim + fiyat. Modern e-ticaret showcase.
+ */
+import type { SimpleProduct } from '@lib/catalog-extra'
+import { formatTRY } from '@lib/format'
+
+interface Props {
+  title: string
+  subtitle?: string
+  eyebrow?: string
+  products: SimpleProduct[]
+  href?: string
+  hrefLabel?: string
+  /** Eyebrow rengi varyantı */
+  accent?: 'primary' | 'amber' | 'rose' | 'emerald'
+}
+
+const { title, subtitle, eyebrow, products, href = '/urunler', hrefLabel = 'Tümünü gör', accent = 'primary' } = Astro.props
+
+const accentColor = {
+  primary: 'text-[var(--color-primary)]',
+  amber: 'text-amber-400',
+  rose: 'text-rose-400',
+  emerald: 'text-emerald-400',
+}[accent]
+
+const id = `carousel-${Math.random().toString(36).slice(2, 8)}`
+---
+
+<section class="py-12 md:py-16">
+  <div class="container-page">
+    <header class="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3 mb-6 md:mb-8">
+      <div>
+        {eyebrow && <span class={`text-[11px] uppercase tracking-[0.2em] font-bold ${accentColor}`}>{eyebrow}</span>}
+        <h2 class="mt-1 font-display text-2xl md:text-4xl font-bold tracking-tight">{title}</h2>
+        {subtitle && <p class="mt-2 text-sm md:text-base text-[var(--color-text-soft)] max-w-2xl">{subtitle}</p>}
+      </div>
+      <div class="flex items-center gap-2">
+        <button
+          type="button"
+          data-carousel-prev={id}
+          aria-label="Önceki"
+          class="hidden md:grid size-10 place-items-center rounded-full border border-[var(--color-border)] hover:border-[var(--color-primary)] hover:bg-[var(--color-surface)] transition-colors"
+        >
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6" /></svg>
+        </button>
+        <button
+          type="button"
+          data-carousel-next={id}
+          aria-label="Sonraki"
+          class="hidden md:grid size-10 place-items-center rounded-full border border-[var(--color-border)] hover:border-[var(--color-primary)] hover:bg-[var(--color-surface)] transition-colors"
+        >
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6" /></svg>
+        </button>
+        <a href={href} class={`text-sm font-semibold hover:underline whitespace-nowrap ${accentColor}`}>
+          {hrefLabel} →
+        </a>
+      </div>
+    </header>
+
+    {/* Yatay kayan carousel — snap-x ile mobil için. Scrollbar görünmez. */}
+    <div
+      id={id}
+      class="flex gap-5 md:gap-6 overflow-x-auto snap-x snap-mandatory scroll-smooth pb-4 -mx-4 px-4 md:mx-0 md:px-0 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+      style="scroll-padding: 0 1rem;"
+    >
+      {products.map((p) => {
+        const discount = p.oldPrice ? Math.round(((p.oldPrice - p.price) / p.oldPrice) * 100) : 0
+        return (
+          <a
+            href={`/urunler/${p.category}/${p.slug}`}
+            class="group snap-start flex-shrink-0 w-[180px] md:w-[210px] flex flex-col items-center text-center transition-transform hover:-translate-y-1"
+          >
+            {/* Dairesel görsel — premium showcase */}
+            <div class="relative size-[180px] md:size-[210px] rounded-full overflow-hidden bg-gradient-to-br from-[var(--color-surface)] to-[var(--color-surface-2)] ring-1 ring-[var(--color-border)]/60 group-hover:ring-2 group-hover:ring-[var(--color-primary)] group-hover:shadow-2xl group-hover:shadow-[var(--color-primary)]/30 transition-all">
+              <img
+                src={p.image}
+                alt={p.name}
+                loading="lazy"
+                decoding="async"
+                class="size-full object-cover group-hover:scale-110 transition-transform duration-500"
+                onerror={`this.onerror=null;this.src='/assets/products/${p.category}/${p.slug}.svg'`}
+              />
+              {discount > 0 && (
+                <span class="absolute top-3 right-3 size-11 rounded-full bg-[var(--color-danger)] text-white grid place-items-center text-[11px] font-black tabular-nums shadow-lg">
+                  −%{discount}
+                </span>
+              )}
+              {p.badges?.includes('best-seller') && discount === 0 && (
+                <span class="absolute top-3 right-3 px-2 py-0.5 rounded-full bg-amber-500 text-black text-[10px] font-black uppercase tracking-wider shadow-lg">
+                  ⭐
+                </span>
+              )}
+            </div>
+
+            {/* Bilgi */}
+            <div class="mt-4 px-1.5">
+              <h3 class="text-[13px] md:text-sm font-semibold text-[var(--color-text)] line-clamp-2 leading-snug min-h-[2.6em] group-hover:text-[var(--color-primary)] transition-colors">
+                {p.name}
+              </h3>
+              <div class="mt-2 flex items-baseline justify-center gap-1.5">
+                <span class="font-display text-base md:text-lg font-bold text-[var(--color-primary)] tabular-nums">
+                  {formatTRY(p.price)}
+                </span>
+                {p.oldPrice && (
+                  <span class="text-[11px] text-[var(--color-text-muted)] line-through tabular-nums">
+                    {formatTRY(p.oldPrice)}
+                  </span>
+                )}
+              </div>
+            </div>
+          </a>
+        )
+      })}
+    </div>
+  </div>
+</section>
+
+<script is:inline define:vars={{ id }}>
+  (function () {
+    var track = document.getElementById(id)
+    if (!track) return
+    var prev = document.querySelector('[data-carousel-prev="' + id + '"]')
+    var next = document.querySelector('[data-carousel-next="' + id + '"]')
+    function scroll(dir) {
+      var amt = track.clientWidth * 0.8 * dir
+      track.scrollBy({ left: amt, behavior: 'smooth' })
+    }
+    prev && prev.addEventListener('click', function () { scroll(-1) })
+    next && next.addEventListener('click', function () { scroll(1) })
+  })()
+</script>
