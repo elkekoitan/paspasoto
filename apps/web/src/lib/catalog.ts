@@ -215,7 +215,9 @@ export type Product = {
   includesTrunk: boolean
 }
 
-export const BRANDS: Brand[] = [
+import { EXTENDED_BRANDS, EXTENDED_MODELS } from './catalog-extended'
+
+const _BASE_BRANDS: Brand[] = [
   { id: 1, slug: 'audi', name: 'Audi', popular: true, iconSlug: 'audi', color: '#BB0A30', logoUrl: '/assets/brands/audi.svg' },
   { id: 2, slug: 'bmw', name: 'BMW', popular: true, iconSlug: 'bmw', color: '#0066B1', logoUrl: '/assets/brands/bmw.svg' },
   { id: 3, slug: 'mercedes', name: 'Mercedes-Benz', popular: true, color: '#A4AAAE', logoUrl: '/assets/brands/mercedes.svg' },
@@ -265,7 +267,10 @@ export const BRANDS: Brand[] = [
   { id: 46, slug: 'ssangyong', name: 'SsangYong', popular: false, color: '#003F87', logoUrl: '/assets/brands/ssangyong.svg' },
 ]
 
-export const VEHICLE_MODELS: VehicleModel[] = [
+/** Tüm markalar — temel + genişletilmiş (catalog-extended.ts'den) */
+export const BRANDS: Brand[] = [..._BASE_BRANDS, ...EXTENDED_BRANDS]
+
+const _BASE_MODELS: VehicleModel[] = [
   // BMW
   { id: 1, brandSlug: 'bmw', slug: '1-serisi-f20', name: '1 Serisi', chassisCode: 'F20/F21', yearStart: 2011, yearEnd: 2019, bodyType: 'hatchback' },
   { id: 2, brandSlug: 'bmw', slug: '1-serisi-f40', name: '1 Serisi', chassisCode: 'F40', yearStart: 2019, yearEnd: 2026, bodyType: 'hatchback' },
@@ -441,6 +446,9 @@ export const VEHICLE_MODELS: VehicleModel[] = [
   { id: 156, brandSlug: 'tesla', slug: 'model-x', name: 'Model X', chassisCode: 'X', yearStart: 2015, yearEnd: 2026, bodyType: 'suv' },
 ]
 
+/** Tüm modeller — temel + genişletilmiş (catalog-extended.ts'den) */
+export const VEHICLE_MODELS: VehicleModel[] = [..._BASE_MODELS, ...EXTENDED_MODELS]
+
 const SWATCH = '/assets/swatches'
 
 export const MAT_COLORS: MatColor[] = [
@@ -494,9 +502,9 @@ export const LOGO_ACCESSORIES: LogoAccessory[] = BRANDS.map((b, i) => ({
 LOGO_ACCESSORIES.push({ id: 99, brandSlug: null, name: 'İstemiyorum', price: 0 })
 
 export const PRODUCTS: Product[] = [
-  { id: 1, slug: 'surucu-yolcu', name: 'Sürücü + Yolcu (2\'li)', basePrice: 1490, parts: 2, includesTrunk: false },
-  { id: 2, slug: '4lu-set', name: '4\'lü Set', basePrice: 1990, parts: 4, includesTrunk: false },
-  { id: 3, slug: '4lu-bagaj', name: '4\'lü + Bagaj', basePrice: 2490, parts: 5, includesTrunk: true },
+  { id: 1, slug: '4lu-set', name: '4\'lü Set', basePrice: 1990, parts: 4, includesTrunk: false },
+  { id: 2, slug: '5li-set', name: '5\'li Set (4 Paspas + Bagaj)', basePrice: 2490, parts: 5, includesTrunk: true },
+  { id: 3, slug: 'bagaj-only', name: 'Sadece Bagaj Paspası', basePrice: 690, parts: 1, includesTrunk: true },
 ]
 
 export const POPULAR_BRANDS = BRANDS.filter((b) => b.popular)

@@ -11,7 +11,7 @@ const STATS = [
   { value: '3000+', label: 'Araç Modeli' },
   { value: '10', label: 'Mat Rengi' },
   { value: '15', label: 'Kenarlık Rengi' },
-  { value: '5-7', label: 'Gün Teslim' },
+  { value: '2-3', label: 'Gün Teslim' },
   { value: '2 Yıl', label: 'Garanti' },
   { value: '100%', label: 'Aracına Özel' },
 ]
@@ -43,7 +43,7 @@ const STEPS = [
   { num: 1, title: 'Konfigüratörü Aç', text: 'Aracını seç, paspas + kenarlık + topukluk + amblem kombinasyonunu kendin oluştur.', icon: 'M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z' },
   { num: 2, title: 'Teklif İste', text: 'Bilgilerin atölyemize iletilir. Birkaç dakika içinde WhatsApp\'tan tarafına teklif gönderilir.', icon: 'M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z' },
   { num: 3, title: 'Onay & Üretim', text: 'Teklifi onayladığında atölyemiz aynı gün üretime başlar — kalıp, kesim, dikim, kalite kontrol.', icon: 'M14.7 6.3a1 1 0 000 1.4l1.6 1.6a1 1 0 001.4 0l3.77-3.77a6 6 0 01-7.94 7.94l-6.91 6.91a2.12 2.12 0 01-3-3l6.91-6.91a6 6 0 017.94-7.94l-3.76 3.76z' },
-  { num: 4, title: 'Kapına Teslim', text: 'Kargo ile tüm Türkiye\'ye 5-7 iş günü. Veya Konya atölyemizden gel, hazır seni bekleyen paspasını al.', icon: 'M3 7l9 5 9-5-9-5-9 5z M3 7v10l9 5 9-5V7' },
+  { num: 4, title: 'Kapına Teslim', text: 'Kargo ile tüm Türkiye\'ye 2-3 iş günü. Veya Konya atölyemizden gel, hazır seni bekleyen paspasını al.', icon: 'M3 7l9 5 9-5-9-5-9 5z M3 7v10l9 5 9-5V7' },
 ]
 
 // Konfigürasyon showcase — 3 örnek
@@ -314,7 +314,7 @@ const heelOf = (slug: string) => HEEL_PADS.find((h) => h.slug === slug)!
           Aracın hak ediyor.
         </h2>
         <p class="mt-4 text-[var(--color-text-soft)] max-w-xl mx-auto">
-          Aracını seç, paspasını kişiselleştir, atölyemizden teklif iste. Onayladığında 5-7 iş gününde teslim.
+          Aracını seç, paspasını kişiselleştir, atölyemizden teklif iste. Onayladığında 2-3 iş gününde teslim.
         </p>
         <a
           href="/konfigurator"

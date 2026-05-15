@@ -28,11 +28,15 @@ import { formatTRY } from '../../lib/format'
 import ClientBrandLogo from '../ui/ClientBrandLogo'
 import BigMatBackdrop from './BigMatBackdrop'
 
-/** Product slug → asset set slug mapping (gerçek EVA paspas fotoğraf adları) */
+/** Product slug → asset set slug mapping (gerçek EVA paspas fotoğraf adları)
+ *  '4lu-set'    → 4 paspas (ön + arka)
+ *  '5li-set'    → 4 paspas + bagaj
+ *  'bagaj-only' → sadece bagaj paspası
+ */
 function productToSetSlug(productSlug?: string): string {
-  if (!productSlug) return 'classic-paw-full'
-  if (productSlug.includes('surucu') || productSlug.includes('on') || productSlug.includes('front')) return 'classic-paw-front'
-  return 'classic-paw-full'
+  if (productSlug === 'bagaj-only') return 'classic-paw-trunk'
+  if (productSlug === '4lu-set') return 'classic-paw-full'
+  return 'classic-paw-full' // default: 5'li veya bilinmeyen → full set
 }
 
 /** EmblemType slug → asset dir slug ('metal' | 'premium') */
@@ -99,8 +103,14 @@ export type MatLogoConfig = {
   orientation?: LogoOrientation
 }
 
-/** Set parts → o set için pozisyon listesi */
+/** Set parts → o set için pozisyon listesi
+ *  bagaj-only (parts=1, includesTrunk=true) → ['trunk']
+ *  4'lü (parts=4)                            → ['driver','passenger','leftRear','rightRear']
+ *  5'li (parts=5, includesTrunk=true)        → ['driver','passenger','leftRear','rightRear','trunk']
+ */
 function positionsFor(parts: number, includesTrunk: boolean): MatPosition[] {
+  // Sadece bagaj seti
+  if (parts === 1 && includesTrunk) return ['trunk']
   const out: MatPosition[] = ['driver', 'passenger']
   if (parts >= 4) out.push('leftRear', 'rightRear')
   if (includesTrunk) out.push('trunk')
@@ -209,24 +219,6 @@ export default function Configurator() {
     step === 'logo' ||
     step === 'summary'
 
-  // Müşteri ön talep formu state'i (ad+telefon+adres)
-  const [contactName, setContactName] = useState('')
-  const [contactPhone, setContactPhone] = useState('')
-  const [contactCity, setContactCity] = useState('')
-  const [contactDistrict, setContactDistrict] = useState('')
-  const [contactAddress, setContactAddress] = useState('')
-  const [submittingQuote, setSubmittingQuote] = useState(false)
-  const [quoteResult, setQuoteResult] = useState<{ orderNo: string; accessToken: string } | null>(null)
-  const [showContactForm, setShowContactForm] = useState(false)
-
-  const TR_CITIES = [
-    'İstanbul', 'Ankara', 'İzmir', 'Bursa', 'Antalya', 'Konya', 'Adana', 'Gaziantep',
-    'Kayseri', 'Mersin', 'Eskişehir', 'Diyarbakır', 'Samsun', 'Trabzon', 'Sakarya',
-    'Manisa', 'Şanlıurfa', 'Denizli', 'Hatay', 'Balıkesir', 'Kahramanmaraş', 'Van',
-    'Aydın', 'Tekirdağ', 'Muğla', 'Erzurum', 'Mardin', 'Malatya', 'Çorum', 'Ordu',
-    'Afyonkarahisar', 'Sivas', 'Tokat', 'Zonguldak', 'Diğer',
-  ]
-
   function handleAddToCart() {
     if (!brand || !model || !product || !matColor || !borderColor || !heelPad) {
       alert('Lütfen tüm adımları tamamlayın.')
@@ -294,83 +286,6 @@ export default function Configurator() {
       return canvas.toDataURL('image/png')
     } catch {
       return null
-    }
-  }
-
-  async function submitQuote(e: Event) {
-    e.preventDefault()
-    if (!brand || !model || !product || !matColor || !borderColor || !heelPad) return
-    if (!contactName.trim() || !contactPhone.trim() || !contactCity.trim() || !contactDistrict.trim() || !contactAddress.trim()) {
-      alert('Lütfen tüm alanları doldurun.')
-      return
-    }
-    setSubmittingQuote(true)
-    try {
-      const previewImageData = await capturePreview()
-      // Aktif paspas pozisyonları için logo'ları filtrele
-      const activePositions = positionsFor(product.parts, product.includesTrunk)
-      const activeLogos = logos.filter((l) => activePositions.includes(l.position))
-      const logoQty = activeLogos.filter((l) => l.brandSlug !== null).length
-      // Geriye dönük uyumluluk: logoBrandSlug ilk dolu logo'yu yansıtır
-      const firstLogoBrand = activeLogos.find((l) => l.brandSlug !== null)?.brandSlug ?? null
-      const heelPassengerLegacy = heelPosition === 'both' || heelPosition === 'passenger-only'
-
-      const item = {
-        brandSlug: brand.slug, brandName: brand.name,
-        modelSlug: model.slug, modelName: model.name, modelChassis: model.chassisCode,
-        productSlug: product.slug, productName: product.name, productParts: product.parts,
-        matSlug: matColor.slug, matName: matColor.name, matSwatchUrl: matColor.swatchUrl,
-        borderSlug: borderColor.slug, borderName: borderColor.name, borderSwatchUrl: borderColor.swatchUrl,
-        heelSlug: heelPad.slug, heelName: heelPad.name, heelSwatchUrl: heelPad.swatchUrl,
-        // Yeni şema:
-        heelPosition,
-        logos: activeLogos,
-        // Geriye dönük uyumluluk (eski tracker/admin parser'ları için):
-        heelPadPassenger: heelPassengerLegacy,
-        logoBrandSlug: firstLogoBrand,
-        logoQty,
-        category: 'mat' as const,
-        qty: 1, unitPrice: totalPrice,
-        // Trim/versiyon (opsiyonel — kullanıcı sahibinden seviyesi seçim yaptıysa)
-        ...(trim ? {
-          trimId: trim.id,
-          trimName: trim.name,
-          trimEngine: trim.engine,
-          trimFuel: trim.fuel,
-          trimTransmission: trim.transmission,
-          trimPackage: trim.package,
-        } : {}),
-        ...(previewImageData ? { previewImageData } : {}),
-      }
-      const res = await fetch('/api/quote', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          customer: { fullName: contactName.trim(), phone: contactPhone.trim() },
-          shippingAddress: {
-            fullName: contactName.trim(),
-            phone: contactPhone.trim(),
-            city: contactCity.trim(),
-            district: contactDistrict.trim(),
-            addressLine: contactAddress.trim(),
-          },
-          items: [item],
-          subtotal: totalPrice,
-          total: totalPrice,
-        }),
-      })
-      if (res.ok) {
-        const data = await res.json()
-        setQuoteResult(data)
-        // Talep oluştuktan sonra varsa kalmış key'leri temizle
-        cleanupStaleDrafts()
-      } else {
-        alert('Talebiniz iletilemedi. Lütfen tekrar deneyin veya WhatsApp\'tan bize ulaşın.')
-      }
-    } catch {
-      alert('Bağlantı hatası. Lütfen tekrar deneyin.')
-    } finally {
-      setSubmittingQuote(false)
     }
   }
 
@@ -551,85 +466,6 @@ export default function Configurator() {
         </div>
       </div>
 
-      {/* Müşteri ad/telefon mini form — Teklif Al butonuna basınca açılır */}
-      {showContactForm && (
-        <div class="fixed inset-0 z-[100] grid place-items-center p-4 bg-black/80 backdrop-blur-md pointer-events-auto" onClick={(e) => { if (e.target === e.currentTarget) setShowContactForm(false) }}>
-          <div class="w-full max-w-md rounded-3xl bg-[var(--color-surface)] border border-white/10 shadow-[0_0_50px_rgba(0,0,0,0.8)] overflow-hidden">
-            <div class="p-6 border-b border-white/5 flex items-start justify-between gap-3">
-              <div>
-                <h3 class="font-display text-xl font-semibold text-white">Teklif İste</h3>
-                <p class="mt-1.5 text-xs text-white/60 leading-snug">
-                  Konfigürasyonunuz atölyemize iletilir. Fiyat onaylanınca size WhatsApp'tan teklifi gönderir, sipariş onayınızla üretime başlarız.
-                </p>
-              </div>
-              <button type="button" onClick={() => setShowContactForm(false)} class="size-8 grid place-items-center rounded-xl bg-white/5 hover:bg-white/10 text-white transition-colors">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12" /></svg>
-              </button>
-            </div>
-            {quoteResult ? (
-              <div class="p-8 space-y-5 text-center">
-                <div class="size-20 rounded-full bg-emerald-500/20 grid place-items-center mx-auto ring-1 ring-emerald-500/50">
-                  <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5" /></svg>
-                </div>
-                <div>
-                  <div class="font-display text-2xl font-semibold text-white">Talebiniz Alındı!</div>
-                  <p class="mt-2 text-sm text-white/70 leading-relaxed">
-                    Atölye ekibimiz konfigürasyonunuzu inceleyip <span class="text-white font-semibold">WhatsApp'tan tarafınıza teklifi iletecek</span>.
-                  </p>
-                  <div class="mt-6 p-4 rounded-xl bg-white/5 border border-white/10 inline-block">
-                    <p class="text-xs text-white/50 mb-1">Talep No</p>
-                    <p class="font-mono text-white text-lg font-semibold">{quoteResult.orderNo}</p>
-                  </div>
-                </div>
-                <button onClick={() => { setShowContactForm(false); setQuoteResult(null); setContactName(''); setContactPhone(''); setContactCity(''); setContactDistrict(''); setContactAddress(''); resetDraft(); }} class="w-full px-5 py-3.5 rounded-xl text-sm font-semibold bg-white hover:bg-white/90 text-black transition-all">
-                  Kapat ve Yeni Tasarıma Başla
-                </button>
-              </div>
-            ) : (
-              <form onSubmit={submitQuote} class="p-6 space-y-4 max-h-[75vh] overflow-y-auto custom-scrollbar">
-                {/* Müşteri */}
-                <div class="grid grid-cols-2 gap-3">
-                  <div class="col-span-2">
-                    <label class="block text-xs font-medium text-white/70 mb-1.5">Ad Soyad</label>
-                    <input type="text" value={contactName} onInput={(e) => setContactName((e.target as HTMLInputElement).value)} required placeholder="Örn: Mehmet Yılmaz" class="w-full px-4 py-3 rounded-xl bg-black/40 border border-white/10 focus:border-white/30 text-white placeholder:text-white/30 outline-none text-sm transition-colors" />
-                  </div>
-                  <div class="col-span-2">
-                    <label class="block text-xs font-medium text-white/70 mb-1.5">Telefon (WhatsApp olan)</label>
-                    <input type="tel" value={contactPhone} onInput={(e) => setContactPhone((e.target as HTMLInputElement).value)} required placeholder="Örn: 0532 123 45 67" class="w-full px-4 py-3 rounded-xl bg-black/40 border border-white/10 focus:border-white/30 text-white placeholder:text-white/30 outline-none text-sm font-mono transition-colors" />
-                  </div>
-                </div>
-
-                {/* Adres */}
-                <div class="pt-4 border-t border-white/10">
-                  <div class="text-[10px] uppercase tracking-wider text-white/50 font-bold mb-3">Teslimat Adresi</div>
-                  <div class="grid grid-cols-2 gap-3">
-                    <div>
-                      <label class="block text-xs font-medium text-white/70 mb-1.5">İl</label>
-                      <select value={contactCity} onChange={(e) => setContactCity((e.target as HTMLSelectElement).value)} required class="w-full px-4 py-3 rounded-xl bg-black/40 border border-white/10 focus:border-white/30 text-white outline-none text-sm appearance-none transition-colors">
-                        <option value="" class="bg-gray-900">Seçin...</option>
-                        {TR_CITIES.map((c) => <option value={c} class="bg-gray-900">{c}</option>)}
-                      </select>
-                    </div>
-                    <div>
-                      <label class="block text-xs font-medium text-white/70 mb-1.5">İlçe</label>
-                      <input type="text" value={contactDistrict} onInput={(e) => setContactDistrict((e.target as HTMLInputElement).value)} required placeholder="Örn: Selçuklu" class="w-full px-4 py-3 rounded-xl bg-black/40 border border-white/10 focus:border-white/30 text-white placeholder:text-white/30 outline-none text-sm transition-colors" />
-                    </div>
-                    <div class="col-span-2">
-                      <label class="block text-xs font-medium text-white/70 mb-1.5">Açık Adres</label>
-                      <textarea value={contactAddress} onInput={(e) => setContactAddress((e.target as HTMLTextAreaElement).value)} required rows={2} placeholder="Mahalle, cadde, sokak, bina vb." class="w-full px-4 py-3 rounded-xl bg-black/40 border border-white/10 focus:border-white/30 text-white placeholder:text-white/30 outline-none text-sm resize-none custom-scrollbar transition-colors"></textarea>
-                    </div>
-                  </div>
-                </div>
-
-                <button type="submit" disabled={submittingQuote} class="w-full mt-4 px-5 py-3.5 rounded-xl text-sm font-bold bg-white hover:bg-white/90 text-black transition-all shadow-[0_0_20px_rgba(255,255,255,0.2)] disabled:opacity-50 flex items-center justify-center gap-2">
-                  {submittingQuote ? 'Gönderiliyor...' : 'Teklifimi Hazırla ve Gönder'}
-                  {!submittingQuote && <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>}
-                </button>
-              </form>
-            )}
-          </div>
-        </div>
-      )}
     </div>
   )
 }

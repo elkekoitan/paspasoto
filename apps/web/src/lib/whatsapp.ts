@@ -49,7 +49,7 @@ export function buildProductionStartedWaUrl(order: Order, siteUrl?: string): str
   const text = encodeURIComponent(
     `Merhaba ${firstName}, ${order.orderNo} numaralı siparişiniz Carmat atölyesinde üretime alındı! 🔧\n\n` +
       `📦 Takip linkiniz:\n${trackUrl}\n\n` +
-      `Üretim süresi yaklaşık 5-7 iş günü. Hazır olunca tekrar haber vereceğiz.\n\n` +
+      `Üretim süresi yaklaşık 2-3 iş günü. Hazır olunca tekrar haber vereceğiz.\n\n` +
       `Sorularınız için: 0544 710 81 15\n— Carmat Atölye, Konya 🇹🇷`,
   )
   return `https://wa.me/${phone}?text=${text}`

@@ -56,7 +56,7 @@ export const SCREEN_PROTECTORS: SimpleProduct[] = [
     name: '9 inç Multimedya Ekran Koruyucu — 9H Temperli Cam',
     price: 249,
     oldPrice: 349,
-    image: 'https://images.unsplash.com/photo-1606664515524-ed2f786a0bd6?w=800&q=85',
+    image: 'https://images.pexels.com/photos/8305346/pexels-photo-8305346.jpeg?auto=compress&cs=tinysrgb&w=800',
     shortDescription: '9 inç multimedya ekranınız için 9H sertlikte temperli cam koruma — kristal netlik, zırh dayanıklılığı.',
     description: `**Ekranınızın hak ettiği zırh.**
 
@@ -97,7 +97,7 @@ Aracınızın iç detayına yapılmış en akıllı yatırımdır.`,
     name: '10 inç Multimedya Ekran Koruyucu — 9H Temperli Cam',
     price: 279,
     oldPrice: 379,
-    image: 'https://images.unsplash.com/photo-1551830820-330a71b99659?w=800&q=85',
+    image: 'https://images.pexels.com/photos/9703059/pexels-photo-9703059.jpeg?auto=compress&cs=tinysrgb&w=800',
     shortDescription: '10 inç ekranlar için 9H temperli cam — premium netlik, profesyonel koruma.',
     description: `**10 inç ekranınız için askeri sınıf koruma.**
 
@@ -137,7 +137,7 @@ Dijital kokpitinize yatırım yapın — bir kez takın, yıllarca koruyun.`,
     category: 'screen-protector',
     name: '9 inç Mat Yüzeyli Anti-Glare Ekran Koruyucu',
     price: 199,
-    image: 'https://images.unsplash.com/photo-1543465077-db45d34b88a5?w=800&q=85',
+    image: 'https://images.pexels.com/photos/15828798/pexels-photo-15828798.jpeg?auto=compress&cs=tinysrgb&w=800',
     shortDescription: 'Mat anti-glare ekran koruyucu — güneşte yansımayı %95 keser, gözlerinizi yormaz.',
     description: `**Güneş artık ekranınızın düşmanı değil.**
 
@@ -176,7 +176,7 @@ Güneşi alt edin — ekranınızı her saat okunaklı tutun.`,
     category: 'screen-protector',
     name: '9 inç Gizlilik (Privacy) Ekran Koruyucu',
     price: 329,
-    image: 'https://images.unsplash.com/photo-1549399542-7e3f8b79c341?w=800&q=85',
+    image: 'https://images.pexels.com/photos/6817002/pexels-photo-6817002.jpeg?auto=compress&cs=tinysrgb&w=800',
     shortDescription: 'Privacy ekran filtresi — sadece sürücü görür, yan koltuk gizliliği korur.',
     description: `**Ekranınız sadece sizin için.**
 
@@ -215,7 +215,7 @@ Gizliliğiniz, premium standardınız olsun.`,
     category: 'screen-protector',
     name: 'Gösterge Paneli (Kombi) Ekran Koruyucu',
     price: 229,
-    image: 'https://images.unsplash.com/photo-1494976388531-d1058494cdd8?w=800&q=85',
+    image: 'https://images.pexels.com/photos/31775324/pexels-photo-31775324.jpeg?auto=compress&cs=tinysrgb&w=800',
     shortDescription: 'Dijital kombi paneli için optik koruyucu — netliği koru, çiziği unut.',
     description: `**Dijital kokpitiniz, ilk günkü gibi.**
 
@@ -254,7 +254,7 @@ Dijital kokpitiniz hak ettiği korumayı alsın.`,
     name: '12.3 inç Büyük Ekran Koruyucu (Mercedes, Tesla)',
     price: 399,
     oldPrice: 499,
-    image: 'https://images.unsplash.com/photo-1583121274602-3e2820c69888?w=800&q=85',
+    image: 'https://images.pexels.com/photos/18977351/pexels-photo-18977351.jpeg?auto=compress&cs=tinysrgb&w=800',
     shortDescription: '12.3 inç premium ekranlar için flagship koruma — Tesla, Mercedes, BMW dijital kokpitleri için.',
     description: `**Flagship ekranınız için flagship koruma.**
 
@@ -300,7 +300,7 @@ export const PERFUMES: SimpleProduct[] = [
     name: 'Midnight Oud — Klips Oto Parfüm',
     price: 149,
     oldPrice: 199,
-    image: 'https://images.unsplash.com/photo-1541643600914-78b084683601?w=800&q=85',
+    image: 'https://images.pexels.com/photos/11711835/pexels-photo-11711835.jpeg?auto=compress&cs=tinysrgb&w=800',
     shortDescription: 'Oud, sandal ve amber notalarıyla şoför mahalliniz için derin, lüks bir oryantal imza.',
     description: `**Şoför mahallinizde Orta Doğu lüksü.**
 
@@ -339,7 +339,7 @@ Kabin atmosferinizi yeniden tanımlayın — sürüşünüz, parfümünüzle ba�
     category: 'perfume',
     name: 'Fresh Citrus — Spray Oto Parfüm',
     price: 99,
-    image: 'https://images.unsplash.com/photo-1592945403244-b3fbafd7f539?w=800&q=85',
+    image: 'https://images.pexels.com/photos/33161096/pexels-photo-33161096.jpeg?auto=compress&cs=tinysrgb&w=800',
     shortDescription: 'Bergamot, limon ve yeşil çay notalarıyla canlı, ferahlatıcı sprey parfüm.',
     description: `**Sabah sürüşünüzün enerjisi, bir sıkımda.**
 
@@ -378,7 +378,7 @@ Aracınıza her gün yeni bir başlangıç hediye edin.`,
     category: 'perfume',
     name: 'Leather & Tobacco — Premium Klips Parfüm',
     price: 169,
-    image: 'https://images.unsplash.com/photo-1615634260167-c8cdede054de?w=800&q=85',
+    image: 'https://images.pexels.com/photos/7702669/pexels-photo-7702669.jpeg?auto=compress&cs=tinysrgb&w=800',
     shortDescription: 'Hakiki deri ve Küba tütünü notalarıyla maskülen, klasik bir oto parfümü.',
     description: `**Klasik bir centilmen kulübü, kabin içinde.**
 
@@ -416,7 +416,7 @@ Kabin atmosferiniz, karakterinizi yansıtsın.`,
     category: 'perfume',
     name: 'Vanilla Cream — Yumuşak Klips Parfüm',
     price: 139,
-    image: 'https://images.unsplash.com/photo-1585386959984-a4155224a1ad?w=800&q=85',
+    image: 'https://images.pexels.com/photos/3831748/pexels-photo-3831748.jpeg?auto=compress&cs=tinysrgb&w=800',
     shortDescription: 'Madagaskar vanilyası ve krem notalarıyla sıcak, davetkar bir kabin atmosferi.',
     description: `**Kabin, ev rahatlığında.**
 
@@ -453,7 +453,7 @@ Aracınız, ev kadar davetkar olsun.`,
     category: 'perfume',
     name: 'Ocean Breeze — Hava Filtresi Klipsi',
     price: 119,
-    image: 'https://images.unsplash.com/photo-1547887537-6158d64c35b3?w=800&q=85',
+    image: 'https://images.pexels.com/photos/3640668/pexels-photo-3640668.jpeg?auto=compress&cs=tinysrgb&w=800',
     shortDescription: 'Tuzlu deniz havası ve marin notalarıyla ferah, temiz bir kabin imzası.',
     description: `**Sahil yolculuğu, her gün.**
 
@@ -491,7 +491,7 @@ Her sürüşe sahil ferahlığı katın.`,
     name: 'Parfüm Üçlü Set — Klasik Koleksiyon',
     price: 299,
     oldPrice: 447,
-    image: 'https://images.unsplash.com/photo-1523293182086-7651a899d37f?w=800&q=85',
+    image: 'https://images.pexels.com/photos/4730928/pexels-photo-4730928.jpeg?auto=compress&cs=tinysrgb&w=800',
     shortDescription: 'Üç imza koku — Fresh Citrus, Vanilla Cream, Ocean Breeze — premium sprey set.',
     description: `**Bir sezona üç imza.**
 
@@ -539,7 +539,7 @@ export const CHEMICALS: SimpleProduct[] = [
     name: 'İç Temizleyici Spray — Plastik & Deri & Vinyl 500ml',
     price: 189,
     oldPrice: 249,
-    image: 'https://images.unsplash.com/photo-1607301406259-dfb186e15de8?w=800&q=85',
+    image: 'https://images.pexels.com/photos/8526797/pexels-photo-8526797.jpeg?auto=compress&cs=tinysrgb&w=800',
     shortDescription: 'Plastik, deri, kumaş ve cam — tek formül ile profesyonel iç temizlik.',
     description: `**Profesyonel detaylama, kendi garajınızda.**
 
@@ -579,7 +579,7 @@ Kabinin profesyonel parıltısı, her hafta sonu.`,
     category: 'chemical',
     name: 'Katran ve Asfalt Sökücü Sprey 300ml',
     price: 159,
-    image: 'https://images.unsplash.com/photo-1532974297617-c0f05fe48bff?w=800&q=85',
+    image: 'https://images.pexels.com/photos/7154633/pexels-photo-7154633.jpeg?auto=compress&cs=tinysrgb&w=800',
     shortDescription: 'Asfalt katranı, böcek lekesi ve yapışkan kalıntıları boyaya zarar vermeden temizler.',
     description: `**Yazın boyaya yapışan her şeyi söker.**
 
@@ -617,7 +617,7 @@ Yazın izini boyadan tek harekette silin.`,
     category: 'chemical',
     name: 'Cam Temizleyici — Çizgisiz Finish 750ml',
     price: 129,
-    image: 'https://images.unsplash.com/photo-1607604276583-eef5d076aa5f?w=800&q=85',
+    image: 'https://images.pexels.com/photos/5591457/pexels-photo-5591457.jpeg?auto=compress&cs=tinysrgb&w=800',
     shortDescription: 'Streak-free cam temizleyici — ön cam, ayna ve ekranlar için profesyonel sonuç.',
     description: `**Sıfır iz, kristal netlik.**
 
@@ -654,7 +654,7 @@ Camlarınız, showroom günündeki gibi parlak olsun.`,
     category: 'chemical',
     name: 'Deri Bakım & Besleme Kremi 250ml',
     price: 219,
-    image: 'https://images.unsplash.com/photo-1612965110667-4175024b0dcc?w=800&q=85',
+    image: 'https://images.pexels.com/photos/29961629/pexels-photo-29961629.jpeg?auto=compress&cs=tinysrgb&w=800',
     shortDescription: 'Premium deri koltuk bakım kremi — besler, yumuşatır, UV\'den korur.',
     description: `**Deri koltuklarınız 10 yıl daha genç görünsün.**
 
@@ -694,7 +694,7 @@ Derinizin yumuşaklığı, ilk gün dokunuşu olarak kalsın.`,
     category: 'chemical',
     name: 'Motor Yıkama Köpüğü — Yağ Sökücü 1L',
     price: 269,
-    image: 'https://images.unsplash.com/photo-1607082348824-0a96f2a4b9da?w=800&q=85',
+    image: 'https://images.pexels.com/photos/4140943/pexels-photo-4140943.jpeg?auto=compress&cs=tinysrgb&w=800',
     shortDescription: 'Premium deri koltuk bakım kremi — besler, yumuşatır, UV\'den korur.',
     description: `**Motor bölmesi, sergileme kalitesinde.**
 
@@ -733,7 +733,7 @@ Motor bölmeniz, garaj sahnesinin yıldızı olsun.`,
     name: 'Oto Bakım Başlangıç Seti — 4 Ürün Paket',
     price: 599,
     oldPrice: 826,
-    image: 'https://images.unsplash.com/photo-1610461888750-10bfc601b874?w=800&q=85',
+    image: 'https://images.pexels.com/photos/20042048/pexels-photo-20042048.jpeg?auto=compress&cs=tinysrgb&w=800',
     shortDescription: 'Premium deri koltuk bakım kremi — besler, yumuşatır, UV\'den korur.',
     description: `**Detaylama setinizin tek-tıkla başlangıcı.**
 
@@ -782,7 +782,7 @@ export const BAGS: SimpleProduct[] = [
     name: 'Bagaj Organizer — Deluxe Katlanabilir 3 Bölmeli',
     price: 449,
     oldPrice: 599,
-    image: 'https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=800&q=85',
+    image: 'https://images.pexels.com/photos/17000836/pexels-photo-17000836.jpeg?auto=compress&cs=tinysrgb&w=800',
     shortDescription: 'Bagajınızı garaja çevirin — sert duvarlı, su geçirmez deluxe bagaj organizatörü.',
     description: `**Bagajınız, taşınabilir bir depoya dönüşür.**
 
@@ -823,7 +823,7 @@ Bagajınızı kontrol altına alın — her sürüş düzenli olsun.`,
     category: 'bag',
     name: 'Koltuk Arkası Organizer — Tablet & Çocuk Eşyaları',
     price: 199,
-    image: 'https://images.unsplash.com/photo-1590874103328-eac38a683ce7?w=800&q=85',
+    image: 'https://images.unsplash.com/photo-1602161755661-3781cddac355?auto=format&w=800&q=85',
     shortDescription: 'Koltuk arkası organizatör — tablet tutuçu, su şişesi cebi, çocuk dostu.',
     description: `**Arka koltuk, organize bir komuta merkezi.**
 
@@ -863,7 +863,7 @@ Arka koltuğu kaostan kurtarın — yolculuklar daha huzurlu olsun.`,
     category: 'bag',
     name: "Yan Cep Konsol Organizer — Deri Görünümlü 2'li",
     price: 159,
-    image: 'https://images.unsplash.com/photo-1564422170194-896b89110ef8?w=800&q=85',
+    image: 'https://images.unsplash.com/photo-1722843646530-0ec625b8e34f?auto=format&w=800&q=85',
     shortDescription: 'Konsol ile koltuk arası boşluğu kapatın — eşyalarınız asla aşağı düşmesin.',
     description: `**Konsol-koltuk boşluğu artık kayıp eşya bölgesi değil.**
 
@@ -901,7 +901,7 @@ Kabin düzeniniz, premium bir lounge gibi olsun.`,
     category: 'bag',
     name: 'Manyetik Mini Çöp Torbası — Konsol Yanına',
     price: 89,
-    image: 'https://images.unsplash.com/photo-1581605405669-fcdf81165afa?w=800&q=85',
+    image: 'https://images.pexels.com/photos/12997254/pexels-photo-12997254.jpeg?auto=compress&cs=tinysrgb&w=800',
     shortDescription: 'Manyetik tabanlı, sızdırmaz kabin çöp torbası — her yere yapışır, kötü koku tutmaz.',
     description: `**Çöp, kabinin görünmez detayı olsun.**
 
@@ -940,7 +940,7 @@ Kabin temizliği, premium standardınız olsun.`,
     category: 'bag',
     name: 'Bagaj Eşya Tutucu File — Esnek Elastik',
     price: 119,
-    image: 'https://images.unsplash.com/photo-1591561954557-26941169b49e?w=800&q=85',
+    image: 'https://images.unsplash.com/photo-1768671496923-e43c94b5f60f?auto=format&w=800&q=85',
     shortDescription: 'Elastik bagaj filesi — yük kaymasını engeller, küçük eşyaları sabit tutar.',
     description: `**Yük frende kaymasın, bagajınız her sürüş güvenli olsun.**
 
@@ -977,7 +977,7 @@ Frendeki en sert dur bile, yükünüzü yerinde tutsun.`,
     category: 'bag',
     name: 'Piknik / Termal Bagaj Çantası — 25 Litre',
     price: 299,
-    image: 'https://images.unsplash.com/photo-1545194445-dddb8f4487c6?w=800&q=85',
+    image: 'https://images.pexels.com/photos/27528407/pexels-photo-27528407.jpeg?auto=compress&cs=tinysrgb&w=800',
     shortDescription: 'Termal yalıtımlı bagaj çantası — piknik, alışveriş, kamp için 30L deluxe çözüm.',
     description: `**Hafta sonunuz, bagajdan başlasın.**
 

@@ -5,15 +5,7 @@ type NavChild = { href: string; label: string; desc?: string; soon?: boolean }
 type NavItem = { href: string; label: string; children?: NavChild[] }
 
 const NAV: NavItem[] = [
-  {
-    href: '/konfigurator',
-    label: 'Tasarla',
-    children: [
-      { href: '/konfigurator', label: 'Paspas', desc: 'Aracınıza özel ölçü, 5 paspas + bagaj' },
-      { href: '/konfigurator/koltuk', label: 'Koltuk Kılıfı', desc: 'Ön tasarım · ön sipariş alıyoruz', soon: true },
-      { href: '/konfigurator/direksiyon', label: 'Direksiyon Kılıfı', desc: 'Ön tasarım · ön sipariş alıyoruz', soon: true },
-    ],
-  },
+  { href: '/konfigurator', label: 'Tasarla' },
   {
     href: '/urunler',
     label: 'Ürünler',
