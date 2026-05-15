@@ -16,6 +16,38 @@ export default function OrderEditor({ initial }: { initial: Order }) {
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
   const [copied, setCopied] = useState(false)
+  const [shipping, setShipping] = useState(false)
+  const [shippingMsg, setShippingMsg] = useState<{ kind: 'ok' | 'err'; text: string } | null>(null)
+
+  async function createShipment() {
+    if (!confirm(`Kargo barkodu oluşturulsun mu?\n\nSipariş: ${order.orderNo}\nAlıcı: ${order.shippingAddress.fullName}\n${order.shippingAddress.city} / ${order.shippingAddress.district}`)) return
+    setShipping(true)
+    setShippingMsg(null)
+    try {
+      const res = await fetch('/api/shipping/create', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ orderNo: order.orderNo }),
+      })
+      const data = await res.json().catch(() => ({}))
+      if (res.status === 503) {
+        setShippingMsg({ kind: 'err', text: `Kargo entegrasyonu yapılandırılmamış (${data.provider ?? 'bilinmiyor'}). Coolify env değişkenlerini ekleyin.` })
+        return
+      }
+      if (!res.ok || data.status !== 'ok') {
+        setShippingMsg({ kind: 'err', text: data.message ?? data.error ?? `Hata (${res.status})` })
+        return
+      }
+      setShippingMsg({ kind: 'ok', text: `✓ Barkod oluşturuldu: ${data.trackingNumber} (${data.provider})` })
+      // Sunucu zaten Order'ı güncelledi; biz de UI'da senkronize edelim
+      const refreshed = await fetch(`/api/orders/${order.orderNo}`).then((r) => r.json()).catch(() => null)
+      if (refreshed) setOrder(refreshed)
+    } catch (e: any) {
+      setShippingMsg({ kind: 'err', text: e?.message ?? 'Bağlantı hatası' })
+    } finally {
+      setShipping(false)
+    }
+  }
 
   const trackUrl = `${typeof window !== 'undefined' ? window.location.origin : ''}/siparis-takip/detay?t=${order.accessToken}`
 
@@ -238,29 +270,59 @@ export default function OrderEditor({ initial }: { initial: Order }) {
 
           {/* Kargo bilgisi (sadece kargo ile gönderim) */}
           {(order.deliveryMethod ?? 'cargo') === 'cargo' && (order.productionStatus === 'ready' || order.productionStatus === 'delivered') && (
-            <div class="mt-4 grid sm:grid-cols-2 gap-3">
-              <Field label="Kargo Firma">
-                <select
-                  value={order.cargoCompany ?? ''}
-                  onChange={(e) => patch({ cargoCompany: (e.target as HTMLSelectElement).value })}
-                  class={inp}
+            <div class="mt-4 space-y-3">
+              <div class="grid sm:grid-cols-2 gap-3">
+                <Field label="Kargo Firma">
+                  <select
+                    value={order.cargoCompany ?? ''}
+                    onChange={(e) => patch({ cargoCompany: (e.target as HTMLSelectElement).value })}
+                    class={inp}
+                  >
+                    <option value="">Seçin...</option>
+                    <option value="yurtici">Yurtiçi Kargo</option>
+                    <option value="aras">Aras Kargo</option>
+                    <option value="mng">MNG Kargo</option>
+                    <option value="ptt">PTT Kargo</option>
+                    <option value="surat">Sürat Kargo</option>
+                  </select>
+                </Field>
+                <Field label="Takip Numarası">
+                  <input
+                    defaultValue={order.cargoTrackingNo ?? ''}
+                    onBlur={(e) => patch({ cargoTrackingNo: (e.target as HTMLInputElement).value })}
+                    placeholder="Kargo takip no"
+                    class={inp}
+                  />
+                </Field>
+              </div>
+
+              {/* Otomatik kargo barkodu butonu */}
+              <div class="rounded-xl border border-[var(--color-border)]/60 bg-[var(--color-surface)] p-3 flex flex-wrap items-center justify-between gap-3">
+                <div class="text-xs">
+                  <div class="font-semibold">Otomatik Kargo Barkodu</div>
+                  <div class="text-[var(--color-text-muted)] mt-0.5">
+                    Yapılandırılmış kargo sağlayıcısı üzerinden anında tracking no üretir.
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  disabled={shipping}
+                  onClick={createShipment}
+                  class="px-4 py-2 rounded-lg text-xs font-semibold bg-[var(--color-primary)] text-black hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  <option value="">Seçin...</option>
-                  <option value="yurtici">Yurtiçi Kargo</option>
-                  <option value="aras">Aras Kargo</option>
-                  <option value="mng">MNG Kargo</option>
-                  <option value="ptt">PTT Kargo</option>
-                  <option value="surat">Sürat Kargo</option>
-                </select>
-              </Field>
-              <Field label="Takip Numarası">
-                <input
-                  defaultValue={order.cargoTrackingNo ?? ''}
-                  onBlur={(e) => patch({ cargoTrackingNo: (e.target as HTMLInputElement).value })}
-                  placeholder="Kargo takip no"
-                  class={inp}
-                />
-              </Field>
+                  {shipping ? 'Oluşturuluyor…' : (order.cargoTrackingNo ? '↻ Yeniden Oluştur' : '📦 Kargo Barkodu Oluştur')}
+                </button>
+              </div>
+              {shippingMsg && (
+                <div class={[
+                  'text-xs px-3 py-2 rounded-lg border',
+                  shippingMsg.kind === 'ok'
+                    ? 'bg-emerald-500/10 border-emerald-500/40 text-emerald-300'
+                    : 'bg-red-500/10 border-red-500/40 text-red-300',
+                ].join(' ')}>
+                  {shippingMsg.text}
+                </div>
+              )}
             </div>
           )}
           {(order.deliveryMethod === 'pickup') && order.productionStatus === 'ready' && (
