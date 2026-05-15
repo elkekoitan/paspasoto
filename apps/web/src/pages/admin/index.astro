@@ -70,6 +70,43 @@ const stageTally = PRODUCTION_TIMELINE.map((t) => ({
   count: orders.filter((o) => o.productionStatus === t.status).length,
 }))
 
+/* Kanal dağılımı — Trendyol vs Online vs Manuel */
+const CHANNEL_META: Record<string, { label: string; emoji: string; color: string }> = {
+  configurator: { label: 'Online (Site)', emoji: '🛒', color: 'bg-blue-500' },
+  manual: { label: 'Manuel (Tel/WhatsApp)', emoji: '✋', color: 'bg-zinc-500' },
+  physical_store: { label: 'Dükkân', emoji: '🏪', color: 'bg-purple-500' },
+  trendyol: { label: 'Trendyol', emoji: '🟠', color: 'bg-orange-500' },
+  hepsiburada: { label: 'Hepsiburada', emoji: '🟧', color: 'bg-amber-500' },
+  n11: { label: 'n11', emoji: '🟣', color: 'bg-violet-500' },
+  woocommerce: { label: 'WooCommerce', emoji: '🟢', color: 'bg-emerald-500' },
+  shopify: { label: 'Shopify', emoji: '🟩', color: 'bg-green-500' },
+}
+const channelTally = new Map<string, { count: number; revenue: number; paid: number }>()
+for (const o of orders) {
+  const ch = o.channel ?? 'manual'
+  const prev = channelTally.get(ch) ?? { count: 0, revenue: 0, paid: 0 }
+  prev.count += 1
+  prev.revenue += o.total
+  prev.paid += o.paidAmount
+  channelTally.set(ch, prev)
+}
+const channelList = [...channelTally.entries()]
+  .map(([k, v]) => ({
+    key: k,
+    label: CHANNEL_META[k]?.label ?? k,
+    emoji: CHANNEL_META[k]?.emoji ?? '📦',
+    color: CHANNEL_META[k]?.color ?? 'bg-zinc-500',
+    ...v,
+  }))
+  .sort((a, b) => b.revenue - a.revenue)
+const maxChannelRevenue = Math.max(1, ...channelList.map((c) => c.revenue))
+const marketplaceCount = orders.filter((o) => ['trendyol', 'hepsiburada', 'n11', 'shopify', 'woocommerce'].includes(o.channel ?? '')).length
+const marketplaceRevenue = orders.filter((o) => ['trendyol', 'hepsiburada', 'n11', 'shopify', 'woocommerce'].includes(o.channel ?? '')).reduce((s, o) => s + o.total, 0)
+
+/* Ortalama sepet değeri */
+const avgOrderValue = orders.length > 0 ? totalRevenue / orders.length : 0
+const avgOrderValue30d = last30.length > 0 ? revenueLast30 / last30.length : 0
+
 /* Ödeme yöntemi */
 const methodTally = new Map<string, number>()
 for (const o of orders) methodTally.set(o.paymentMethod, (methodTally.get(o.paymentMethod) ?? 0) + 1)
@@ -197,13 +234,13 @@ const paidPercent = totalRevenue ? Math.round((paidRevenue / totalRevenue) * 100
     </div>
 
     {/* 30/7/% kart üçlüsü — tarih filtreleriyle */}
-    <div class="grid md:grid-cols-3 gap-4 mb-10">
+    <div class="grid md:grid-cols-4 gap-4 mb-10">
       <a href="/admin/orders?range=30" class="p-5 rounded-2xl bg-gradient-to-br from-[var(--color-primary-soft)] to-[var(--color-surface)] border border-[var(--color-primary)]/30 hover:border-[var(--color-primary)] hover:-translate-y-0.5 transition-all group">
         <div class="text-[10px] uppercase tracking-[0.2em] text-[var(--color-primary)] font-semibold flex items-center justify-between">
           Bu Ay (30 gün)
           <span class="opacity-60 group-hover:opacity-100">→</span>
         </div>
-        <div class="mt-2 font-display text-3xl font-semibold">{formatTRY(revenueLast30)}</div>
+        <div class="mt-2 font-display text-2xl md:text-3xl font-semibold">{formatTRY(revenueLast30)}</div>
         <div class="mt-1 text-xs text-[var(--color-text-soft)]">{last30.length} sipariş</div>
       </a>
       <a href="/admin/orders?range=7" class="p-5 rounded-2xl bg-[var(--color-surface)] border border-[var(--color-border)]/60 hover:border-[var(--color-primary)]/40 hover:-translate-y-0.5 transition-all group">
@@ -211,21 +248,67 @@ const paidPercent = totalRevenue ? Math.round((paidRevenue / totalRevenue) * 100
           Bu Hafta (7 gün)
           <span class="opacity-60 group-hover:opacity-100">→</span>
         </div>
-        <div class="mt-2 font-display text-3xl font-semibold">{formatTRY(revenueLast7)}</div>
+        <div class="mt-2 font-display text-2xl md:text-3xl font-semibold">{formatTRY(revenueLast7)}</div>
         <div class="mt-1 text-xs text-[var(--color-text-soft)]">{last7.length} sipariş</div>
       </a>
+      <div class="p-5 rounded-2xl bg-[var(--color-surface)] border border-[var(--color-border)]/60">
+        <div class="text-[10px] uppercase tracking-[0.2em] text-[var(--color-text-muted)] font-semibold">
+          Ortalama Sepet
+        </div>
+        <div class="mt-2 font-display text-2xl md:text-3xl font-semibold tabular-nums">{formatTRY(avgOrderValue)}</div>
+        <div class="mt-1 text-xs text-[var(--color-text-soft)]">Bu ay: <span class="text-white">{formatTRY(avgOrderValue30d)}</span></div>
+      </div>
       <a href="/admin/orders?filter=unpaid" class="p-5 rounded-2xl bg-[var(--color-surface)] border border-[var(--color-border)]/60 hover:border-emerald-500/40 hover:-translate-y-0.5 transition-all group">
         <div class="text-[10px] uppercase tracking-[0.2em] text-[var(--color-text-muted)] font-semibold flex items-center justify-between">
-          Tahsilat Tamamlanma
+          Tahsilat
           <span class="opacity-60 group-hover:opacity-100">→</span>
         </div>
-        <div class="mt-2 font-display text-3xl font-semibold">%{paidPercent}</div>
+        <div class="mt-2 font-display text-2xl md:text-3xl font-semibold">%{paidPercent}</div>
         <div class="mt-2 h-2 rounded-full bg-[var(--color-surface-2)] overflow-hidden">
           <div class="h-full bg-gradient-to-r from-emerald-500 to-emerald-400" style={`width: ${paidPercent}%`}></div>
         </div>
         <div class="mt-1 text-xs text-[var(--color-text-soft)]">Açık: {formatTRY(remainingRevenue)}</div>
       </a>
     </div>
+
+    {/* Kanal dağılımı — Trendyol vs Online vs Manuel */}
+    {channelList.length > 0 && (
+      <section class="mb-10 p-5 rounded-2xl bg-[var(--color-surface)] border border-[var(--color-border)]/60 animate-in fade-in slide-in-from-bottom-4 duration-700">
+        <header class="flex items-end justify-between gap-3 mb-4 flex-wrap">
+          <div>
+            <h3 class="font-display font-semibold text-base">Satış Kanalları</h3>
+            <p class="text-[11px] text-[var(--color-text-muted)] mt-0.5">
+              {marketplaceCount > 0
+                ? `Marketplace: ${marketplaceCount} sipariş · ${formatTRY(marketplaceRevenue)}`
+                : 'Henüz marketplace siparişi yok'}
+            </p>
+          </div>
+          <a href="/admin/entegrasyonlar" class="text-xs text-[var(--color-primary)] hover:underline font-semibold">
+            Entegrasyonlar →
+          </a>
+        </header>
+        <ul class="space-y-2.5">
+          {channelList.map((c) => (
+            <li>
+              <a href={`/admin/orders?channel=${c.key}`} class="block group">
+                <div class="flex items-baseline justify-between mb-1.5">
+                  <span class="text-sm font-medium group-hover:text-[var(--color-primary)] transition-colors flex items-center gap-2">
+                    <span>{c.emoji}</span>
+                    <span>{c.label}</span>
+                  </span>
+                  <span class="text-[11px] text-[var(--color-text-muted)] tabular-nums">
+                    {c.count} sipariş · {formatTRY(c.revenue)}
+                  </span>
+                </div>
+                <div class="h-2 rounded-full bg-[var(--color-surface-2)] overflow-hidden">
+                  <div class={`h-full ${c.color}`} style={`width: ${(c.revenue / maxChannelRevenue) * 100}%`}></div>
+                </div>
+              </a>
+            </li>
+          ))}
+        </ul>
+      </section>
+    )}
 
     {/* Analiz panelleri */}
     <div class="grid lg:grid-cols-2 gap-6 mb-12 animate-in fade-in slide-in-from-bottom-8 duration-1000 delay-500" style="animation-fill-mode: backwards;">

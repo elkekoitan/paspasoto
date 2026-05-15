@@ -12,6 +12,7 @@ const params = Astro.url.searchParams
 const filter = params.get('filter') ?? 'all'
 const status = params.get('status') ?? '' // tek bir aşama
 const brand = params.get('brand') ?? ''
+const channel = params.get('channel') ?? '' // Kanal: trendyol/hepsiburada/configurator/manual/physical_store
 const range = params.get('range') ?? '' // 7 / 30 / custom
 const fromStr = params.get('from') ?? ''
 const toStr = params.get('to') ?? ''
@@ -46,6 +47,15 @@ if (status) filtered = filtered.filter((o) => o.productionStatus === status)
 // 3) Marka filtresi
 if (brand) filtered = filtered.filter((o) => o.items.some((it) => it.brandSlug === brand))
 
+// 3b) Kanal filtresi
+if (channel) {
+  if (channel === 'marketplace') {
+    filtered = filtered.filter((o) => ['trendyol', 'hepsiburada', 'n11', 'woocommerce', 'shopify'].includes(o.channel ?? ''))
+  } else {
+    filtered = filtered.filter((o) => (o.channel ?? 'manual') === channel)
+  }
+}
+
 // 4) Tarih aralığı
 const day = 24 * 60 * 60 * 1000
 const now = Date.now()
@@ -78,6 +88,27 @@ else if (sort === 'total-desc') filtered = [...filtered].sort((a, b) => b.total 
 else if (sort === 'total-asc') filtered = [...filtered].sort((a, b) => a.total - b.total)
 else if (sort === 'paid-desc') filtered = [...filtered].sort((a, b) => b.paidAmount - a.paidAmount)
 // default: date-desc (listOrders zaten sıralı)
+
+// Kanal sayımları
+const CHANNEL_LABELS: Record<string, { label: string; emoji: string; class: string }> = {
+  manual: { label: 'Manuel', emoji: '✋', class: 'bg-zinc-500/15 text-zinc-300 border-zinc-500/30' },
+  configurator: { label: 'Online', emoji: '🛒', class: 'bg-blue-500/15 text-blue-400 border-blue-500/30' },
+  physical_store: { label: 'Dükkân', emoji: '🏪', class: 'bg-purple-500/15 text-purple-400 border-purple-500/30' },
+  trendyol: { label: 'Trendyol', emoji: '🟠', class: 'bg-orange-500/20 text-orange-300 border-orange-500/40' },
+  hepsiburada: { label: 'Hepsiburada', emoji: '🟧', class: 'bg-amber-500/20 text-amber-300 border-amber-500/40' },
+  n11: { label: 'n11', emoji: '🟣', class: 'bg-violet-500/15 text-violet-300 border-violet-500/30' },
+  woocommerce: { label: 'WooCommerce', emoji: '🟢', class: 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30' },
+  shopify: { label: 'Shopify', emoji: '🟩', class: 'bg-green-500/15 text-green-300 border-green-500/30' },
+}
+const CHANNEL_CHIPS = [
+  { k: 'all', l: 'Tüm Kanallar', n: all.length },
+  { k: 'configurator', l: '🛒 Online', n: all.filter((o) => (o.channel ?? 'manual') === 'configurator').length },
+  { k: 'trendyol', l: '🟠 Trendyol', n: all.filter((o) => o.channel === 'trendyol').length },
+  { k: 'hepsiburada', l: '🟧 Hepsiburada', n: all.filter((o) => o.channel === 'hepsiburada').length },
+  { k: 'manual', l: '✋ Manuel', n: all.filter((o) => (o.channel ?? 'manual') === 'manual').length },
+  { k: 'physical_store', l: '🏪 Dükkân', n: all.filter((o) => o.channel === 'physical_store').length },
+  { k: 'marketplace', l: '🏷 Tüm Marketplace', n: all.filter((o) => ['trendyol', 'hepsiburada', 'n11'].includes(o.channel ?? '')).length },
+].filter((c) => c.k === 'all' || c.k === 'marketplace' || c.n > 0) // Sadece dolu kanallar göster
 
 // Hızlı filtre chipleri için sayım (filtrelenmemiş set üzerinden)
 const FILTERS = [
@@ -123,7 +154,7 @@ const totalAmount = filtered.reduce((s, o) => s + o.total, 0)
 const paidAmount = filtered.reduce((s, o) => s + o.paidAmount, 0)
 const remaining = totalAmount - paidAmount
 
-const hasActiveFilter = !!(filter !== 'all' || status || brand || range || fromStr || toStr || q || sort !== 'date-desc')
+const hasActiveFilter = !!(filter !== 'all' || status || brand || channel || range || fromStr || toStr || q || sort !== 'date-desc')
 ---
 
 <AdminLayout title="Siparişler" current="orders">
@@ -144,7 +175,7 @@ const hasActiveFilter = !!(filter !== 'all' || status || brand || range || fromS
     {/* Filtre formu */}
     <form method="get" class="mb-5 p-4 rounded-2xl bg-[var(--color-surface)] border border-[var(--color-border)]/60">
       {/* Hızlı durum chipleri */}
-      <div class="flex flex-wrap gap-2 mb-3">
+      <div class="flex flex-wrap gap-2 mb-2">
         {FILTERS.map((f) => (
           <button
             type="submit"
@@ -159,6 +190,27 @@ const hasActiveFilter = !!(filter !== 'all' || status || brand || range || fromS
           >
             {f.l}
             <span class="text-[10px] opacity-60">({f.n})</span>
+          </button>
+        ))}
+      </div>
+
+      {/* Kanal chip'leri (Trendyol vs Online vs Manuel ayırmak için) */}
+      <div class="flex flex-wrap gap-2 mb-3 pb-3 border-b border-[var(--color-border)]/40">
+        <span class="text-[10px] uppercase tracking-[0.2em] text-[var(--color-text-muted)] font-semibold self-center mr-1">Kaynak:</span>
+        {CHANNEL_CHIPS.map((c) => (
+          <button
+            type="submit"
+            name="channel"
+            value={c.k === 'all' ? '' : c.k}
+            class={[
+              'inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-medium border transition-colors',
+              channel === c.k || (c.k === 'all' && !channel)
+                ? 'border-[var(--color-primary)] bg-[var(--color-primary-soft)] text-[var(--color-primary)]'
+                : 'border-[var(--color-border)] text-[var(--color-text-soft)] hover:text-[var(--color-text)] bg-[var(--color-surface-2)]/40',
+            ].join(' ')}
+          >
+            {c.l}
+            <span class="text-[10px] opacity-60">({c.n})</span>
           </button>
         ))}
       </div>
@@ -279,6 +331,7 @@ const hasActiveFilter = !!(filter !== 'all' || status || brand || range || fromS
             <thead class="text-[10px] uppercase tracking-wider text-[var(--color-text-muted)] border-b border-[var(--color-border)]/40">
               <tr>
                 <th class="px-5 py-3 text-left font-semibold">Sipariş No</th>
+                <th class="px-3 py-3 text-left font-semibold">Kaynak</th>
                 <th class="px-5 py-3 text-left font-semibold">Müşteri / Telefon</th>
                 <th class="px-5 py-3 text-left font-semibold">Araç</th>
                 <th class="px-5 py-3 text-left font-semibold">Tarih</th>
@@ -298,6 +351,17 @@ const hasActiveFilter = !!(filter !== 'all' || status || brand || range || fromS
                     <a href={`/admin/orders/${o.orderNo}`} class="font-mono text-xs text-[var(--color-primary)] hover:underline">
                       {o.orderNo}
                     </a>
+                  </td>
+                  <td class="px-3 py-3">
+                    {(() => {
+                      const ch = o.channel ?? 'manual'
+                      const meta = CHANNEL_LABELS[ch] ?? CHANNEL_LABELS.manual
+                      return (
+                        <span class={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold border whitespace-nowrap ${meta.class}`}>
+                          {meta.emoji} {meta.label}
+                        </span>
+                      )
+                    })()}
                   </td>
                   <td class="px-5 py-3">
                     <div class="font-medium">{o.customer.fullName}</div>
