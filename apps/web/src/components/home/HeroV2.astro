@@ -11,8 +11,10 @@
  * - High contrast, sade
  */
 import { CATEGORY_META } from '@lib/catalog-extra'
+import { getSiteContent } from '../../server/content'
 
-const heroImage = '/assets/mats/hero/default.webp'
+const site = getSiteContent()
+const heroImage = site.heroImage || '/assets/mats/hero/default.webp'
 
 const productThumbs = [
   CATEGORY_META.perfume,

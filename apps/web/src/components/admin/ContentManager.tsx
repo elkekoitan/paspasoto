@@ -10,8 +10,9 @@ import type { ContentDB, ProductOverride, SwatchType, SwatchOverride, CustomProd
 import type { SimpleProduct } from '../../lib/catalog-extra'
 import { MAT_COLORS, BORDER_COLORS, HEEL_PADS, BRANDS } from '../../lib/catalog'
 import { formatTRY } from '../../lib/format'
+import ImageUploadField from './ImageUploadField'
 
-type Tab = 'products' | 'custom' | 'swatches'
+type Tab = 'site' | 'products' | 'custom' | 'swatches'
 const CATEGORY_OPTIONS = [
   { value: 'screen-protector', label: 'Multimedya Ekran Koruyucu' },
   { value: 'perfume', label: 'Oto Parfüm' },
@@ -25,7 +26,7 @@ interface Props {
 }
 
 export default function ContentManager({ initialOverrides, products }: Props) {
-  const [tab, setTab] = useState<Tab>('products')
+  const [tab, setTab] = useState<Tab>('site')
   const [overrides, setOverrides] = useState<ContentDB>(initialOverrides)
   const [search, setSearch] = useState('')
   const [showAddCustom, setShowAddCustom] = useState(false)
@@ -46,6 +47,7 @@ export default function ContentManager({ initialOverrides, products }: Props) {
       {/* Tabs */}
       <div class="flex gap-2 mb-6 border-b border-[var(--color-border)]/60 overflow-x-auto">
         {[
+          { key: 'site', label: '🏠 Ana Sayfa', count: undefined },
           { key: 'products', label: '🛍 Hazır Ürünler', count: staticOnly.length },
           { key: 'custom', label: '➕ Eklediklerim', count: overrides.customProducts?.length ?? 0 },
           { key: 'swatches', label: '🎨 Konfigüratör Asseti', count: MAT_COLORS.length + BORDER_COLORS.length + HEEL_PADS.length },
@@ -61,10 +63,14 @@ export default function ContentManager({ initialOverrides, products }: Props) {
                 : 'border-transparent text-[var(--color-text-muted)] hover:text-[var(--color-text)]',
             ].join(' ')}
           >
-            {t.label} <span class="text-[10px] opacity-60">({t.count})</span>
+            {t.label} {t.count !== undefined && <span class="text-[10px] opacity-60">({t.count})</span>}
           </button>
         ))}
       </div>
+
+      {tab === 'site' && (
+        <SiteTab initial={overrides.site ?? {}} onSaved={(site) => setOverrides((prev) => ({ ...prev, site }))} />
+      )}
 
       {/* Search */}
       {tab === 'products' && (
@@ -255,20 +261,15 @@ function ProductRow({ product, override, onSave, onReset }: ProductRowProps) {
 
       {open && (
         <div class="p-4 md:p-5 pt-2 space-y-3 border-t border-[var(--color-border)]/40 bg-[var(--color-surface-2)]/30">
-          {/* Görsel preview + URL */}
-          <Field label="Ana Görsel URL (Pexels, Unsplash, kendi sunucunuz vb.)">
-            <div class="flex gap-3">
-              <div class="size-20 rounded-lg overflow-hidden bg-[var(--color-bg)] shrink-0 ring-1 ring-[var(--color-border)]/60">
-                <img src={image} alt="" class="size-full object-cover" />
-              </div>
-              <input
-                type="url"
-                value={image}
-                onInput={(e) => setImage((e.target as HTMLInputElement).value)}
-                placeholder="https://images.pexels.com/photos/..."
-                class={inp}
-              />
-            </div>
+          {/* Görsel — dosya yükle veya URL */}
+          <Field label="Ana Görsel">
+            <ImageUploadField
+              value={image}
+              onChange={setImage}
+              aspect="square"
+              previewSize={88}
+              placeholder="Dosya yükleyin veya URL yapıştırın"
+            />
           </Field>
 
           <Field label="Kısa Açıklama (1-2 cümle, kart ve detay üst kısmında)">
@@ -333,6 +334,94 @@ function ProductRow({ product, override, onSave, onReset }: ProductRowProps) {
           </div>
         </div>
       )}
+    </div>
+  )
+}
+
+/* ---------------- Site Tab (Hero) ---------------- */
+
+function SiteTab({ initial, onSaved }: { initial: ContentDB['site']; onSaved: (s: NonNullable<ContentDB['site']>) => void }) {
+  const [heroImage, setHeroImage] = useState(initial?.heroImage ?? '')
+  const [heroTitle, setHeroTitle] = useState(initial?.heroTitle ?? '')
+  const [heroSubtitle, setHeroSubtitle] = useState(initial?.heroSubtitle ?? '')
+  const [saving, setSaving] = useState(false)
+  const [savedFlash, setSavedFlash] = useState(false)
+
+  async function save() {
+    setSaving(true)
+    const res = await fetch('/api/admin/content/site', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        heroImage: heroImage || undefined,
+        heroTitle: heroTitle || undefined,
+        heroSubtitle: heroSubtitle || undefined,
+      }),
+    })
+    setSaving(false)
+    if (res.ok) {
+      const data = await res.json()
+      onSaved(data)
+      setSavedFlash(true)
+      setTimeout(() => setSavedFlash(false), 1800)
+    }
+  }
+
+  return (
+    <div class="space-y-6 max-w-3xl">
+      <section class="rounded-2xl border border-[var(--color-border)]/60 bg-[var(--color-surface)] p-5 space-y-4">
+        <div>
+          <h2 class="font-display text-lg font-bold">Ana Sayfa Hero</h2>
+          <p class="text-xs text-[var(--color-text-muted)] mt-0.5">Site açıldığında en üstte görünen büyük tanıtım alanı.</p>
+        </div>
+
+        <Field label="Hero Görseli (sağ kolon)">
+          <ImageUploadField
+            value={heroImage}
+            onChange={setHeroImage}
+            aspect="wide"
+            previewSize={180}
+            placeholder="Dosya yükleyin veya URL yapıştırın"
+          />
+        </Field>
+
+        <Field label="Hero Başlık (boş bırakırsanız varsayılan kullanılır)">
+          <input
+            type="text"
+            value={heroTitle}
+            onInput={(e) => setHeroTitle((e.target as HTMLInputElement).value)}
+            placeholder="Örn: Aracına özel EVA paspas. Premium kalite, atölye fiyatı."
+            class={inp}
+          />
+        </Field>
+
+        <Field label="Hero Alt Başlık">
+          <textarea
+            value={heroSubtitle}
+            onInput={(e) => setHeroSubtitle((e.target as HTMLTextAreaElement).value)}
+            placeholder="Markaya ve modele birebir kalıplanmış. 2-3 iş günü kapına."
+            rows={2}
+            class={`${inp} resize-none`}
+          />
+        </Field>
+
+        <button
+          type="button"
+          onClick={save}
+          disabled={saving}
+          class={[
+            'w-full px-5 py-3 rounded-lg text-sm font-bold transition-colors',
+            savedFlash ? 'bg-emerald-500 text-white' : 'bg-[var(--color-primary)] text-black hover:opacity-90',
+            saving && 'opacity-50',
+          ].join(' ')}
+        >
+          {savedFlash ? '✓ Kaydedildi (anasayfa anında yenilenir)' : saving ? 'Kaydediliyor…' : '💾 Hero\'yu Güncelle'}
+        </button>
+      </section>
+
+      <p class="text-xs text-[var(--color-text-muted)] leading-relaxed">
+        💡 İpucu: Burada yaptığınız değişiklik <a href="/" target="_blank" class="text-[var(--color-primary)] underline">ana sayfada</a> <strong>anında</strong> görünür (deploy beklenmez).
+      </p>
     </div>
   )
 }
@@ -504,11 +593,13 @@ function CustomProductForm({ onAdded }: { onAdded: (p: CustomProduct) => void })
         </Field>
       </div>
 
-      <Field label="Görsel URL (Pexels, Unsplash, Imgur, kendi sunucunuz...)">
-        <div class="flex gap-3">
-          {image && <div class="size-20 rounded-lg overflow-hidden bg-[var(--color-bg)] shrink-0 ring-1 ring-[var(--color-border)]/60"><img src={image} alt="" class="size-full object-cover" onError={(e: any) => e.currentTarget.style.opacity = '0.3'} /></div>}
-          <input type="url" value={image} onInput={(e) => setImage((e.target as HTMLInputElement).value)} placeholder="https://images.pexels.com/..." class={inp} />
-        </div>
+      <Field label="Ürün Görseli">
+        <ImageUploadField
+          value={image}
+          onChange={setImage}
+          aspect="square"
+          previewSize={96}
+        />
       </Field>
 
       <Field label="Kısa Açıklama (1-2 cümle, kart üzerinde)">
@@ -604,11 +695,8 @@ function CustomProductRow({ product, onUpdate, onDelete }: { product: CustomProd
           <Field label="Ürün Adı">
             <input type="text" value={name} onInput={(e) => setName((e.target as HTMLInputElement).value)} class={inp} />
           </Field>
-          <Field label="Görsel URL">
-            <div class="flex gap-3">
-              {image && <div class="size-20 rounded-lg overflow-hidden bg-[var(--color-bg)] shrink-0 ring-1 ring-[var(--color-border)]/60"><img src={image} alt="" class="size-full object-cover" /></div>}
-              <input type="url" value={image} onInput={(e) => setImage((e.target as HTMLInputElement).value)} class={inp} />
-            </div>
+          <Field label="Ürün Görseli">
+            <ImageUploadField value={image} onChange={setImage} aspect="square" previewSize={88} />
           </Field>
           <Field label="Kısa Açıklama">
             <textarea value={shortDescription} onInput={(e) => setShortDescription((e.target as HTMLTextAreaElement).value)} rows={2} class={`${inp} resize-none`} />
@@ -676,15 +764,13 @@ function SwatchSection({ title, type, items, overrides, onChange }: SwatchSectio
 
 function SwatchCard({ item, override, onChange }: { item: any; override?: SwatchOverride; onChange: (p: SwatchOverride) => Promise<void> }) {
   const [url, setUrl] = useState(override?.imageUrl ?? '')
-  const [saving, setSaving] = useState(false)
   const [savedFlash, setSavedFlash] = useState(false)
 
   const effective = override?.imageUrl || item.current
 
-  async function save() {
-    setSaving(true)
-    await onChange({ imageUrl: url || undefined })
-    setSaving(false)
+  async function saveUrl(newUrl: string) {
+    setUrl(newUrl)
+    await onChange({ imageUrl: newUrl || undefined })
     setSavedFlash(true)
     setTimeout(() => setSavedFlash(false), 1800)
   }
@@ -700,27 +786,17 @@ function SwatchCard({ item, override, onChange }: { item: any; override?: Swatch
           {override?.imageUrl && (
             <div class="text-[9px] text-[var(--color-primary)] font-bold uppercase">● Override</div>
           )}
+          {savedFlash && (
+            <div class="text-[9px] text-emerald-400 font-bold uppercase">✓ Kaydedildi</div>
+          )}
         </div>
       </div>
-      <input
-        type="url"
+      <ImageUploadField
         value={url}
-        onInput={(e) => setUrl((e.target as HTMLInputElement).value)}
-        placeholder="https://… (foto URL)"
-        class="w-full px-2 py-1.5 rounded-md bg-[var(--color-surface-2)] border border-[var(--color-border)] text-[11px]"
+        onChange={saveUrl}
+        aspect="square"
+        previewSize={64}
       />
-      <button
-        type="button"
-        onClick={save}
-        disabled={saving}
-        class={[
-          'mt-2 w-full px-2 py-1.5 rounded-md text-[11px] font-semibold transition-colors',
-          savedFlash ? 'bg-emerald-500 text-white' : 'bg-[var(--color-primary)]/20 text-[var(--color-primary)] hover:bg-[var(--color-primary)]/30',
-          saving && 'opacity-50',
-        ].join(' ')}
-      >
-        {savedFlash ? '✓ Kaydedildi' : saving ? '...' : 'Kaydet'}
-      </button>
     </div>
   )
 }

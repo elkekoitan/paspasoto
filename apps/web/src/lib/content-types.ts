@@ -41,9 +41,20 @@ export interface CustomProduct {
   updatedAt: number
 }
 
+/** Site-level görsel ve metin override'ları (hero, banner vb.). */
+export interface SiteContent {
+  /** Ana sayfa hero görseli URL. */
+  heroImage?: string
+  /** Hero başlık override (yoksa default kullanılır). */
+  heroTitle?: string
+  /** Hero alt başlık override. */
+  heroSubtitle?: string
+}
+
 export interface ContentDB {
   products: Record<string, ProductOverride>
   customProducts: CustomProduct[]
   swatches: Record<SwatchType, Record<string, SwatchOverride>>
+  site?: SiteContent
   meta: { version: number; updatedAt: number }
 }

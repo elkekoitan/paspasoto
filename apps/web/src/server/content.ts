@@ -10,9 +10,9 @@
  */
 import { existsSync, mkdirSync, readFileSync, writeFileSync, renameSync } from 'node:fs'
 import { resolve } from 'node:path'
-import type { ProductOverride, SwatchOverride, SwatchType, ContentDB, CustomProduct } from '../lib/content-types'
+import type { ProductOverride, SwatchOverride, SwatchType, ContentDB, CustomProduct, SiteContent } from '../lib/content-types'
 
-export type { ProductOverride, SwatchOverride, SwatchType, ContentDB, CustomProduct } from '../lib/content-types'
+export type { ProductOverride, SwatchOverride, SwatchType, ContentDB, CustomProduct, SiteContent } from '../lib/content-types'
 
 const DATA_DIR = process.env.DATA_DIR ?? resolve(process.cwd(), '.data')
 const FILE = resolve(DATA_DIR, 'content.json')
@@ -22,6 +22,7 @@ function emptyDB(): ContentDB {
     products: {},
     customProducts: [],
     swatches: { mat: {}, border: {}, heel: {}, logo: {}, emblem: {} },
+    site: {},
     meta: { version: 1, updatedAt: Date.now() },
   }
 }
@@ -43,6 +44,7 @@ function read(): ContentDB {
     raw.swatches = { mat: {}, border: {}, heel: {}, logo: {}, emblem: {}, ...raw.swatches }
     raw.products = raw.products ?? {}
     raw.customProducts = raw.customProducts ?? []
+    raw.site = raw.site ?? {}
     return raw
   } catch {
     return emptyDB()
@@ -159,4 +161,17 @@ export async function deleteCustomProduct(id: string): Promise<boolean> {
   if (db.customProducts.length === before) return false
   await write(db)
   return true
+}
+
+/* -------------------- Site-Level (hero, banner) -------------------- */
+
+export function getSiteContent(): SiteContent {
+  return read().site ?? {}
+}
+
+export async function setSiteContent(patch: SiteContent): Promise<SiteContent> {
+  const db = read()
+  db.site = { ...(db.site ?? {}), ...patch }
+  await write(db)
+  return db.site
 }
