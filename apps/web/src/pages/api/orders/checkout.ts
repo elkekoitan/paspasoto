@@ -34,13 +34,8 @@ export const POST: APIRoute = async ({ request }) => {
   }
 
   const paymentMethod = body.paymentMethod as PaymentMethod
-  // iyzico henüz aktif değil
-  if (paymentMethod === 'iyzico') {
-    return new Response(
-      JSON.stringify({ error: 'Online ödeme henüz aktif değil. Lütfen başka bir ödeme yöntemi seçin.' }),
-      { status: 501, headers: { 'Content-Type': 'application/json' } },
-    )
-  }
+  // iyzico: sipariş oluşturulur, ardından client /api/payments/iyzico/init çağırarak
+  // hosted checkout sayfasına yönlendirir.
 
   // CartLine[] → OrderItem[] dönüşümü + server-side fiyat re-validation
   const items: OrderItem[] = []
@@ -111,6 +106,10 @@ export const POST: APIRoute = async ({ request }) => {
       city: String(sa.city ?? 'Belirtilmedi').slice(0, 50),
       district: String(sa.district ?? 'Belirtilmedi').slice(0, 50),
       addressLine: String(sa.addressLine ?? '').slice(0, 500),
+      ...(sa.geo && typeof sa.geo.lat === 'number' && typeof sa.geo.lng === 'number'
+        ? { geo: { lat: sa.geo.lat, lng: sa.geo.lng } }
+        : {}),
+      ...(sa.formattedAddress ? { formattedAddress: String(sa.formattedAddress).slice(0, 500) } : {}),
     },
     items,
     subtotal,

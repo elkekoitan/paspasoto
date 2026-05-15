@@ -5,7 +5,7 @@ import Base from '@layouts/Base.astro'
 
 <Base title="İletişim" description="Konya atölyemize ulaşın — telefon, WhatsApp, e-posta.">
   <section class="container-page py-16 md:py-24">
-    <div class="grid md:grid-cols-2 gap-12 max-w-5xl">
+    <div class="grid md:grid-cols-2 gap-12 max-w-5xl mb-12">
       <div>
         <p class="text-sm text-[var(--color-primary)] font-medium uppercase tracking-wider">İletişim</p>
         <h1 class="mt-2 font-display text-4xl md:text-5xl font-semibold tracking-tight">Bize ulaşın</h1>
@@ -58,6 +58,44 @@ import Base from '@layouts/Base.astro'
           Gönder
         </button>
       </form>
+    </div>
+
+    {/* Atölye haritası */}
+    <div class="max-w-5xl">
+      <h2 class="font-display text-2xl md:text-3xl font-semibold mb-4 tracking-tight">Atölyemizin Konumu</h2>
+      <p class="text-sm text-[var(--color-text-soft)] mb-4">
+        Konya Karatay'da, Fevzi Çakmak Sanayi bölgesindeyiz. Randevu almadan da uğrayabilirsiniz.
+      </p>
+      <div class="rounded-2xl overflow-hidden border border-[var(--color-border)]/60 bg-[var(--color-surface)] shadow-lg">
+        <iframe
+          title="Carmat atölye konumu"
+          src="https://www.google.com/maps?q=Fevzi+%C3%87akmak+Mah.+10733.+Sk.+No+1+Karatay+Konya&output=embed"
+          width="100%"
+          height="380"
+          style="border:0; display:block;"
+          loading="lazy"
+          referrerpolicy="no-referrer-when-downgrade"
+          allowfullscreen
+        ></iframe>
+      </div>
+      <div class="mt-3 flex flex-wrap gap-3 text-sm">
+        <a
+          href="https://maps.google.com/?q=Fevzi+%C3%87akmak+Mah.+10733.+Sk.+No+1+Karatay+Konya"
+          target="_blank"
+          rel="noopener"
+          class="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-[var(--color-primary)] text-black font-semibold hover:opacity-90"
+        >
+          🗺 Google Maps'te Aç
+        </a>
+        <a
+          href="https://www.google.com/maps/dir/?api=1&destination=Fevzi+%C3%87akmak+Mah.+10733.+Sk.+No+1+Karatay+Konya"
+          target="_blank"
+          rel="noopener"
+          class="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-[var(--color-border)] hover:border-[var(--color-primary)]"
+        >
+          🚗 Yol Tarifi Al
+        </a>
+      </div>
     </div>
   </section>
 </Base>

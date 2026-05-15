@@ -243,6 +243,10 @@ export type Order = {
     city: string
     district: string
     addressLine: string
+    /** Google Maps üzerinden seçildiyse koordinatlar (kargo + admin haritada göster). */
+    geo?: { lat: number; lng: number }
+    /** Maps'ten gelen tam formatlı adres (varsa). */
+    formattedAddress?: string
   }
   items: OrderItem[]
   subtotal: number

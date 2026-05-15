@@ -365,6 +365,7 @@ export default function OrderEditor({ initial }: { initial: Order }) {
                 <option value="elden-kart">Elden — Kredi Kartı (POS)</option>
                 <option value="havale">Banka Havalesi / EFT</option>
                 <option value="kapida">Kapıda</option>
+                <option value="iyzico">Online Kart (iyzico)</option>
                 <option value="sonra">Sonra Ödenecek</option>
                 <option value="taksit">Parçalı / Taksit</option>
               </select>
@@ -377,6 +378,40 @@ export default function OrderEditor({ initial }: { initial: Order }) {
               order={order}
               onUpdate={(installments) => patch({ paymentInstallments: installments })}
             />
+          )}
+
+          {/* İade akışı — paymentStatus='iade' iken not + onay */}
+          {order.paymentStatus === 'iade' && (
+            <div class="mt-4 p-4 rounded-xl border border-red-500/40 bg-red-500/5 space-y-3">
+              <div class="flex items-start gap-2">
+                <span class="text-lg">↩</span>
+                <div>
+                  <div class="font-semibold text-sm text-red-300">İade Kaydı</div>
+                  <div class="text-[11px] text-[var(--color-text-muted)] mt-0.5">
+                    Bu sipariş "iade" olarak işaretlendi. iyzico ödemesi varsa iyzico panelden refund'u manuel olarak da işlemeniz gerekir (otomatik refund henüz yok).
+                  </div>
+                </div>
+              </div>
+              <Field label="İade Notu (atölye için)">
+                <textarea
+                  defaultValue={order.internalNote ?? ''}
+                  onBlur={(e) => patch({ internalNote: (e.target as HTMLTextAreaElement).value })}
+                  rows={2}
+                  placeholder="İade nedeni, müşteriyle yapılan görüşme..."
+                  class={`${inp} resize-none`}
+                />
+              </Field>
+              {order.paymentMethod === 'iyzico' && (
+                <a
+                  href="https://merchant.iyzipay.com/transaction"
+                  target="_blank"
+                  rel="noopener"
+                  class="inline-flex items-center gap-1.5 text-xs font-medium text-red-300 hover:text-red-200"
+                >
+                  → iyzico panelinde refund işle
+                </a>
+              )}
+            </div>
           )}
         </Section>
 
@@ -467,6 +502,38 @@ export default function OrderEditor({ initial }: { initial: Order }) {
               <br />
               {order.shippingAddress.district} / {order.shippingAddress.city}
             </div>
+            {(order.shippingAddress as any)?.geo && (
+              <div class="mt-2 text-[10px] text-[var(--color-primary)] flex items-center gap-1">
+                <span>📍</span>
+                <span>Konum işaretli ({((order.shippingAddress as any).geo.lat).toFixed(5)}, {((order.shippingAddress as any).geo.lng).toFixed(5)})</span>
+              </div>
+            )}
+          </div>
+          <div class="mt-3 grid grid-cols-2 gap-2">
+            <a
+              href={(order.shippingAddress as any)?.geo
+                ? `https://www.google.com/maps?q=${(order.shippingAddress as any).geo.lat},${(order.shippingAddress as any).geo.lng}`
+                : `https://www.google.com/maps?q=${encodeURIComponent(
+                    `${order.shippingAddress.addressLine}, ${order.shippingAddress.district}, ${order.shippingAddress.city}`,
+                  )}`}
+              target="_blank"
+              rel="noopener"
+              class="text-center px-3 py-2 rounded-lg text-xs font-medium border border-[var(--color-border)] hover:border-[var(--color-primary)] hover:text-[var(--color-primary)]"
+            >
+              🗺 Haritada Göster
+            </a>
+            <a
+              href={(order.shippingAddress as any)?.geo
+                ? `https://www.google.com/maps/dir/?api=1&destination=${(order.shippingAddress as any).geo.lat},${(order.shippingAddress as any).geo.lng}`
+                : `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(
+                    `${order.shippingAddress.addressLine}, ${order.shippingAddress.district}, ${order.shippingAddress.city}`,
+                  )}`}
+              target="_blank"
+              rel="noopener"
+              class="text-center px-3 py-2 rounded-lg text-xs font-medium border border-[var(--color-border)] hover:border-[var(--color-primary)] hover:text-[var(--color-primary)]"
+            >
+              🚗 Yol Tarifi
+            </a>
           </div>
         </div>
 

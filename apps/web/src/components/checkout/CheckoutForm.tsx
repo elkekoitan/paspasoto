@@ -5,6 +5,13 @@ import { useState } from 'preact/hooks'
 import { useStore } from '@nanostores/preact'
 import { cartStore, cartTotal, clearCart } from '../../lib/cart'
 import { formatTRY } from '../../lib/format'
+import AddressAutocomplete from './AddressAutocomplete'
+
+// Astro PUBLIC_ env değişkenleri build sırasında inject edilir.
+// (Yoksa undefined kalır → autocomplete fallback'e düşer.)
+const GMAPS_API_KEY =
+  // @ts-ignore — import.meta.env Astro tarafında PUBLIC_ prefix'iyle expose edilir
+  (import.meta as any).env?.PUBLIC_GOOGLE_MAPS_API_KEY as string | undefined
 
 const TR_CITIES = [
   'Adana', 'Ankara', 'Antalya', 'Balıkesir', 'Bursa', 'Denizli', 'Diyarbakır', 'Erzurum',
@@ -32,6 +39,8 @@ export default function CheckoutForm() {
   const [city, setCity] = useState('')
   const [district, setDistrict] = useState('')
   const [addressLine, setAddressLine] = useState('')
+  const [geo, setGeo] = useState<{ lat: number; lng: number } | null>(null)
+  const [formattedAddress, setFormattedAddress] = useState<string | null>(null)
   const [customerNote, setCustomerNote] = useState('')
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('kapida')
   const [submitting, setSubmitting] = useState(false)
@@ -62,6 +71,8 @@ export default function CheckoutForm() {
             city: city.trim(),
             district: district.trim(),
             addressLine: addressLine.trim(),
+            ...(geo ? { geo } : {}),
+            ...(formattedAddress ? { formattedAddress } : {}),
           },
           lines,
           paymentMethod,
@@ -188,7 +199,31 @@ export default function CheckoutForm() {
               <input type="text" value={district} onInput={(e) => setDistrict((e.target as HTMLInputElement).value)} class={inpClass} required />
             </Field>
             <Field label="Adres *" class="sm:col-span-2">
-              <textarea value={addressLine} onInput={(e) => setAddressLine((e.target as HTMLTextAreaElement).value)} rows={3} class={`${inpClass} resize-none`} required></textarea>
+              <AddressAutocomplete
+                value={addressLine}
+                onChange={(v) => {
+                  setAddressLine(v)
+                  // Kullanıcı manuel düzenlediyse geo'yu sıfırla (tutarsızlık önleme)
+                  if (geo) { setGeo(null); setFormattedAddress(null) }
+                }}
+                onPick={(p) => {
+                  if (p.addressLine) setAddressLine(p.addressLine)
+                  if (p.city) setCity(p.city)
+                  if (p.district) setDistrict(p.district)
+                  if (p.geo) setGeo(p.geo)
+                  if (p.formattedAddress) setFormattedAddress(p.formattedAddress)
+                }}
+                apiKey={GMAPS_API_KEY}
+                className={`${inpClass} resize-none`}
+                placeholder="Mahalle, sokak, bina no, daire no..."
+                rows={3}
+              />
+              {geo && (
+                <div class="mt-1.5 text-[10px] text-[var(--color-primary)] flex items-center gap-1">
+                  <span>📍</span>
+                  <span>Konum kaydedildi · Kargoya doğru adres bilgisi gidecek.</span>
+                </div>
+              )}
             </Field>
             <Field label="Sipariş notu (opsiyonel)" class="sm:col-span-2">
               <textarea value={customerNote} onInput={(e) => setCustomerNote((e.target as HTMLTextAreaElement).value)} rows={2} placeholder="Özel istek, teslimat saati vb." class={`${inpClass} resize-none`}></textarea>
