@@ -285,6 +285,16 @@ const criticalStockCount = (() => { try { return getCriticalItems().length } cat
         <a href="/admin/entegrasyonlar" class="flex items-center gap-3 px-3 py-3 rounded-xl text-sm bg-[var(--color-surface-2)] hover:bg-[var(--color-border)]/40">
           <span>🛒</span> E-Ticaret Entegrasyonları
         </a>
+        {isPatron && (
+          <a href="/admin/audit" class="flex items-center gap-3 px-3 py-3 rounded-xl text-sm bg-[var(--color-surface-2)] hover:bg-[var(--color-border)]/40">
+            <span>🔍</span> Aktivite Log (Audit)
+          </a>
+        )}
+        {isPatron && (
+          <a href="/admin/sablonlar" class="flex items-center gap-3 px-3 py-3 rounded-xl text-sm bg-[var(--color-surface-2)] hover:bg-[var(--color-border)]/40">
+            <span>📨</span> Mesaj Şablonları
+          </a>
+        )}
         <a href="/" class="flex items-center gap-3 px-3 py-3 rounded-xl bg-gradient-to-br from-[var(--color-primary-soft)] to-[var(--color-surface-2)] border border-[var(--color-primary)]/30 text-[var(--color-primary)] font-semibold">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12l9-9 9 9M5 10v10h14V10" /></svg>
           Müşteri Anasayfası ↗

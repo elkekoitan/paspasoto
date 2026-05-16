@@ -1,6 +1,7 @@
 import type { APIRoute } from 'astro'
 import { requireRole } from '../../../../server/auth'
 import { listUsers, createUser, type UserRole } from '../../../../server/users'
+import { audit } from '../../../../server/audit'
 
 export const prerender = false
 
@@ -11,25 +12,21 @@ export const GET: APIRoute = async ({ cookies }) => {
   } catch (r) {
     return r as Response
   }
-  const users = listUsers().map((u) => ({
-    id: u.id,
-    username: u.username,
-    displayName: u.displayName,
-    role: u.role,
-    active: u.active,
-    createdAt: u.createdAt,
-    lastLoginAt: u.lastLoginAt,
-  }))
+  const users = listUsers().map((u) => {
+    const { passwordHash: _h, passwordSalt: _s, ...safe } = u
+    return safe
+  })
   return new Response(JSON.stringify(users), {
     status: 200,
     headers: { 'Content-Type': 'application/json' },
   })
 }
 
-/** POST /api/admin/users — Patron only, yeni personel ekle (veya patron). */
+/** POST /api/admin/users — Patron only, yeni personel ekle. */
 export const POST: APIRoute = async ({ cookies, request }) => {
+  let auth
   try {
-    requireRole(cookies, ['patron'])
+    auth = requireRole(cookies, ['patron'])
   } catch (r) {
     return r as Response
   }
@@ -43,6 +40,13 @@ export const POST: APIRoute = async ({ cookies, request }) => {
       displayName: body.displayName ? String(body.displayName) : undefined,
       password: String(body.password),
       role: (body.role === 'patron' ? 'patron' : 'staff') as UserRole,
+    })
+    audit({
+      userId: auth.user.id,
+      username: auth.user.username,
+      action: 'user.create',
+      target: user.id,
+      details: { newUsername: user.username, role: user.role },
     })
     const { passwordHash: _h, passwordSalt: _s, ...safe } = user
     return new Response(JSON.stringify(safe), {

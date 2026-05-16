@@ -163,3 +163,20 @@ export function requireAdmin(cookies: AstroCookies): Session {
   const { session } = requireRole(cookies, ['patron'])
   return session
 }
+
+/**
+ * Belirli bir RBAC permission gerektirir. Patron her zaman geçer.
+ * Throw 403 yetkisizse.
+ */
+import { hasPermission, defaultPermissionsForRole, type Permission } from '../lib/permissions'
+export function requirePermission(
+  cookies: AstroCookies,
+  permission: Permission,
+): { user: User; session: Session } {
+  const auth = requireAuth(cookies)
+  const perms = auth.user.permissions ?? defaultPermissionsForRole(auth.user.role)
+  if (!hasPermission(perms, permission)) {
+    throw new Response('Forbidden — permission required: ' + permission, { status: 403 })
+  }
+  return auth
+}

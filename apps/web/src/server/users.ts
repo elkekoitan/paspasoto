@@ -32,6 +32,20 @@ export interface User {
   active: boolean
   createdAt: number
   lastLoginAt?: number
+  // Faz 4 — kişisel + iş bilgileri
+  email?: string
+  phone?: string
+  avatar?: string             // /uploads/{...}
+  position?: string           // 'Atölye Şefi', 'Kasiyer', vb.
+  startDate?: number          // işe başlama epoch ms
+  birthDate?: number
+  workingDays?: number[]      // [1,2,3,4,5,6] = Pzt..Cmt
+  monthlyTarget?: number      // aylık ciro hedefi ₺
+  commissionRate?: number     // satış komisyonu %
+  permissions?: string[]      // RBAC izin listesi (boşsa role default'u uygulanır)
+  internalNote?: string       // patron not
+  updatedAt?: number
+  lastLoginIp?: string
 }
 
 type UsersFile = {
@@ -151,21 +165,55 @@ export function createUser(input: {
 
 export function updateUser(
   id: string,
-  patch: Partial<Pick<User, 'displayName' | 'active'>> & { password?: string },
+  patch: Partial<Omit<User, 'id' | 'passwordHash' | 'passwordSalt' | 'createdAt'>> & { password?: string },
 ): User | null {
   const data = read()
   const i = data.users.findIndex((u) => u.id === id)
   if (i < 0) return null
   const u = data.users[i]!
-  if (patch.displayName !== undefined) u.displayName = patch.displayName.trim()
-  if (patch.active !== undefined) u.active = patch.active
-  if (patch.password !== undefined && patch.password.length >= 6) {
+
+  // Username değişimi — uniq kontrol
+  if (patch.username !== undefined) {
+    const newUsername = patch.username.trim().toLowerCase()
+    if (newUsername.length < 3 || !/^[a-z0-9_.-]+$/.test(newUsername)) {
+      throw new Error('Geçersiz kullanıcı adı')
+    }
+    if (newUsername !== u.username && data.users.some((x) => x.username.toLowerCase() === newUsername)) {
+      throw new Error('Bu kullanıcı adı zaten alınmış')
+    }
+    u.username = newUsername
+  }
+
+  // Şifre değişimi
+  if (patch.password !== undefined) {
+    if (patch.password.length < 8) throw new Error('Şifre en az 8 karakter olmalı')
+    if (!/[0-9]/.test(patch.password) || !/[a-zA-Z]/.test(patch.password)) {
+      throw new Error('Şifre en az 1 sayı ve 1 harf içermeli')
+    }
     const { hash, salt } = hashPassword(patch.password)
     u.passwordHash = hash
     u.passwordSalt = salt
   }
+
+  // Diğer alanlar
+  const allowed: Array<keyof User> = [
+    'displayName', 'active', 'email', 'phone', 'avatar', 'position',
+    'startDate', 'birthDate', 'workingDays', 'monthlyTarget', 'commissionRate',
+    'permissions', 'internalNote',
+  ]
+  for (const k of allowed) {
+    if (k in patch) (u as any)[k] = (patch as any)[k]
+  }
+  // Patron permissions değiştirilemez — her zaman * (tüm yetki)
+  if (u.role === 'patron') u.permissions = ['*']
+
+  u.updatedAt = Date.now()
   write(data)
   return u
+}
+
+export function getUserById(id: string): User | null {
+  return read().users.find((u) => u.id === id) ?? null
 }
 
 export function deactivateUser(id: string): boolean {

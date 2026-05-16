@@ -1,0 +1,32 @@
+---
+export const prerender = false
+import AdminLayout from '@layouts/AdminLayout.astro'
+import { getCurrentUser } from '../../../../server/auth'
+import { getUserById } from '../../../../server/users'
+import PersonnelEditor from '@components/admin/PersonnelEditor.tsx'
+
+const me = getCurrentUser(Astro.cookies)
+if (!me) return Astro.redirect('/admin/login')
+if (me.role !== 'patron') return new Response('Forbidden', { status: 403 })
+
+const id = Astro.params.id!
+const user = getUserById(id)
+if (!user) return new Response('Personel bulunamadı', { status: 404 })
+
+// passwordHash gönderme
+const { passwordHash: _h, passwordSalt: _s, ...safeUser } = user
+---
+
+<AdminLayout title={`Personel — ${user.displayName}`} current="personel">
+  <div class="p-4 md:p-8 max-w-4xl mx-auto">
+    <nav class="text-xs text-[var(--color-text-muted)] mb-4">
+      <a href="/admin" class="hover:text-[var(--color-primary)]">Yönetim</a>
+      <span class="mx-2">/</span>
+      <a href="/admin/patron/personel" class="hover:text-[var(--color-primary)]">Personel</a>
+      <span class="mx-2">/</span>
+      <span>{user.displayName}</span>
+    </nav>
+
+    <PersonnelEditor initial={safeUser} client:load />
+  </div>
+</AdminLayout>

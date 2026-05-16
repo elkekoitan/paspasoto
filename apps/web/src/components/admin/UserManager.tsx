@@ -236,13 +236,12 @@ export default function UserManager() {
                   </div>
                 </div>
                 <div class="flex items-center gap-2 shrink-0">
-                  <button
-                    type="button"
-                    onClick={() => handleResetPassword(u.id, u.displayName)}
-                    class="px-3 py-1.5 rounded-lg text-[11px] bg-[var(--color-surface)] hover:bg-[var(--color-border)] text-[var(--color-text-soft)]"
+                  <a
+                    href={`/admin/patron/personel/${u.id}`}
+                    class="px-3 py-1.5 rounded-lg text-[11px] font-semibold bg-[var(--color-primary)]/15 text-[var(--color-primary)] hover:bg-[var(--color-primary)]/25"
                   >
-                    Şifre
-                  </button>
+                    Düzenle →
+                  </a>
                   <button
                     type="button"
                     onClick={() => handleToggleActive(u.id, u.active)}

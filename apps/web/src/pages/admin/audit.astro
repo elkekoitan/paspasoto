@@ -1,0 +1,131 @@
+---
+export const prerender = false
+import AdminLayout from '@layouts/AdminLayout.astro'
+import { getCurrentUser } from '../../server/auth'
+import { listAudit, listAuditActions } from '../../server/audit'
+import { listUsers } from '../../server/users'
+import { formatDateTime } from '@lib/format'
+
+const me = getCurrentUser(Astro.cookies)
+if (!me) return Astro.redirect('/admin/login')
+if (me.role !== 'patron') return new Response('Forbidden', { status: 403 })
+
+const params = Astro.url.searchParams
+const userId = params.get('userId') ?? ''
+const action = params.get('action') ?? ''
+const target = params.get('target') ?? ''
+const limit = Number(params.get('limit') ?? '200')
+
+const events = listAudit({
+  userId: userId || undefined,
+  action: action || undefined,
+  target: target || undefined,
+  limit,
+})
+const allActions = listAuditActions()
+const users = listUsers()
+
+const ACTION_LABELS: Record<string, { label: string; emoji: string; color: string }> = {
+  'user.create': { label: 'Personel eklendi', emoji: '👤', color: 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30' },
+  'user.update': { label: 'Personel düzenlendi', emoji: '✏', color: 'bg-blue-500/15 text-blue-300 border-blue-500/30' },
+  'user.password-reset': { label: 'Şifre sıfırlandı', emoji: '🔑', color: 'bg-amber-500/15 text-amber-300 border-amber-500/30' },
+  'user.deactivate': { label: 'Personel pasifleştirildi', emoji: '🚫', color: 'bg-red-500/15 text-red-300 border-red-500/30' },
+  'order.create': { label: 'Sipariş oluşturuldu', emoji: '🛒', color: 'bg-blue-500/15 text-blue-300 border-blue-500/30' },
+  'order.edit': { label: 'Sipariş düzenlendi', emoji: '✏', color: 'bg-blue-500/15 text-blue-300 border-blue-500/30' },
+  'order.bulk': { label: 'Toplu sipariş işlemi', emoji: '📦', color: 'bg-purple-500/15 text-purple-300 border-purple-500/30' },
+  'permission.denied': { label: 'Yetki reddedildi', emoji: '⛔', color: 'bg-red-500/15 text-red-300 border-red-500/30' },
+}
+---
+
+<AdminLayout title="Aktivite Log" current="dashboard">
+  <div class="p-4 md:p-8 max-w-7xl mx-auto">
+    <header class="mb-6 flex items-end justify-between gap-3 flex-wrap">
+      <div>
+        <p class="text-xs uppercase tracking-[0.2em] text-[var(--color-primary)] font-semibold">Admin</p>
+        <h1 class="mt-1 font-display text-2xl md:text-3xl font-bold">🔍 Aktivite Log</h1>
+        <p class="mt-2 text-sm text-[var(--color-text-soft)]">
+          Sistemdeki tüm önemli işlemlerin izi. Son {limit} olay.
+        </p>
+      </div>
+      <div class="text-xs text-[var(--color-text-muted)]">
+        Toplam {events.length} olay
+      </div>
+    </header>
+
+    {/* Filtreler */}
+    <form method="get" class="mb-6 p-4 rounded-2xl bg-[var(--color-surface)] border border-[var(--color-border)]/60 grid grid-cols-2 md:grid-cols-5 gap-3 items-end">
+      <label>
+        <div class="text-[10px] uppercase tracking-wider text-[var(--color-text-muted)] font-semibold mb-1">Kullanıcı</div>
+        <select name="userId" class="w-full px-3 py-2 rounded-lg bg-[var(--color-surface-2)] border border-[var(--color-border)] text-sm">
+          <option value="">Tümü</option>
+          {users.map((u) => (
+            <option value={u.id} selected={userId === u.id}>{u.username}</option>
+          ))}
+        </select>
+      </label>
+      <label>
+        <div class="text-[10px] uppercase tracking-wider text-[var(--color-text-muted)] font-semibold mb-1">Eylem</div>
+        <select name="action" class="w-full px-3 py-2 rounded-lg bg-[var(--color-surface-2)] border border-[var(--color-border)] text-sm">
+          <option value="">Tümü</option>
+          {allActions.map((a) => (
+            <option value={a} selected={action === a}>{a}</option>
+          ))}
+        </select>
+      </label>
+      <label class="md:col-span-2">
+        <div class="text-[10px] uppercase tracking-wider text-[var(--color-text-muted)] font-semibold mb-1">Hedef (sipariş no, kullanıcı id)</div>
+        <input
+          type="text"
+          name="target"
+          value={target}
+          placeholder="S-1234 / u_..."
+          class="w-full px-3 py-2 rounded-lg bg-[var(--color-surface-2)] border border-[var(--color-border)] text-sm"
+        />
+      </label>
+      <button type="submit" class="px-4 py-2 rounded-lg text-xs font-semibold bg-[var(--color-primary)] text-black">
+        Filtrele
+      </button>
+    </form>
+
+    {/* Olay listesi */}
+    <div class="rounded-2xl bg-[var(--color-surface)] border border-[var(--color-border)]/60 overflow-hidden">
+      {events.length === 0 ? (
+        <div class="p-12 text-center text-[var(--color-text-muted)]">
+          Bu filtre ile eşleşen olay yok.
+        </div>
+      ) : (
+        <ul class="divide-y divide-[var(--color-border)]/30">
+          {events.map((e) => {
+            const meta = ACTION_LABELS[e.action] ?? { label: e.action, emoji: '📋', color: 'bg-zinc-500/15 text-zinc-300 border-zinc-500/30' }
+            return (
+              <li class="p-3 md:p-4 hover:bg-[var(--color-surface-2)]/40 transition-colors flex items-start gap-3">
+                <span class={`text-base px-2.5 py-1 rounded-lg ${meta.color} border whitespace-nowrap shrink-0`}>
+                  {meta.emoji} {meta.label}
+                </span>
+                <div class="flex-1 min-w-0">
+                  <div class="text-sm">
+                    <strong class="text-[var(--color-text)]">{e.username ?? '—'}</strong>
+                    {e.target && (
+                      <span class="text-[var(--color-text-muted)]"> · hedef: </span>
+                    )}
+                    {e.target && <a href={`/admin/orders/${e.target}`} class="font-mono text-xs text-[var(--color-primary)] hover:underline">{e.target}</a>}
+                  </div>
+                  {e.details && Object.keys(e.details).length > 0 && (
+                    <div class="text-[11px] text-[var(--color-text-muted)] mt-0.5 truncate">
+                      {Object.entries(e.details).filter(([k]) => k !== 'changedFields').slice(0, 3).map(([k, v]) => (
+                        <span class="mr-2"><b>{k}</b>: {typeof v === 'object' ? JSON.stringify(v) : String(v)}</span>
+                      ))}
+                    </div>
+                  )}
+                </div>
+                <span class="text-[11px] text-[var(--color-text-muted)] whitespace-nowrap shrink-0">
+                  {formatDateTime(e.at)}
+                </span>
+              </li>
+            )
+          })}
+        </ul>
+      )}
+    </div>
+  </div>
+</AdminLayout>
