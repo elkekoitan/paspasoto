@@ -19,12 +19,17 @@
     "process-images": "node scripts/process-images.mjs"
   },
   "devDependencies": {
-    "prettier": "^3.4.0",
-    "typescript": "^5.7.0",
     "@types/node": "^22.10.0",
-    "sharp": "^0.33.5"
+    "prettier": "^3.4.0",
+    "sharp": "^0.33",
+    "typescript": "^5.7.0"
   },
   "pnpm": {
-    "onlyBuiltDependencies": ["esbuild", "sharp", "better-sqlite3", "bcryptjs"]
+    "onlyBuiltDependencies": [
+      "esbuild",
+      "sharp",
+      "better-sqlite3",
+      "bcryptjs"
+    ]
   }
 }
