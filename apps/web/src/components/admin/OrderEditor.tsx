@@ -4,6 +4,7 @@ import { buildProductionStartedWaUrl, buildReadyWaUrl } from '../../lib/whatsapp
 import type { Order, OrderStatus } from '../../server/db'
 import type { MessageTemplate, TemplateKey } from '../../lib/template-types'
 import { renderTemplate, TEMPLATE_META } from '../../lib/template-types'
+import { PRODUCTION_STEPS as MAT_PRODUCTION_STEPS, isStepRelevant, type ProductionStepKey } from '../../lib/production-steps'
 
 const PRODUCTION_STEPS: { value: OrderStatus; label: string }[] = [
   { value: 'received', label: 'Sipariş Alındı' },
@@ -352,6 +353,14 @@ export default function OrderEditor({ initial }: { initial: Order }) {
             </div>
           )}
         </Section>
+
+        {/* Üretim Aşamaları — sadece paspas siparişleri (mat) için */}
+        {order.items[0]?.category === 'mat' && order.productionStatus !== 'cancelled' && (
+          <ProductionStepsSection
+            order={order}
+            onUpdate={setOrder}
+          />
+        )}
 
         {/* Ödeme durumu */}
         <Section title="Ödeme Durumu">
@@ -1221,6 +1230,109 @@ function NotifyModal({ order, onClose, onSent }: { order: Order; onClose: () => 
           </div>
         )}
       </div>
+    </div>
+  )
+}
+
+/* ---------------- Production Steps Section ---------------- */
+
+function ProductionStepsSection({ order, onUpdate }: { order: Order; onUpdate: (o: Order) => void }) {
+  const [saving, setSaving] = useState<ProductionStepKey | null>(null)
+  const it = order.items[0]
+  const hasLogo = !!(it?.logoBrandSlug)
+  const hasHeel = !!(it?.heelSlug && it.heelSlug !== '-')
+
+  const relevant = MAT_PRODUCTION_STEPS.filter((s) => isStepRelevant(s.key, hasLogo, hasHeel))
+  const stepsByKey = new Map((order.productionSteps ?? []).map((s) => [s.step, s]))
+
+  async function toggleStep(step: ProductionStepKey) {
+    const current = stepsByKey.get(step)
+    const wasComplete = !!current?.completedAt
+    setSaving(step)
+    try {
+      const res = await fetch(`/api/orders/${order.orderNo}/production-step`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ step, completed: !wasComplete }),
+      })
+      if (res.ok) {
+        const updated = await res.json()
+        onUpdate(updated)
+      }
+    } finally {
+      setSaving(null)
+    }
+  }
+
+  const completedCount = relevant.filter((s) => stepsByKey.get(s.key)?.completedAt).length
+  const totalCount = relevant.length
+  const percent = totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0
+
+  return (
+    <div class="mb-6 rounded-2xl bg-[var(--color-surface)] border border-[var(--color-border)]/60 overflow-hidden">
+      <div class="p-5 border-b border-[var(--color-border)]/40">
+        <div class="flex items-center justify-between gap-3">
+          <h3 class="font-display text-base font-semibold">🔨 Üretim Aşamaları</h3>
+          <span class={[
+            'text-xs font-bold tabular-nums px-2 py-0.5 rounded-full',
+            percent === 100 ? 'bg-emerald-500/20 text-emerald-300' : 'bg-[var(--color-surface-2)] text-[var(--color-text-muted)]',
+          ].join(' ')}>
+            {completedCount}/{totalCount} · %{percent}
+          </span>
+        </div>
+        <div class="mt-2 h-1.5 rounded-full bg-[var(--color-surface-2)] overflow-hidden">
+          <div
+            class="h-full bg-gradient-to-r from-[var(--color-primary)] to-emerald-500 transition-all duration-300"
+            style={`width: ${percent}%`}
+          ></div>
+        </div>
+      </div>
+      <ol class="divide-y divide-[var(--color-border)]/30">
+        {relevant.map((step, idx) => {
+          const state = stepsByKey.get(step.key)
+          const done = !!state?.completedAt
+          const isLoading = saving === step.key
+          return (
+            <li class={['p-3 md:p-4 flex items-center gap-3 hover:bg-[var(--color-surface-2)]/40 transition-colors', done && 'bg-emerald-500/5'].filter(Boolean).join(' ')}>
+              <button
+                type="button"
+                onClick={() => toggleStep(step.key)}
+                disabled={isLoading}
+                class={[
+                  'size-9 rounded-full grid place-items-center font-bold text-sm transition-all shrink-0',
+                  done ? 'bg-emerald-500 text-white' : 'bg-[var(--color-surface-2)] text-[var(--color-text-muted)] hover:bg-[var(--color-primary-soft)]',
+                  isLoading && 'opacity-50',
+                ].join(' ')}
+                title={done ? 'Geri al' : 'Tamamlandı işaretle'}
+              >
+                {isLoading ? '…' : done ? '✓' : idx + 1}
+              </button>
+              <div class="flex-1 min-w-0">
+                <div class="flex items-center gap-2">
+                  <span class="text-base">{step.emoji}</span>
+                  <span class={['font-semibold text-sm', done && 'text-emerald-300 line-through opacity-80'].filter(Boolean).join(' ')}>
+                    {step.label}
+                  </span>
+                </div>
+                <div class="text-[11px] text-[var(--color-text-muted)] mt-0.5">{step.description}</div>
+                {done && state && (
+                  <div class="text-[10px] text-emerald-400 mt-1">
+                    ✓ {state.completedBy} · {formatDateTime(state.completedAt!)}
+                  </div>
+                )}
+              </div>
+            </li>
+          )
+        })}
+      </ol>
+      {percent === 100 && (
+        <div class="p-3 bg-emerald-500/10 border-t border-emerald-500/30 text-xs text-emerald-300 font-semibold">
+          ✓ Tüm üretim aşamaları tamamlandı. Sipariş otomatik "Hazır" durumuna geçti.
+          {order.deliveryMethod === 'cargo' && !order.cargoTrackingNo && (
+            <span> Kargo barkodu oluşturmak için yukarıdaki butonu kullanın.</span>
+          )}
+        </div>
+      )}
     </div>
   )
 }

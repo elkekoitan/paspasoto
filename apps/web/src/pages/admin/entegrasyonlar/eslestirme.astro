@@ -1,0 +1,43 @@
+---
+export const prerender = false
+import AdminLayout from '@layouts/AdminLayout.astro'
+import { getCurrentUser } from '../../../server/auth'
+import { listMappings } from '../../../server/integrations/trendyol-mapping'
+import { BRANDS, MAT_COLORS, BORDER_COLORS, HEEL_PADS, PRODUCTS } from '../../../lib/catalog'
+import MappingManager from '@components/admin/MappingManager.tsx'
+
+const me = getCurrentUser(Astro.cookies)
+if (!me) return Astro.redirect('/admin/login')
+if (me.role !== 'patron') return new Response('Forbidden', { status: 403 })
+
+const mappings = listMappings()
+---
+
+<AdminLayout title="Ürün Eşleştirme" current="entegrasyonlar">
+  <div class="p-4 md:p-8 max-w-6xl mx-auto">
+    <nav class="text-xs text-[var(--color-text-muted)] mb-4">
+      <a href="/admin/entegrasyonlar" class="hover:text-[var(--color-primary)]">Entegrasyonlar</a>
+      <span class="mx-2">/</span>
+      <span>Ürün Eşleştirme</span>
+    </nav>
+    <header class="mb-6">
+      <p class="text-xs uppercase tracking-[0.2em] text-[var(--color-primary)] font-semibold">Entegrasyon</p>
+      <h1 class="mt-1 font-display text-2xl md:text-3xl font-bold">🔗 Marketplace Ürün Eşleştirme</h1>
+      <p class="mt-2 text-sm text-[var(--color-text-soft)] max-w-3xl">
+        Trendyol / Hepsiburada gibi marketplace'lerde yayınladığınız her ürünün
+        <strong>barkodunu / SKU'sunu</strong> Carmat tarafındaki konfigürasyona eşleyin.
+        Eşleşme yoksa gelen sipariş <code>unmapped</code> olarak işaretlenir, admin elle düzeltir.
+      </p>
+    </header>
+
+    <MappingManager
+      initial={mappings}
+      brands={BRANDS}
+      mats={MAT_COLORS}
+      borders={BORDER_COLORS}
+      heels={HEEL_PADS}
+      products={PRODUCTS}
+      client:load
+    />
+  </div>
+</AdminLayout>

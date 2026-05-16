@@ -13,7 +13,7 @@
  */
 import { createHmac, timingSafeEqual } from 'node:crypto'
 import type { PlatformAdapter, NormalizedOrder } from './types'
-import { getMappingByExternalCode } from './trendyol-mapping'
+import { getMappingByExternalCode, mappingToOrderItem } from './trendyol-mapping'
 import type { OrderItem } from '../db'
 
 export const trendyolAdapter: PlatformAdapter = {
@@ -78,8 +78,8 @@ export const trendyolAdapter: PlatformAdapter = {
       const code = String(l.productCode ?? l.sku ?? '')
       const mapping = getMappingByExternalCode('trendyol', code)
       // Mapping yoksa generic placeholder — admin manual eşleştirecek
-      const it: OrderItem = mapping?.toOrderItem
-        ? mapping.toOrderItem(l)
+      const it: OrderItem = mapping
+        ? mappingToOrderItem(mapping, l)
         : {
             category: 'mat',
             brandSlug: 'unmapped',

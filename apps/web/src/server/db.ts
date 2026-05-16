@@ -272,6 +272,13 @@ export type Order = {
     by: string
     at: number
   }>
+  /** Üretim aşamaları checklist (Faz 7) — paspas üretimi için detaylı adımlar */
+  productionSteps?: Array<{
+    step: 'cutting' | 'sewing' | 'logo' | 'heel' | 'quality' | 'packaging'
+    completedAt?: number
+    completedBy?: string
+    note?: string
+  }>
   cargoCompany?: 'yurtici' | 'aras' | 'mng' | 'ptt' | 'surat'
   cargoTrackingNo?: string
   /** Siparişi oluşturan kullanıcının id'si (multi-user için).
