@@ -26,6 +26,34 @@ const last30 = orders.filter((o) => now - o.createdAt < 30 * day)
 const revenueLast30 = last30.reduce((s, o) => s + o.total, 0)
 const revenueLast7 = last7.reduce((s, o) => s + o.total, 0)
 
+// Faz 3 — Geçen ay karşılaştırma (30-60 gün önceki periyod)
+const prev30 = orders.filter((o) => now - o.createdAt >= 30 * day && now - o.createdAt < 60 * day)
+const prev7 = orders.filter((o) => now - o.createdAt >= 7 * day && now - o.createdAt < 14 * day)
+const revenuePrev30 = prev30.reduce((s, o) => s + o.total, 0)
+const revenuePrev7 = prev7.reduce((s, o) => s + o.total, 0)
+function pctChange(curr: number, prev: number): { value: number; positive: boolean } | null {
+  if (prev === 0) return curr > 0 ? { value: 100, positive: true } : null
+  const pct = ((curr - prev) / prev) * 100
+  return { value: Math.round(pct), positive: pct >= 0 }
+}
+const revChange30 = pctChange(revenueLast30, revenuePrev30)
+const orderChange30 = pctChange(last30.length, prev30.length)
+const revChange7 = pctChange(revenueLast7, revenuePrev7)
+
+// Faz 3 — Günlük ciro line chart (son 30 gün)
+const dailyRevenue: { date: string; rev: number; count: number }[] = []
+for (let i = 29; i >= 0; i--) {
+  const start = now - (i + 1) * day
+  const end = now - i * day
+  const dayOrders = orders.filter((o) => o.createdAt >= start && o.createdAt < end)
+  dailyRevenue.push({
+    date: new Date(start).toLocaleDateString('tr-TR', { day: '2-digit', month: 'short' }),
+    rev: dayOrders.reduce((s, o) => s + o.total, 0),
+    count: dayOrders.length,
+  })
+}
+const maxDailyRev = Math.max(1, ...dailyRevenue.map((d) => d.rev))
+
 const inProductionCount = orders.filter(
   (o) => o.productionStatus === 'in_production' || o.productionStatus === 'received',
 ).length
@@ -188,13 +216,21 @@ const paidPercent = totalRevenue ? Math.round((paidRevenue / totalRevenue) * 100
           Bu ay <span class="text-white font-semibold">{last30.length}</span> sipariş · <span class="text-white font-semibold">{formatTRY(revenueLast30)}</span> ciro · <span class="text-[var(--color-primary)]">{repeatCustomers}</span> sadık müşteri
         </p>
       </div>
-      <a
-        href="/admin/orders/new"
-        class="inline-flex items-center gap-2 px-6 py-3 rounded-xl text-sm font-bold bg-gradient-to-r from-[var(--color-primary)] to-[var(--color-primary-hover)] text-[var(--color-bg)] transition-all hover:scale-105 hover:shadow-[0_0_20px_rgba(var(--color-primary-rgb),0.4)]"
-      >
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
-        Yeni Sipariş
-      </a>
+      <div class="flex gap-2 flex-wrap">
+        <a
+          href="/api/admin/export/orders"
+          class="inline-flex items-center gap-2 px-4 py-3 rounded-xl text-sm font-semibold bg-[var(--color-surface)] hover:bg-[var(--color-border)]/60 border border-[var(--color-border)] text-[var(--color-text)]"
+        >
+          📥 CSV İndir
+        </a>
+        <a
+          href="/admin/orders/new"
+          class="inline-flex items-center gap-2 px-6 py-3 rounded-xl text-sm font-bold bg-gradient-to-r from-[var(--color-primary)] to-[var(--color-primary-hover)] text-[var(--color-bg)] transition-all hover:scale-105 hover:shadow-[0_0_20px_rgba(var(--color-primary-rgb),0.4)]"
+        >
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+          Yeni Sipariş
+        </a>
+      </div>
     </header>
 
     {/* KPI Row — tıklanınca filtreli sipariş listesine */}
@@ -241,7 +277,17 @@ const paidPercent = totalRevenue ? Math.round((paidRevenue / totalRevenue) * 100
           <span class="opacity-60 group-hover:opacity-100">→</span>
         </div>
         <div class="mt-2 font-display text-2xl md:text-3xl font-semibold">{formatTRY(revenueLast30)}</div>
-        <div class="mt-1 text-xs text-[var(--color-text-soft)]">{last30.length} sipariş</div>
+        <div class="mt-1 flex items-center gap-2 text-xs text-[var(--color-text-soft)]">
+          <span>{last30.length} sipariş</span>
+          {revChange30 && (
+            <span class={[
+              'px-1.5 py-0.5 rounded text-[10px] font-bold',
+              revChange30.positive ? 'bg-emerald-500/20 text-emerald-300' : 'bg-red-500/20 text-red-300',
+            ].join(' ')}>
+              {revChange30.positive ? '↑' : '↓'}%{Math.abs(revChange30.value)} geçen aya göre
+            </span>
+          )}
+        </div>
       </a>
       <a href="/admin/orders?range=7" class="p-5 rounded-2xl bg-[var(--color-surface)] border border-[var(--color-border)]/60 hover:border-[var(--color-primary)]/40 hover:-translate-y-0.5 transition-all group">
         <div class="text-[10px] uppercase tracking-[0.2em] text-[var(--color-text-muted)] font-semibold flex items-center justify-between">
@@ -249,7 +295,17 @@ const paidPercent = totalRevenue ? Math.round((paidRevenue / totalRevenue) * 100
           <span class="opacity-60 group-hover:opacity-100">→</span>
         </div>
         <div class="mt-2 font-display text-2xl md:text-3xl font-semibold">{formatTRY(revenueLast7)}</div>
-        <div class="mt-1 text-xs text-[var(--color-text-soft)]">{last7.length} sipariş</div>
+        <div class="mt-1 flex items-center gap-2 text-xs text-[var(--color-text-soft)]">
+          <span>{last7.length} sipariş</span>
+          {revChange7 && (
+            <span class={[
+              'px-1.5 py-0.5 rounded text-[10px] font-bold',
+              revChange7.positive ? 'bg-emerald-500/20 text-emerald-300' : 'bg-red-500/20 text-red-300',
+            ].join(' ')}>
+              {revChange7.positive ? '↑' : '↓'}%{Math.abs(revChange7.value)}
+            </span>
+          )}
+        </div>
       </a>
       <div class="p-5 rounded-2xl bg-[var(--color-surface)] border border-[var(--color-border)]/60">
         <div class="text-[10px] uppercase tracking-[0.2em] text-[var(--color-text-muted)] font-semibold">
@@ -270,6 +326,65 @@ const paidPercent = totalRevenue ? Math.round((paidRevenue / totalRevenue) * 100
         <div class="mt-1 text-xs text-[var(--color-text-soft)]">Açık: {formatTRY(remainingRevenue)}</div>
       </a>
     </div>
+
+    {/* Faz 3 — Son 30 gün günlük ciro line chart */}
+    <section class="mb-10 p-5 rounded-2xl bg-[var(--color-surface)] border border-[var(--color-border)]/60">
+      <header class="mb-4 flex items-end justify-between gap-2 flex-wrap">
+        <div>
+          <h3 class="font-display font-semibold text-base">📈 Son 30 Gün Ciro Trendi</h3>
+          <p class="text-[11px] text-[var(--color-text-muted)] mt-0.5">
+            Toplam: <strong class="text-white">{formatTRY(revenueLast30)}</strong> ·
+            Ortalama günlük: <strong class="text-white">{formatTRY(revenueLast30 / 30)}</strong>
+          </p>
+        </div>
+      </header>
+      <div class="relative h-48 md:h-56">
+        <svg viewBox="0 0 600 200" preserveAspectRatio="none" class="absolute inset-0 size-full">
+          <defs>
+            <linearGradient id="revGradient" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stop-color="rgba(var(--color-primary-rgb), 0.4)" />
+              <stop offset="100%" stop-color="rgba(var(--color-primary-rgb), 0)" />
+            </linearGradient>
+          </defs>
+          {/* Area path */}
+          <path
+            d={`M 0 200 ${dailyRevenue.map((d, i) => {
+              const x = (i / (dailyRevenue.length - 1)) * 600
+              const y = 200 - (d.rev / maxDailyRev) * 180
+              return `L ${x} ${y}`
+            }).join(' ')} L 600 200 Z`}
+            fill="url(#revGradient)"
+          />
+          {/* Line */}
+          <polyline
+            points={dailyRevenue.map((d, i) => {
+              const x = (i / (dailyRevenue.length - 1)) * 600
+              const y = 200 - (d.rev / maxDailyRev) * 180
+              return `${x},${y}`
+            }).join(' ')}
+            fill="none"
+            stroke="var(--color-primary)"
+            stroke-width="2"
+          />
+          {/* Points */}
+          {dailyRevenue.map((d, i) => {
+            const x = (i / (dailyRevenue.length - 1)) * 600
+            const y = 200 - (d.rev / maxDailyRev) * 180
+            return (
+              <g>
+                <title>{d.date}: {formatTRY(d.rev)} · {d.count} sipariş</title>
+                <circle cx={x} cy={y} r="3" fill="var(--color-primary)" />
+              </g>
+            )
+          })}
+        </svg>
+      </div>
+      <div class="mt-2 grid grid-cols-3 gap-1 text-[9px] text-[var(--color-text-muted)] text-center">
+        <span>{dailyRevenue[0]?.date}</span>
+        <span>{dailyRevenue[15]?.date}</span>
+        <span>{dailyRevenue[29]?.date}</span>
+      </div>
+    </section>
 
     {/* Kanal dağılımı — Trendyol vs Online vs Manuel */}
     {channelList.length > 0 && (
