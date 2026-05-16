@@ -375,10 +375,30 @@ export async function updateOrder(
   const data = load()
   const idx = data.orders.findIndex((o) => o.orderNo === orderNo)
   if (idx === -1) return null
-  const merged = { ...data.orders[idx], ...patch } as Order
+  const before = data.orders[idx]
+  const merged = { ...before, ...patch } as Order
   if (newEvent) merged.events = [...(merged.events ?? []), newEvent]
   data.orders[idx] = merged
   await save(data)
+
+  // Faz 5 — Sipariş tahsil edildiyse + elden ödeme → otomatik kasa hareketi
+  if (
+    patch.paymentStatus === 'tamamlandi' &&
+    before.paymentStatus !== 'tamamlandi' &&
+    (merged.paymentMethod === 'elden-nakit' || merged.paymentMethod === 'elden-kart')
+  ) {
+    try {
+      const { recordOrderSale } = await import('./cash')
+      await recordOrderSale({
+        orderNo: merged.orderNo,
+        amount: merged.paidAmount || merged.total,
+        paymentMethod: merged.paymentMethod,
+        by: newEvent?.by ?? 'system',
+      }).catch(() => {})
+    } catch {
+      // cash modülü yüklenememişse atla — graceful
+    }
+  }
   return merged
 }
 

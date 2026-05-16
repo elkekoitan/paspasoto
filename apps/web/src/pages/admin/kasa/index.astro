@@ -1,0 +1,74 @@
+---
+export const prerender = false
+import AdminLayout from '@layouts/AdminLayout.astro'
+import { getCurrentUser } from '../../../server/auth'
+import { getOpenSession, listSessions, computeExpectedBalance } from '../../../server/cash'
+import CashRegisterPanel from '@components/admin/CashRegisterPanel.tsx'
+
+const me = getCurrentUser(Astro.cookies)
+if (!me) return Astro.redirect('/admin/login')
+
+const open = getOpenSession()
+const expectedBalance = open ? computeExpectedBalance(open) : 0
+const recentSessions = listSessions().filter((s) => s.closedAt).slice(0, 10)
+---
+
+<AdminLayout title="Kasa" current="dashboard">
+  <div class="p-4 md:p-8 max-w-5xl mx-auto">
+    <header class="mb-6 flex items-end justify-between gap-3 flex-wrap">
+      <div>
+        <p class="text-xs uppercase tracking-[0.2em] text-[var(--color-primary)] font-semibold">Operasyon</p>
+        <h1 class="mt-1 font-display text-2xl md:text-3xl font-bold">💰 Kasa Yönetimi</h1>
+        <p class="mt-2 text-sm text-[var(--color-text-soft)]">
+          Dükkân kasası — günlük açış/kapanış, satış/gider/çekim hareketleri.
+        </p>
+      </div>
+      <a href="/admin/kasa/gecmis" class="text-xs text-[var(--color-primary)] hover:underline font-semibold">
+        Geçmiş Kasalar →
+      </a>
+    </header>
+
+    <CashRegisterPanel
+      initialOpen={open ? { session: open, expectedBalance } : null}
+      currentUser={me.username}
+      client:load
+    />
+
+    {recentSessions.length > 0 && (
+      <section class="mt-8">
+        <h2 class="font-display text-base font-semibold mb-3">Son Kapanışlar</h2>
+        <div class="rounded-2xl bg-[var(--color-surface)] border border-[var(--color-border)]/60 overflow-hidden">
+          <ul class="divide-y divide-[var(--color-border)]/30">
+            {recentSessions.map((s) => {
+              const diff = s.diff ?? 0
+              return (
+                <li class="p-3 flex items-center justify-between gap-3 text-sm">
+                  <div>
+                    <div class="font-semibold">{s.openedBy} → {s.closedBy}</div>
+                    <div class="text-[11px] text-[var(--color-text-muted)]">
+                      Açılış: {new Date(s.openedAt).toLocaleString('tr-TR')} · Kapanış: {new Date(s.closedAt!).toLocaleString('tr-TR')}
+                    </div>
+                  </div>
+                  <div class="text-right">
+                    <div class="tabular-nums">
+                      <span class="text-[var(--color-text-muted)]">Beklenen</span>{' '}
+                      <strong>₺{s.expectedBalance?.toFixed(2)}</strong> ·{' '}
+                      <span class="text-[var(--color-text-muted)]">Sayım</span>{' '}
+                      <strong>₺{s.countedBalance?.toFixed(2)}</strong>
+                    </div>
+                    <div class={[
+                      'text-[11px] font-bold mt-0.5',
+                      diff === 0 ? 'text-emerald-400' : diff > 0 ? 'text-blue-400' : 'text-red-400',
+                    ].join(' ')}>
+                      {diff === 0 ? '✓ Tam' : diff > 0 ? `+₺${diff.toFixed(2)} fazla` : `−₺${Math.abs(diff).toFixed(2)} eksik`}
+                    </div>
+                  </div>
+                </li>
+              )
+            })}
+          </ul>
+        </div>
+      </section>
+    )}
+  </div>
+</AdminLayout>

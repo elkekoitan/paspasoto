@@ -1,0 +1,88 @@
+---
+export const prerender = false
+import AdminLayout from '@layouts/AdminLayout.astro'
+import { getCurrentUser } from '../../../server/auth'
+import { listSessions } from '../../../server/cash'
+import { formatTRY, formatDateTime } from '@lib/format'
+
+const me = getCurrentUser(Astro.cookies)
+if (!me) return Astro.redirect('/admin/login')
+
+const sessions = listSessions().filter((s) => s.closedAt)
+---
+
+<AdminLayout title="Kasa Geçmişi" current="dashboard">
+  <div class="p-4 md:p-8 max-w-5xl mx-auto">
+    <nav class="text-xs text-[var(--color-text-muted)] mb-4">
+      <a href="/admin/kasa" class="hover:text-[var(--color-primary)]">Kasa</a>
+      <span class="mx-2">/</span>
+      <span>Geçmiş</span>
+    </nav>
+
+    <header class="mb-6">
+      <h1 class="font-display text-2xl md:text-3xl font-bold">📜 Kasa Geçmişi</h1>
+      <p class="mt-2 text-sm text-[var(--color-text-soft)]">{sessions.length} kapalı kasa kaydı.</p>
+    </header>
+
+    {sessions.length === 0 ? (
+      <div class="text-center py-16 text-[var(--color-text-muted)] rounded-2xl border-2 border-dashed border-[var(--color-border)]/40">
+        Henüz kapanmış kasa yok.
+      </div>
+    ) : (
+      <div class="space-y-3">
+        {sessions.map((s) => {
+          const diff = s.diff ?? 0
+          return (
+            <details class="rounded-2xl bg-[var(--color-surface)] border border-[var(--color-border)]/60 overflow-hidden">
+              <summary class="p-4 cursor-pointer hover:bg-[var(--color-surface-2)]/50 flex items-center justify-between gap-3 flex-wrap">
+                <div>
+                  <div class="font-semibold text-sm">{s.openedBy} → {s.closedBy}</div>
+                  <div class="text-[11px] text-[var(--color-text-muted)] mt-0.5">
+                    {formatDateTime(s.openedAt)} → {formatDateTime(s.closedAt!)}
+                  </div>
+                </div>
+                <div class="text-right">
+                  <div class="text-sm">
+                    <span class="text-[var(--color-text-muted)]">Beklenen:</span>{' '}
+                    <strong class="tabular-nums">{formatTRY(s.expectedBalance ?? 0)}</strong>
+                  </div>
+                  <div class={[
+                    'text-[11px] font-bold mt-0.5',
+                    diff === 0 ? 'text-emerald-400' : diff > 0 ? 'text-blue-400' : 'text-red-400',
+                  ].join(' ')}>
+                    Fark: {diff === 0 ? 'Tam' : (diff > 0 ? '+' : '') + formatTRY(diff)}
+                  </div>
+                </div>
+              </summary>
+              <div class="p-4 pt-2 border-t border-[var(--color-border)]/40 text-xs space-y-2">
+                <div class="grid grid-cols-3 gap-3 mb-3">
+                  <div><b>Açılış:</b> {formatTRY(s.openingBalance)}</div>
+                  <div><b>Beklenen:</b> {formatTRY(s.expectedBalance ?? 0)}</div>
+                  <div><b>Sayım:</b> {formatTRY(s.countedBalance ?? 0)}</div>
+                </div>
+                {s.note && (
+                  <div class="p-2 rounded bg-[var(--color-surface-2)]/40 text-[var(--color-text-soft)] whitespace-pre-wrap">
+                    📝 {s.note}
+                  </div>
+                )}
+                {s.movements.length > 0 && (
+                  <div>
+                    <div class="font-semibold mb-1">Hareketler ({s.movements.length})</div>
+                    <ul class="space-y-1">
+                      {s.movements.slice().reverse().map((m) => (
+                        <li class="flex justify-between gap-2 py-1 border-b border-[var(--color-border)]/30">
+                          <span>{m.type} · {m.reason}</span>
+                          <span class="tabular-nums font-mono">{formatTRY(m.amount)}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+              </div>
+            </details>
+          )
+        })}
+      </div>
+    )}
+  </div>
+</AdminLayout>
