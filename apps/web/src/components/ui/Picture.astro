@@ -1,0 +1,81 @@
+---
+/**
+ * Picture — Responsive image with WebP/AVIF fallback + skeleton.
+ *
+ * Kullanım:
+ *   <Picture src="/assets/products/x.jpg" alt="..." aspect="square" loading="lazy" />
+ *
+ * Pre-built: AVIF + WebP + original fallback chain.
+ * Skeleton: image yüklenirken / hata olursa gradient bg.
+ *
+ * src .jpg/.png ise otomatik .webp ve .avif alternatif denenir.
+ */
+
+interface Props {
+  src: string
+  alt: string
+  aspect?: 'square' | 'video' | 'portrait' | 'wide' | 'auto'
+  loading?: 'eager' | 'lazy'
+  decoding?: 'sync' | 'async' | 'auto'
+  class?: string
+  imgClass?: string
+  sizes?: string
+  fetchpriority?: 'high' | 'low' | 'auto'
+}
+
+const {
+  src,
+  alt,
+  aspect = 'auto',
+  loading = 'lazy',
+  decoding = 'async',
+  class: wrapperClass = '',
+  imgClass = '',
+  sizes,
+  fetchpriority,
+} = Astro.props
+
+const aspectMap = {
+  square: 'aspect-square',
+  video: 'aspect-video',
+  portrait: 'aspect-[3/4]',
+  wide: 'aspect-[16/9]',
+  auto: '',
+}
+
+// .webp + .avif fallback chain (sadece local /assets path için)
+const isLocal = src.startsWith('/') && !src.startsWith('//')
+const ext = src.match(/\.(\w+)$/)?.[1]?.toLowerCase()
+const canHaveAlts = isLocal && (ext === 'jpg' || ext === 'jpeg' || ext === 'png')
+
+const webpSrc = canHaveAlts ? src.replace(/\.(jpg|jpeg|png)$/i, '.webp') : null
+const avifSrc = canHaveAlts ? src.replace(/\.(jpg|jpeg|png)$/i, '.avif') : null
+---
+
+<div class={`relative img-fallback overflow-hidden ${aspectMap[aspect]} ${wrapperClass}`}>
+  {canHaveAlts ? (
+    <picture>
+      {avifSrc && <source srcset={avifSrc} type="image/avif" />}
+      {webpSrc && <source srcset={webpSrc} type="image/webp" />}
+      <img
+        src={src}
+        alt={alt}
+        loading={loading}
+        decoding={decoding}
+        sizes={sizes}
+        fetchpriority={fetchpriority}
+        class={`size-full object-cover ${imgClass}`}
+      />
+    </picture>
+  ) : (
+    <img
+      src={src}
+      alt={alt}
+      loading={loading}
+      decoding={decoding}
+      sizes={sizes}
+      fetchpriority={fetchpriority}
+      class={`size-full object-cover ${imgClass}`}
+    />
+  )}
+</div>

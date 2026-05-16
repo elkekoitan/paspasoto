@@ -1,0 +1,55 @@
+---
+/**
+ * Card — Tüm projede tek source-of-truth kart component.
+ *
+ * Kullanım:
+ *   <Card variant="elevated" padding="normal">...</Card>
+ *   <Card variant="outlined" padding="compact" href="/somewhere" interactive>...</Card>
+ *
+ * Variants:
+ *   - default: surface bg + subtle border
+ *   - elevated: + shadow-md
+ *   - outlined: transparent bg, stronger border
+ *   - gradient: subtle gradient bg
+ *
+ * Padding: compact (p-3) | normal (p-4 md:p-5) | spacious (p-5 md:p-6)
+ */
+
+interface Props {
+  variant?: 'default' | 'elevated' | 'outlined' | 'gradient'
+  padding?: 'compact' | 'normal' | 'spacious' | 'none'
+  href?: string
+  interactive?: boolean
+  class?: string
+  as?: 'div' | 'article' | 'section' | 'li'
+}
+
+const {
+  variant = 'default',
+  padding = 'normal',
+  href,
+  interactive = false,
+  class: classes = '',
+  as: Tag = 'div',
+} = Astro.props
+
+const variantClass = variant === 'default' ? 'card'
+  : variant === 'elevated' ? 'card card-elevated'
+  : variant === 'outlined' ? 'card card-outlined'
+  : 'card card-gradient'
+
+const paddingClass = padding === 'none' ? '' : `card-${padding}`
+const interactiveClass = (href || interactive) ? 'card-interactive' : ''
+
+const finalClass = [variantClass, paddingClass, interactiveClass, classes].filter(Boolean).join(' ')
+---
+
+{href ? (
+  <a href={href} class={finalClass}>
+    <slot />
+  </a>
+) : (
+  <Tag class={finalClass}>
+    <slot />
+  </Tag>
+)}

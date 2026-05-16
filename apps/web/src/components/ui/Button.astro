@@ -1,0 +1,87 @@
+---
+/**
+ * Button — Tüm projede tek source-of-truth buton component.
+ *
+ * Kullanım (Astro):
+ *   <Button variant="primary" size="md" href="/sepet">Sepete Ekle</Button>
+ *   <Button variant="ghost" type="submit" disabled>Kaydet</Button>
+ *
+ * Kullanım (Preact/TSX): Button.tsx kullan.
+ *
+ * Sizes: sm (40px) | md (48px) | lg (56px) — hepsi touch-safe
+ * Variants: primary | secondary | ghost | danger | success
+ */
+
+interface Props {
+  variant?: 'primary' | 'secondary' | 'ghost' | 'danger' | 'success'
+  size?: 'sm' | 'md' | 'lg'
+  href?: string
+  target?: string
+  rel?: string
+  type?: 'button' | 'submit' | 'reset'
+  disabled?: boolean
+  fullWidth?: boolean
+  iconOnly?: boolean
+  class?: string
+  ariaLabel?: string
+  id?: string
+  dataAttrs?: Record<string, string>
+}
+
+const {
+  variant = 'primary',
+  size = 'md',
+  href,
+  target,
+  rel,
+  type = 'button',
+  disabled = false,
+  fullWidth = false,
+  iconOnly = false,
+  class: classes = '',
+  ariaLabel,
+  id,
+  dataAttrs = {},
+} = Astro.props
+
+const sizeClass = iconOnly
+  ? size === 'sm' ? 'btn-icon-sm' : 'btn-icon-md'
+  : `btn-${size}`
+
+const variantClass = `btn-${variant}`
+const widthClass = fullWidth ? 'w-full' : ''
+
+const finalClass = ['btn', sizeClass, variantClass, widthClass, classes].filter(Boolean).join(' ')
+
+// Data attributes — automatic spread
+const dataProps: Record<string, string> = {}
+for (const [k, v] of Object.entries(dataAttrs)) {
+  dataProps[`data-${k}`] = v
+}
+---
+
+{href ? (
+  <a
+    href={href}
+    target={target}
+    rel={rel ?? (target === '_blank' ? 'noopener noreferrer' : undefined)}
+    class={finalClass}
+    aria-label={ariaLabel}
+    aria-disabled={disabled ? 'true' : undefined}
+    id={id}
+    {...dataProps}
+  >
+    <slot />
+  </a>
+) : (
+  <button
+    type={type}
+    disabled={disabled}
+    class={finalClass}
+    aria-label={ariaLabel}
+    id={id}
+    {...dataProps}
+  >
+    <slot />
+  </button>
+)}

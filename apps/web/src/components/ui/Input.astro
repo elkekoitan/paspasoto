@@ -1,0 +1,79 @@
+---
+/**
+ * Input — Tek source-of-truth form input.
+ *
+ * Kullanım:
+ *   <Input label="E-posta" type="email" name="email" required />
+ *   <Input label="Telefon" name="phone" hint="Örn: 0544 ..." />
+ *   <Input name="x" error="Bu alan zorunlu" />
+ *
+ * min-height 48px (touch safe), focus state ring.
+ */
+
+interface Props {
+  label?: string
+  name?: string
+  type?: string
+  value?: string | number
+  placeholder?: string
+  required?: boolean
+  disabled?: boolean
+  hint?: string
+  error?: string
+  id?: string
+  class?: string
+  inputClass?: string
+  autocomplete?: string
+}
+
+const {
+  label,
+  name,
+  type = 'text',
+  value,
+  placeholder,
+  required = false,
+  disabled = false,
+  hint,
+  error,
+  id,
+  class: wrapperClass = '',
+  inputClass = '',
+  autocomplete,
+} = Astro.props
+
+const inputId = id ?? (name ? `inp-${name}` : undefined)
+const finalInputClass = ['input', error && 'aria-invalid', inputClass].filter(Boolean).join(' ')
+---
+
+<label class={`block ${wrapperClass}`} for={inputId}>
+  {label && (
+    <span class="text-xs font-medium mb-1.5 block text-[var(--color-text-soft)]">
+      {label}
+      {required && <span class="text-[var(--color-danger)] ml-0.5">*</span>}
+    </span>
+  )}
+  <input
+    type={type}
+    name={name}
+    id={inputId}
+    value={value}
+    placeholder={placeholder}
+    required={required}
+    disabled={disabled}
+    autocomplete={autocomplete}
+    aria-invalid={error ? 'true' : undefined}
+    aria-describedby={error ? `${inputId}-err` : hint ? `${inputId}-hint` : undefined}
+    class={finalInputClass}
+  />
+  {error && (
+    <span id={`${inputId}-err`} class="text-[11px] text-[var(--color-danger)] mt-1 block">
+      ⚠ {error}
+    </span>
+  )}
+  {!error && hint && (
+    <span id={`${inputId}-hint`} class="text-[11px] text-[var(--color-text-muted)] mt-1 block">
+      {hint}
+    </span>
+  )}
+</label>

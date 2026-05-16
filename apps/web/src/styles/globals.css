@@ -1,39 +1,69 @@
 @import "tailwindcss";
 
 @theme {
-  /* Renkler — koyu premium otomotiv */
+  /* Renkler — koyu premium otomotiv (WCAG AA enforced) */
   --color-bg: #0b0b0f;
   --color-surface: #15151b;
   --color-surface-2: #1f1f26;
+  --color-surface-3: #2a2a33;
   --color-border: #2a2a33;
+  --color-border-strong: #3a3a44;
   --color-text: #f4ede0;
-  --color-text-muted: #8e8e94;
-  --color-text-soft: #b4b4ba;
+  --color-text-soft: #c4c4cc; /* önce #b4b4ba — biraz açıldı (AA on surface-2) */
+  --color-text-muted: #9a9aa3; /* önce #8e8e94 — AA on surface uyumlu */
 
   --color-primary: #d4923a;
   --color-primary-hover: #e5a04a;
   --color-primary-soft: rgba(212, 146, 58, 0.12);
+  --color-primary-strong: rgba(212, 146, 58, 0.25);
 
   --color-success: #22c55e;
+  --color-success-soft: rgba(34, 197, 94, 0.12);
   --color-warning: #f59e0b;
+  --color-warning-soft: rgba(245, 158, 11, 0.12);
   --color-danger: #ef4444;
+  --color-danger-soft: rgba(239, 68, 68, 0.12);
   --color-info: #3b82f6;
+  --color-info-soft: rgba(59, 130, 246, 0.12);
 
   /* Tipografi */
   --font-sans: "Inter", "Segoe UI", system-ui, sans-serif;
   --font-display: "Satoshi", "Inter", system-ui, sans-serif;
   --font-mono: "JetBrains Mono", "SF Mono", Menlo, monospace;
 
-  /* Radius */
+  /* Radius — token sistemi (Tailwind rounded-{sm,md,lg,xl,2xl,3xl,full}) */
   --radius-sm: 6px;
   --radius-md: 10px;
   --radius-lg: 14px;
   --radius-xl: 20px;
   --radius-2xl: 28px;
+  --radius-3xl: 36px;
 
-  /* Shadows */
+  /* Shadows — 5 tier scale */
+  --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.5);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.5);
+  --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.6);
+  --shadow-xl: 0 16px 48px rgba(0, 0, 0, 0.7);
   --shadow-glow: 0 0 0 1px rgba(212, 146, 58, 0.3), 0 8px 32px rgba(212, 146, 58, 0.15);
+  --shadow-glow-primary: 0 0 32px rgba(212, 146, 58, 0.25);
   --shadow-card: 0 1px 0 rgba(255, 255, 255, 0.04) inset, 0 8px 24px rgba(0, 0, 0, 0.4);
+
+  /* Z-index scale */
+  --z-dropdown: 20;
+  --z-sticky: 30;
+  --z-fixed: 40;
+  --z-drawer: 50;
+  --z-overlay: 60;
+  --z-modal: 70;
+  --z-toast: 80;
+
+  /* Heights — tap target safe zone */
+  --h-touch: 44px;     /* WCAG min */
+  --h-button-sm: 40px;
+  --h-button-md: 48px;
+  --h-button-lg: 56px;
+  --h-input: 48px;
 }
 
 /* Base */
@@ -104,6 +134,213 @@
       transition-duration: 0.01ms !important;
       scroll-behavior: auto !important;
     }
+  }
+}
+
+/* Component utility classes — tek source-of-truth tasarım sistemi */
+@layer components {
+  /* ──────────── BUTTON SYSTEM ──────────── */
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    font-weight: 600;
+    border-radius: var(--radius-lg);
+    transition: background-color 180ms ease, border-color 180ms ease, transform 120ms ease, box-shadow 180ms ease;
+    white-space: nowrap;
+    cursor: pointer;
+    user-select: none;
+    text-decoration: none;
+    border: 1px solid transparent;
+  }
+  .btn:focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+  }
+  .btn:disabled, .btn[aria-disabled="true"] {
+    opacity: 0.5;
+    cursor: not-allowed;
+    pointer-events: none;
+  }
+  .btn:active:not(:disabled) {
+    transform: scale(0.97);
+  }
+
+  /* Sizes — all touch-safe (≥40px sm, ≥48px md/lg) */
+  .btn-sm { height: var(--h-button-sm); padding-inline: 0.875rem; font-size: 0.8125rem; }
+  .btn-md { height: var(--h-button-md); padding-inline: 1.125rem; font-size: 0.875rem; }
+  .btn-lg { height: var(--h-button-lg); padding-inline: 1.5rem; font-size: 0.9375rem; }
+
+  /* Icon-only — square, touch-safe */
+  .btn-icon-sm { width: var(--h-button-sm); height: var(--h-button-sm); padding: 0; }
+  .btn-icon-md { width: var(--h-button-md); height: var(--h-button-md); padding: 0; }
+
+  /* Variants */
+  .btn-primary {
+    background: var(--color-primary);
+    color: #0b0b0f;
+    font-weight: 700;
+  }
+  .btn-primary:hover:not(:disabled) {
+    background: var(--color-primary-hover);
+    box-shadow: var(--shadow-glow-primary);
+  }
+
+  .btn-secondary {
+    background: var(--color-surface);
+    color: var(--color-text);
+    border-color: var(--color-border);
+  }
+  .btn-secondary:hover:not(:disabled) {
+    background: var(--color-surface-2);
+    border-color: var(--color-border-strong);
+  }
+
+  .btn-ghost {
+    background: transparent;
+    color: var(--color-text-soft);
+  }
+  .btn-ghost:hover:not(:disabled) {
+    background: var(--color-surface-2);
+    color: var(--color-text);
+  }
+
+  .btn-danger {
+    background: var(--color-danger-soft);
+    color: #fca5a5;
+    border-color: rgba(239, 68, 68, 0.4);
+  }
+  .btn-danger:hover:not(:disabled) {
+    background: rgba(239, 68, 68, 0.2);
+    color: #fecaca;
+  }
+
+  .btn-success {
+    background: var(--color-success-soft);
+    color: #86efac;
+    border-color: rgba(34, 197, 94, 0.4);
+  }
+  .btn-success:hover:not(:disabled) {
+    background: rgba(34, 197, 94, 0.2);
+  }
+
+  /* ──────────── CARD SYSTEM ──────────── */
+  .card {
+    border-radius: var(--radius-2xl);
+    background: var(--color-surface);
+    border: 1px solid rgba(42, 42, 51, 0.6);
+    transition: border-color 220ms ease, transform 220ms ease, box-shadow 220ms ease;
+  }
+  .card-elevated {
+    box-shadow: var(--shadow-md);
+  }
+  .card-outlined {
+    background: transparent;
+    border-color: var(--color-border);
+  }
+  .card-interactive {
+    cursor: pointer;
+  }
+  .card-interactive:hover {
+    border-color: rgba(212, 146, 58, 0.4);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-lg);
+  }
+  .card-compact { padding: 0.75rem; }
+  .card-normal { padding: 1rem; }
+  @media (min-width: 768px) {
+    .card-normal { padding: 1.25rem; }
+  }
+  .card-spacious { padding: 1.25rem; }
+  @media (min-width: 768px) {
+    .card-spacious { padding: 1.5rem; }
+  }
+
+  /* ──────────── INPUT SYSTEM ──────────── */
+  .input,
+  .select,
+  .textarea {
+    width: 100%;
+    min-height: var(--h-input);
+    padding: 0 0.875rem;
+    border-radius: var(--radius-lg);
+    background: var(--color-surface-2);
+    border: 1px solid var(--color-border);
+    color: var(--color-text);
+    font-size: 0.9375rem;
+    transition: border-color 180ms ease, box-shadow 180ms ease;
+  }
+  .textarea {
+    padding-block: 0.625rem;
+    min-height: 96px;
+    line-height: 1.5;
+  }
+  .input:focus,
+  .select:focus,
+  .textarea:focus {
+    outline: none;
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 3px rgba(212, 146, 58, 0.18);
+  }
+  .input:disabled,
+  .select:disabled,
+  .textarea:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+  .input[aria-invalid="true"],
+  .select[aria-invalid="true"],
+  .textarea[aria-invalid="true"] {
+    border-color: var(--color-danger);
+    box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.18);
+  }
+
+  /* ──────────── BADGE / CHIP SYSTEM ──────────── */
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.125rem 0.625rem;
+    border-radius: 9999px;
+    font-size: 0.6875rem;
+    font-weight: 700;
+    line-height: 1.4;
+    border: 1px solid transparent;
+    white-space: nowrap;
+  }
+  .badge-sm { padding: 0.0625rem 0.5rem; font-size: 0.625rem; }
+  .badge-md { padding: 0.125rem 0.625rem; font-size: 0.6875rem; }
+  .badge-lg { padding: 0.25rem 0.75rem; font-size: 0.75rem; }
+
+  .badge-info { background: var(--color-info-soft); color: #93c5fd; border-color: rgba(59, 130, 246, 0.3); }
+  .badge-success { background: var(--color-success-soft); color: #86efac; border-color: rgba(34, 197, 94, 0.3); }
+  .badge-warning { background: var(--color-warning-soft); color: #fcd34d; border-color: rgba(245, 158, 11, 0.3); }
+  .badge-danger { background: var(--color-danger-soft); color: #fca5a5; border-color: rgba(239, 68, 68, 0.3); }
+  .badge-neutral { background: rgba(255, 255, 255, 0.06); color: var(--color-text-soft); border-color: rgba(255, 255, 255, 0.1); }
+  .badge-accent { background: var(--color-primary-soft); color: var(--color-primary); border-color: rgba(212, 146, 58, 0.3); }
+
+  /* ──────────── IMAGE FALLBACK ──────────── */
+  .img-fallback {
+    background: linear-gradient(135deg, var(--color-surface-2), var(--color-surface));
+    position: relative;
+  }
+  .img-fallback::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(110deg, transparent 40%, rgba(255, 255, 255, 0.03) 50%, transparent 60%);
+    background-size: 200% 100%;
+    animation: shimmer 2.5s linear infinite;
+  }
+
+  /* ──────────── SCROLLBAR HIDE ──────────── */
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
   }
 }
 

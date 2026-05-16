@@ -1,0 +1,27 @@
+---
+/**
+ * Badge / Chip — Tüm projede tek pattern.
+ *
+ * Variants: info | success | warning | danger | neutral | accent
+ * Sizes: sm | md | lg
+ *
+ * Kullanım:
+ *   <Badge variant="success">Tamamlandı</Badge>
+ *   <Badge variant="warning" size="sm">⏳ Bekliyor</Badge>
+ */
+
+interface Props {
+  variant?: 'info' | 'success' | 'warning' | 'danger' | 'neutral' | 'accent'
+  size?: 'sm' | 'md' | 'lg'
+  class?: string
+  as?: 'span' | 'div'
+}
+
+const { variant = 'neutral', size = 'md', class: classes = '', as: Tag = 'span' } = Astro.props
+
+const finalClass = ['badge', `badge-${size}`, `badge-${variant}`, classes].filter(Boolean).join(' ')
+---
+
+<Tag class={finalClass}>
+  <slot />
+</Tag>

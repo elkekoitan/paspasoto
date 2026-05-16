@@ -1,0 +1,26 @@
+---
+/**
+ * Skeleton — Loading placeholder.
+ *
+ * Kullanım:
+ *   <Skeleton class="h-4 w-32" />
+ *   <Skeleton variant="circle" class="size-12" />
+ */
+
+interface Props {
+  variant?: 'rect' | 'circle' | 'text'
+  class?: string
+}
+
+const { variant = 'rect', class: classes = '' } = Astro.props
+
+const variantClass = variant === 'circle' ? 'rounded-full'
+  : variant === 'text' ? 'rounded-md h-4'
+  : 'rounded-lg'
+---
+
+<div
+  class={`img-fallback ${variantClass} ${classes}`}
+  aria-hidden="true"
+  role="presentation"
+></div>
