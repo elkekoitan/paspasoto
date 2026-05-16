@@ -53,7 +53,7 @@ export default function ProductCard({ product }: { product: SimpleProduct }) {
       class="group relative flex flex-col rounded-2xl overflow-hidden border border-[var(--color-border)]/60 bg-[var(--color-surface)] hover:border-[var(--color-primary)]/60 hover:shadow-2xl hover:shadow-[var(--color-primary)]/15 transition-all hover:-translate-y-1"
     >
       {/* Görsel + rozet */}
-      <div class="relative aspect-square overflow-hidden bg-gradient-to-br from-[var(--color-surface-2)] to-[var(--color-surface)]">
+      <div class="relative aspect-square overflow-hidden img-fallback">
         <img
           src={product.image}
           alt={product.name}
@@ -61,8 +61,14 @@ export default function ProductCard({ product }: { product: SimpleProduct }) {
           decoding="async"
           class="size-full object-cover group-hover:scale-110 transition-transform duration-700"
           onError={(e: any) => {
-            e.currentTarget.onerror = null
-            e.currentTarget.src = `/assets/products/${product.category}/${product.slug}.svg`
+            // 2 deneme: önce SVG fallback, sonra opacity 0 (gradient bg görünür)
+            const img = e.currentTarget
+            if (!img.dataset.fallbackTried) {
+              img.dataset.fallbackTried = '1'
+              img.src = `/assets/products/${product.category}/${product.slug}.svg`
+            } else {
+              img.style.opacity = '0'
+            }
           }}
         />
         {/* Sol üst: rozetler */}
@@ -91,26 +97,26 @@ export default function ProductCard({ product }: { product: SimpleProduct }) {
           </div>
         )}
 
-        {/* Hızlı Sepete Ekle — sadece hover/touch (mobile her zaman görünür) */}
+        {/* Hızlı Sepete Ekle — Touch safe (44px), mobil her zaman, desktop hover'da */}
         {!outOfStock && (
           <button
             type="button"
             onClick={handleAdd}
             disabled={adding}
+            aria-label={added ? 'Sepete eklendi' : `${product.name} sepete ekle`}
             class={[
-              'absolute bottom-2 right-2 size-10 rounded-full grid place-items-center shadow-lg transition-all duration-200',
+              'absolute bottom-2 right-2 size-11 rounded-full grid place-items-center shadow-lg transition-all duration-200',
+              // Mobilde her zaman görünür; desktop'ta hover'da
+              'opacity-100 md:opacity-0 md:group-hover:opacity-100',
               added
                 ? 'bg-emerald-500 text-white scale-110'
-                : 'bg-[var(--color-primary)] text-black hover:scale-110 active:scale-95 opacity-0 group-hover:opacity-100 md:opacity-0 md:group-hover:opacity-100',
-              // Mobilde her zaman görünür
-              'opacity-100 md:opacity-0',
+                : 'bg-[var(--color-primary)] text-black hover:scale-110 active:scale-95',
             ].join(' ')}
-            aria-label="Sepete ekle"
           >
             {added ? (
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12" /></svg>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12" /></svg>
             ) : (
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1" /><circle cx="20" cy="21" r="1" /><path d="M1 1h4l2.7 13.4a2 2 0 0 0 2 1.6h9.7a2 2 0 0 0 2-1.6L23 6H6" /></svg>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="21" r="1" /><circle cx="20" cy="21" r="1" /><path d="M1 1h4l2.7 13.4a2 2 0 0 0 2 1.6h9.7a2 2 0 0 0 2-1.6L23 6H6" /></svg>
             )}
           </button>
         )}

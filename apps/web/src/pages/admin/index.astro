@@ -233,8 +233,8 @@ const paidPercent = totalRevenue ? Math.round((paidRevenue / totalRevenue) * 100
       </div>
     </header>
 
-    {/* KPI Row — tıklanınca filtreli sipariş listesine */}
-    <div class="grid grid-cols-2 md:grid-cols-4 gap-5 mb-8">
+    {/* KPI Row — mobil 1 sütun, tablet 2, desktop 4 (okunaklılık önceliği) */}
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 lg:gap-5 mb-8">
       <a href="/admin/orders" class="p-6 rounded-2xl bg-[var(--color-surface)] border border-[var(--color-border)]/60 hover:border-[var(--color-primary)]/50 hover:-translate-y-1 shadow-lg hover:shadow-[0_10px_30px_rgba(0,0,0,0.5)] transition-all duration-300 group animate-in fade-in slide-in-from-bottom-4 duration-700" style="animation-fill-mode: backwards; animation-delay: 100ms;">
         <div class="text-[10px] uppercase tracking-[0.2em] text-[var(--color-text-muted)] font-bold flex items-center justify-between">
           Toplam Sipariş

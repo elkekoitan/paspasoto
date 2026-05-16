@@ -63,21 +63,21 @@ export default function CartSummary() {
                 </div>
               )}
               <div class="mt-auto flex items-center justify-between pt-2">
-                {/* Qty stepper */}
+                {/* Qty stepper — tap target ≥44px */}
                 <div class="inline-flex items-center rounded-lg border border-[var(--color-border)]/60 overflow-hidden">
                   <button
                     type="button"
                     onClick={() => updateQty(line.lineId, line.quantity - 1)}
-                    class="size-8 grid place-items-center hover:bg-[var(--color-surface-2)] text-[var(--color-text)]"
-                    aria-label="Azalt"
-                  >−</button>
-                  <span class="w-10 text-center text-sm font-semibold tabular-nums">{line.quantity}</span>
+                    class="size-11 grid place-items-center hover:bg-[var(--color-surface-2)] text-[var(--color-text)] text-xl font-bold transition-colors"
+                    aria-label="Miktarı azalt"
+                  ><span aria-hidden="true">−</span></button>
+                  <span class="min-w-[3rem] px-2 text-center text-base font-semibold tabular-nums" aria-live="polite" aria-label={`Miktar: ${line.quantity}`}>{line.quantity}</span>
                   <button
                     type="button"
                     onClick={() => updateQty(line.lineId, line.quantity + 1)}
-                    class="size-8 grid place-items-center hover:bg-[var(--color-surface-2)] text-[var(--color-text)]"
-                    aria-label="Arttır"
-                  >+</button>
+                    class="size-11 grid place-items-center hover:bg-[var(--color-surface-2)] text-[var(--color-text)] text-xl font-bold transition-colors"
+                    aria-label="Miktarı arttır"
+                  ><span aria-hidden="true">+</span></button>
                 </div>
                 {/* Tutar */}
                 <div class="text-right">
