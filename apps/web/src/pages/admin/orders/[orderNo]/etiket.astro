@@ -1,0 +1,98 @@
+---
+export const prerender = false
+import { getSession } from '../../../../server/auth'
+import { getByOrderNo } from '../../../../server/db'
+
+if (!getSession(Astro.cookies)) return Astro.redirect('/admin/login')
+
+const orderNo = Astro.params.orderNo!
+const order = getByOrderNo(orderNo)
+if (!order) return new Response('Sipariş bulunamadı', { status: 404 })
+
+const phone = order.shippingAddress.phone || order.customer.phone
+const cargo = order.cargoCompany ?? 'Kargo'
+---
+
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8" />
+  <title>Etiket — {order.orderNo}</title>
+  <meta name="robots" content="noindex,nofollow" />
+  <style>
+    @page { size: 100mm 150mm; margin: 2mm; }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: -apple-system, "Segoe UI", Arial, sans-serif; color: #000; }
+    .label { width: 96mm; min-height: 146mm; padding: 4mm; }
+    .top { display: flex; justify-content: space-between; align-items: center; padding-bottom: 2mm; border-bottom: 3px solid #000; }
+    .top .brand { font-weight: 800; font-size: 18pt; letter-spacing: -0.5px; }
+    .top .cargo { font-weight: 700; font-size: 11pt; text-transform: uppercase; padding: 1.5mm 3mm; border: 2px solid #000; border-radius: 1mm; }
+    .order-no { margin-top: 3mm; text-align: center; }
+    .order-no .lbl { font-size: 7pt; text-transform: uppercase; color: #555; letter-spacing: 1px; }
+    .order-no .val { font-family: 'Courier New', monospace; font-size: 22pt; font-weight: 800; letter-spacing: 1px; }
+    .barcode-area { text-align: center; margin: 3mm 0; padding: 3mm 0; border: 2px dashed #000; }
+    .barcode-area .num { font-family: 'Courier New', monospace; font-size: 14pt; font-weight: 700; letter-spacing: 2px; }
+    .barcode-area .sub { font-size: 7pt; color: #666; margin-top: 1mm; }
+    .section { margin-top: 3mm; }
+    .section h2 { font-size: 7pt; text-transform: uppercase; letter-spacing: 1px; color: #555; padding-bottom: 1mm; border-bottom: 1px solid #999; margin-bottom: 1.5mm; }
+    .receiver-name { font-size: 13pt; font-weight: 800; line-height: 1.2; }
+    .receiver-addr { font-size: 10pt; line-height: 1.35; margin-top: 1mm; }
+    .receiver-phone { font-size: 11pt; font-weight: 700; margin-top: 1.5mm; }
+    .sender { font-size: 7.5pt; line-height: 1.4; color: #555; }
+    .sender b { color: #000; }
+    .footer-meta { margin-top: 3mm; padding-top: 2mm; border-top: 1px dashed #999; display: flex; justify-content: space-between; font-size: 7pt; color: #555; }
+    .actions { display: flex; gap: 8px; padding: 8px; justify-content: center; position: fixed; top: 0; left: 0; right: 0; background: white; border-bottom: 1px solid #ddd; z-index: 100; }
+    .actions button { padding: 6px 14px; background: #000; color: white; border: 0; border-radius: 3px; cursor: pointer; font-weight: 600; font-size: 11pt; }
+    @media print { .actions { display: none; } body { padding-top: 0 !important; background: white; } .label { box-shadow: none !important; } }
+    @media screen { body { padding-top: 48px; background: #ddd; padding-bottom: 24px; } .label { background: white; margin: 16px auto; box-shadow: 0 4px 12px rgba(0,0,0,0.15); } }
+  </style>
+</head>
+<body>
+  <div class="actions">
+    <button onclick="window.print()">🖨 Etiketi Yazdır</button>
+    <button onclick="window.close()">✕ Kapat</button>
+  </div>
+
+  <div class="label">
+    <div class="top">
+      <div class="brand">CARMAT</div>
+      <div class="cargo">{cargo.toUpperCase()}</div>
+    </div>
+
+    <div class="order-no">
+      <div class="lbl">Sipariş No</div>
+      <div class="val">{order.orderNo}</div>
+    </div>
+
+    {order.cargoTrackingNo && (
+      <div class="barcode-area">
+        <div class="num">{order.cargoTrackingNo}</div>
+        <div class="sub">Kargo Takip No</div>
+      </div>
+    )}
+
+    <div class="section">
+      <h2>Alıcı</h2>
+      <div class="receiver-name">{order.shippingAddress.fullName}</div>
+      <div class="receiver-addr">
+        {order.shippingAddress.addressLine}<br/>
+        <strong>{order.shippingAddress.district} / {order.shippingAddress.city}</strong>
+      </div>
+      <div class="receiver-phone">☎ {phone}</div>
+    </div>
+
+    <div class="section">
+      <h2>Gönderen</h2>
+      <div class="sender">
+        <b>Carmat</b> — Fevzi Çakmak Mah. 10733. Sk. No: 1<br/>
+        Karatay / Konya · ☎ +90 544 710 81 15
+      </div>
+    </div>
+
+    <div class="footer-meta">
+      <span>{new Date(order.createdAt).toLocaleDateString('tr-TR')}</span>
+      <span>{order.items.length} kalem</span>
+    </div>
+  </div>
+</body>
+</html>

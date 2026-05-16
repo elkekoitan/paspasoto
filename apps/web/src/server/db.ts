@@ -264,6 +264,14 @@ export type Order = {
   deliveryMethod?: DeliveryMethod
   customerNote?: string
   internalNote?: string
+  /** Sipariş thread'i — admin ve müşteri-görünür notlar (Faz 1) */
+  notes?: Array<{
+    id: string
+    kind: 'internal' | 'customer-visible'
+    body: string
+    by: string
+    at: number
+  }>
   cargoCompany?: 'yurtici' | 'aras' | 'mng' | 'ptt' | 'surat'
   cargoTrackingNo?: string
   /** Siparişi oluşturan kullanıcının id'si (multi-user için).

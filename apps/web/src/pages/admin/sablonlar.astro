@@ -1,0 +1,32 @@
+---
+export const prerender = false
+import AdminLayout from '@layouts/AdminLayout.astro'
+import { getCurrentUser } from '../../server/auth'
+import { listTemplates } from '../../server/message-templates'
+import TemplateEditor from '@components/admin/TemplateEditor.tsx'
+
+const me = getCurrentUser(Astro.cookies)
+if (!me) return Astro.redirect('/admin/login')
+if (me.role !== 'patron') return new Response('Forbidden', { status: 403 })
+
+const templates = listTemplates()
+---
+
+<AdminLayout title="Mesaj Şablonları" current="dashboard">
+  <div class="p-4 md:p-8 max-w-5xl mx-auto">
+    <header class="mb-6">
+      <p class="text-xs uppercase tracking-[0.2em] text-[var(--color-primary)] font-semibold">Admin</p>
+      <h1 class="mt-1 font-display text-2xl md:text-3xl font-bold">Mesaj Şablonları</h1>
+      <p class="mt-2 text-sm text-[var(--color-text-soft)] max-w-3xl">
+        Müşteriye gönderilen otomatik bildirim metinlerini buradan düzenleyin.
+        Her şablonun WhatsApp + e-posta versiyonu var. Yer tutucular:
+        <code class="px-1 py-0.5 rounded bg-[var(--color-surface-2)]">{'{customerName}'}</code>,
+        <code class="px-1 py-0.5 rounded bg-[var(--color-surface-2)]">{'{orderNo}'}</code>,
+        <code class="px-1 py-0.5 rounded bg-[var(--color-surface-2)]">{'{trackingNo}'}</code>,
+        <code class="px-1 py-0.5 rounded bg-[var(--color-surface-2)]">{'{total}'}</code>,
+        <code class="px-1 py-0.5 rounded bg-[var(--color-surface-2)]">{'{shippingCity}'}</code>.
+      </p>
+    </header>
+    <TemplateEditor initial={templates} client:load />
+  </div>
+</AdminLayout>

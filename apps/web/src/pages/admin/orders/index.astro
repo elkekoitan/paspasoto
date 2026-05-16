@@ -316,6 +316,43 @@ const hasActiveFilter = !!(filter !== 'all' || status || brand || channel || ran
       </div>
     </div>
 
+    {/* Bulk action bar — seçim varken sticky görünür */}
+    <div
+      id="bulk-action-bar"
+      class="hidden mb-4 sticky top-2 z-30 rounded-2xl bg-[var(--color-primary)] text-black shadow-2xl shadow-[var(--color-primary)]/30 p-3 md:p-4 flex items-center gap-3 flex-wrap"
+    >
+      <div class="flex items-center gap-2 font-bold">
+        <span id="bulk-count" class="text-lg">0</span>
+        <span class="text-sm">sipariş seçildi</span>
+      </div>
+      <div class="flex-1"></div>
+      <div class="flex gap-2 flex-wrap">
+        <button data-bulk-action="mark-production" class="px-3 py-2 rounded-lg text-xs font-bold bg-black/15 hover:bg-black/25 transition-colors">
+          ⚙ Üretime Al
+        </button>
+        <button data-bulk-action="mark-ready" class="px-3 py-2 rounded-lg text-xs font-bold bg-black/15 hover:bg-black/25 transition-colors">
+          ✓ Hazır
+        </button>
+        <button data-bulk-action="shipping" class="px-3 py-2 rounded-lg text-xs font-bold bg-black/15 hover:bg-black/25 transition-colors">
+          📦 Kargo Barkodu
+        </button>
+        <button data-bulk-action="mark-delivered" class="px-3 py-2 rounded-lg text-xs font-bold bg-black/15 hover:bg-black/25 transition-colors">
+          🚚 Teslim
+        </button>
+        {me.role === 'patron' && (
+          <button data-bulk-action="cancel" class="px-3 py-2 rounded-lg text-xs font-bold bg-red-600 text-white hover:bg-red-700 transition-colors">
+            ✕ İptal
+          </button>
+        )}
+        <button data-bulk-action="export" class="px-3 py-2 rounded-lg text-xs font-bold bg-black/15 hover:bg-black/25 transition-colors">
+          📥 CSV İndir
+        </button>
+        <button id="bulk-clear" class="px-3 py-2 rounded-lg text-xs font-bold border border-black/30 hover:bg-black/15">
+          Seçimi Temizle
+        </button>
+      </div>
+    </div>
+
     {/* Tablo */}
     <div class="rounded-2xl bg-[var(--color-surface)] border border-[var(--color-border)]/60 overflow-hidden">
       {filtered.length === 0 ? (
@@ -330,6 +367,9 @@ const hasActiveFilter = !!(filter !== 'all' || status || brand || channel || ran
           <table class="w-full text-sm">
             <thead class="text-[10px] uppercase tracking-wider text-[var(--color-text-muted)] border-b border-[var(--color-border)]/40">
               <tr>
+                <th class="px-3 py-3 text-center font-semibold w-10">
+                  <input type="checkbox" id="bulk-toggle-all" class="size-4 accent-[var(--color-primary)]" aria-label="Tümünü seç" />
+                </th>
                 <th class="px-5 py-3 text-left font-semibold">Sipariş No</th>
                 <th class="px-3 py-3 text-left font-semibold">Kaynak</th>
                 <th class="px-5 py-3 text-left font-semibold">Müşteri / Telefon</th>
@@ -345,8 +385,17 @@ const hasActiveFilter = !!(filter !== 'all' || status || brand || channel || ran
               {filtered.map((o) => (
                 <tr
                   data-href={`/admin/orders/${o.orderNo}`}
+                  data-order-no={o.orderNo}
                   class="border-b border-[var(--color-border)]/30 hover:bg-[var(--color-surface-2)]/60 cursor-pointer transition-colors row-link"
                 >
+                  <td class="px-3 py-3 text-center">
+                    <input
+                      type="checkbox"
+                      class="bulk-row-check size-4 accent-[var(--color-primary)]"
+                      data-order-no={o.orderNo}
+                      aria-label={`Sipariş ${o.orderNo} seç`}
+                    />
+                  </td>
                   <td class="px-5 py-3">
                     <a href={`/admin/orders/${o.orderNo}`} class="font-mono text-xs text-[var(--color-primary)] hover:underline">
                       {o.orderNo}
@@ -400,13 +449,91 @@ const hasActiveFilter = !!(filter !== 'all' || status || brand || channel || ran
   </div>
 
   <script>
-    // Tablo satırına tıklayınca aç (link/buton hariç)
+    // Tablo satırına tıklayınca aç (link/buton/checkbox hariç)
     document.querySelectorAll<HTMLElement>('tr.row-link').forEach((row) => {
       row.addEventListener('click', (e) => {
         const t = e.target as HTMLElement
-        if (t.closest('a, button, input, select, textarea')) return
+        if (t.closest('a, button, input, select, textarea, label')) return
         const href = row.dataset.href
         if (href) window.location.href = href
+      })
+    })
+
+    // Bulk select state
+    const checkboxes = document.querySelectorAll<HTMLInputElement>('.bulk-row-check')
+    const toggleAll = document.getElementById('bulk-toggle-all') as HTMLInputElement | null
+    const bulkBar = document.getElementById('bulk-action-bar')
+    const bulkCount = document.getElementById('bulk-count')
+
+    function getSelected(): string[] {
+      return Array.from(checkboxes)
+        .filter((c) => c.checked)
+        .map((c) => c.dataset.orderNo || '')
+        .filter(Boolean)
+    }
+
+    function updateBar() {
+      const n = getSelected().length
+      if (n === 0) {
+        bulkBar?.classList.add('hidden')
+      } else {
+        bulkBar?.classList.remove('hidden')
+        if (bulkCount) bulkCount.textContent = String(n)
+      }
+    }
+
+    checkboxes.forEach((c) => c.addEventListener('change', updateBar))
+    toggleAll?.addEventListener('change', () => {
+      checkboxes.forEach((c) => { c.checked = !!toggleAll.checked })
+      updateBar()
+    })
+    document.getElementById('bulk-clear')?.addEventListener('click', () => {
+      checkboxes.forEach((c) => { c.checked = false })
+      if (toggleAll) toggleAll.checked = false
+      updateBar()
+    })
+
+    document.querySelectorAll<HTMLButtonElement>('[data-bulk-action]').forEach((btn) => {
+      btn.addEventListener('click', async () => {
+        const action = btn.dataset.bulkAction
+        const orderNos = getSelected()
+        if (orderNos.length === 0) return
+
+        if (action === 'export') {
+          // CSV indir
+          const params = new URLSearchParams({ orderNos: orderNos.join(',') })
+          window.location.href = `/api/admin/export/orders?${params}`
+          return
+        }
+
+        const confirmMsg = action === 'cancel'
+          ? `${orderNos.length} siparişi iptal etmek istediğinize emin misiniz? Bu işlem geri alınamaz.`
+          : `${orderNos.length} sipariş için "${btn.textContent?.trim()}" işlemi uygulansın mı?`
+        if (!confirm(confirmMsg)) return
+
+        btn.disabled = true
+        const orig = btn.textContent
+        btn.textContent = '⏳ İşleniyor…'
+
+        try {
+          const res = await fetch('/api/admin/orders/bulk', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ orderNos, action }),
+          })
+          const data = await res.json()
+          if (data.ok) {
+            alert(`✓ ${data.summary.success} başarılı, ${data.summary.failed} hata.\n\nSayfa yenileniyor…`)
+            location.reload()
+          } else {
+            alert('Hata: ' + (data.error ?? 'bilinmeyen'))
+          }
+        } catch (e) {
+          alert('Beklenmedik hata: ' + (e as Error).message)
+        } finally {
+          btn.disabled = false
+          if (orig) btn.textContent = orig
+        }
       })
     })
   </script>

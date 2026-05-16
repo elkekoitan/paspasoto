@@ -1,0 +1,151 @@
+---
+export const prerender = false
+import { getSession } from '../../../../server/auth'
+import { getByOrderNo, PAYMENT_METHOD_LABELS } from '../../../../server/db'
+import { formatTRY, formatDateTime } from '../../../../lib/format'
+
+if (!getSession(Astro.cookies)) return Astro.redirect('/admin/login')
+
+const orderNo = Astro.params.orderNo!
+const order = getByOrderNo(orderNo)
+if (!order) return new Response('Sipariş bulunamadı', { status: 404 })
+
+const KDV_RATE = 0.20
+const subtotal = order.subtotal ?? order.total
+const kdvAmount = subtotal * KDV_RATE / (1 + KDV_RATE)
+const netAmount = subtotal - kdvAmount
+---
+
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8" />
+  <title>Fatura — {order.orderNo}</title>
+  <meta name="robots" content="noindex,nofollow" />
+  <style>
+    @page { size: A4; margin: 14mm; }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: -apple-system, "Segoe UI", Arial, sans-serif; color: #111; line-height: 1.45; font-size: 11pt; }
+    .doc { max-width: 180mm; margin: 0 auto; padding: 6mm 0; }
+    .header { display: flex; justify-content: space-between; align-items: start; padding-bottom: 4mm; border-bottom: 2px solid #111; }
+    .brand h1 { font-size: 22pt; letter-spacing: -0.5px; }
+    .brand .tagline { font-size: 8pt; color: #666; margin-top: 1mm; }
+    .seller { text-align: right; font-size: 9pt; line-height: 1.5; }
+    .seller strong { display: block; font-size: 10pt; }
+    .meta-row { display: flex; justify-content: space-between; margin-top: 6mm; padding: 4mm; background: #f5f5f5; border-radius: 2mm; font-size: 9pt; }
+    .meta-row > div b { display: block; font-size: 7.5pt; color: #888; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 0.5mm; }
+    .buyer { margin-top: 6mm; padding: 4mm; border: 1px solid #ddd; border-radius: 2mm; }
+    .buyer h2 { font-size: 9pt; color: #888; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 2mm; }
+    table { width: 100%; border-collapse: collapse; margin-top: 6mm; font-size: 9.5pt; }
+    th { background: #111; color: white; text-align: left; padding: 2.5mm 3mm; font-size: 8pt; text-transform: uppercase; letter-spacing: 0.5px; }
+    th.r, td.r { text-align: right; }
+    td { padding: 2.5mm 3mm; border-bottom: 1px solid #eee; }
+    tr:last-child td { border-bottom: 1px solid #ccc; }
+    .totals { margin-top: 4mm; margin-left: auto; width: 70mm; }
+    .totals div { display: flex; justify-content: space-between; padding: 1.5mm 0; font-size: 10pt; }
+    .totals .grand { font-size: 13pt; font-weight: 700; border-top: 2px solid #111; padding-top: 2.5mm; margin-top: 1mm; }
+    .stamp { display: inline-block; margin-top: 6mm; padding: 3mm 8mm; border: 2px solid; transform: rotate(-3deg); font-weight: 800; letter-spacing: 1.5px; font-size: 12pt; }
+    .stamp.paid { color: #10b981; border-color: #10b981; }
+    .stamp.unpaid { color: #f59e0b; border-color: #f59e0b; }
+    .footer { margin-top: 12mm; padding-top: 4mm; border-top: 1px solid #ddd; font-size: 8pt; color: #888; text-align: center; line-height: 1.6; }
+    .actions { background: #fff; position: fixed; top: 0; left: 0; right: 0; padding: 8px 16px; border-bottom: 1px solid #ddd; z-index: 100; display: flex; gap: 8px; justify-content: center; }
+    .actions button { padding: 8px 16px; background: #111; color: white; border: 0; border-radius: 4px; cursor: pointer; font-weight: 600; }
+    @media print { .actions { display: none; } body { padding-top: 0 !important; } }
+    @media screen { body { padding-top: 56px; background: #f5f5f5; } .doc { background: white; box-shadow: 0 2px 8px rgba(0,0,0,0.1); padding: 14mm; } }
+  </style>
+</head>
+<body>
+  <div class="actions">
+    <button onclick="window.print()">🖨 Yazdır / PDF Olarak Kaydet</button>
+    <button onclick="window.close()">✕ Kapat</button>
+  </div>
+
+  <div class="doc">
+    <div class="header">
+      <div class="brand">
+        <h1>CARMAT</h1>
+        <div class="tagline">Aracına Özel 3D Havuzlu Oto Paspas</div>
+      </div>
+      <div class="seller">
+        <strong>Carmat</strong>
+        Fevzi Çakmak Mah. 10733. Sk. No: 1<br/>
+        Karatay / Konya<br/>
+        Tel: +90 544 710 81 15<br/>
+        destek@carmat.com.tr
+      </div>
+    </div>
+
+    <div class="meta-row">
+      <div><b>Sipariş No</b>{order.orderNo}</div>
+      <div><b>Sipariş Tarihi</b>{formatDateTime(order.createdAt)}</div>
+      <div><b>Ödeme Yöntemi</b>{PAYMENT_METHOD_LABELS[order.paymentMethod] ?? order.paymentMethod}</div>
+    </div>
+
+    <div class="buyer">
+      <h2>Alıcı</h2>
+      <strong>{order.customer.fullName}</strong><br/>
+      <div style="margin-top: 1.5mm; font-size: 9pt; color: #555;">
+        {order.shippingAddress.addressLine}<br/>
+        {order.shippingAddress.district} / {order.shippingAddress.city}<br/>
+        Tel: {order.customer.phone}
+        {order.customer.email && <span> · E-posta: {order.customer.email}</span>}
+      </div>
+    </div>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Açıklama</th>
+          <th class="r">Adet</th>
+          <th class="r">Birim Fiyat</th>
+          <th class="r">Tutar</th>
+        </tr>
+      </thead>
+      <tbody>
+        {order.items.map((it) => (
+          <tr>
+            <td>
+              <strong>{it.productName ?? it.brandName}</strong>
+              {(it.brandName && it.brandName !== 'Aksesuar') && (
+                <div style="font-size: 8.5pt; color: #888; margin-top: 0.5mm;">{it.brandName} {it.modelName} · {it.matName} mat, {it.borderName} kenarlık</div>
+              )}
+            </td>
+            <td class="r">{it.qty}</td>
+            <td class="r">{formatTRY(it.unitPrice)}</td>
+            <td class="r">{formatTRY(it.unitPrice * it.qty)}</td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+
+    <div class="totals">
+      <div><span>Net Tutar (KDV Hariç)</span><span>{formatTRY(netAmount)}</span></div>
+      <div><span>KDV (%20)</span><span>{formatTRY(kdvAmount)}</span></div>
+      {order.discount && order.discount > 0 && (
+        <div><span>İndirim</span><span>−{formatTRY(order.discount)}</span></div>
+      )}
+      <div class="grand"><span>Genel Toplam</span><span>{formatTRY(order.total)}</span></div>
+      {order.paidAmount > 0 && (
+        <div style="color: #10b981; font-weight: 600;"><span>Tahsil Edildi</span><span>{formatTRY(order.paidAmount)}</span></div>
+      )}
+      {(order.total - order.paidAmount) > 0 && (
+        <div style="color: #f59e0b; font-weight: 600;"><span>Bakiye</span><span>{formatTRY(order.total - order.paidAmount)}</span></div>
+      )}
+    </div>
+
+    {order.paymentStatus === 'tamamlandi' ? (
+      <div class="stamp paid">✓ ÖDENDİ</div>
+    ) : order.paymentStatus === 'iade' ? (
+      <div class="stamp" style="color: #dc2626; border-color: #dc2626;">İADE</div>
+    ) : (
+      <div class="stamp unpaid">⏳ ÖDEME BEKLİYOR</div>
+    )}
+
+    <div class="footer">
+      Bu belge bilgi amaçlı düzenlenmiştir, resmi e-fatura/e-arşiv için
+      muhasebeniz ile doğrulayınız.<br/>
+      Carmat · carmat.com.tr · destek@carmat.com.tr
+    </div>
+  </div>
+</body>
+</html>

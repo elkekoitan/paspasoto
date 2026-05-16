@@ -1,7 +1,9 @@
-import { useState } from 'preact/hooks'
+import { useState, useEffect } from 'preact/hooks'
 import { formatTRY, formatDateTime } from '../../lib/format'
 import { buildProductionStartedWaUrl, buildReadyWaUrl } from '../../lib/whatsapp'
 import type { Order, OrderStatus } from '../../server/db'
+import type { MessageTemplate, TemplateKey } from '../../lib/template-types'
+import { renderTemplate, TEMPLATE_META } from '../../lib/template-types'
 
 const PRODUCTION_STEPS: { value: OrderStatus; label: string }[] = [
   { value: 'received', label: 'Sipariş Alındı' },
@@ -18,6 +20,7 @@ export default function OrderEditor({ initial }: { initial: Order }) {
   const [copied, setCopied] = useState(false)
   const [shipping, setShipping] = useState(false)
   const [shippingMsg, setShippingMsg] = useState<{ kind: 'ok' | 'err'; text: string } | null>(null)
+  const [notifyOpen, setNotifyOpen] = useState(false)
 
   async function createShipment() {
     if (!confirm(`Kargo barkodu oluşturulsun mu?\n\nSipariş: ${order.orderNo}\nAlıcı: ${order.shippingAddress.fullName}\n${order.shippingAddress.city} / ${order.shippingAddress.district}`)) return
@@ -113,11 +116,29 @@ export default function OrderEditor({ initial }: { initial: Order }) {
               </div>
             </div>
             <div class="flex items-center gap-2 flex-wrap">
+              <a
+                href={`/admin/orders/${order.orderNo}/fatura`}
+                target="_blank"
+                rel="noopener"
+                class="px-3 py-2 rounded-lg text-xs font-medium bg-[var(--color-surface-2)] hover:bg-[var(--color-border)]/60 text-[var(--color-text)] inline-flex items-center gap-1.5"
+                title="Fatura yazdır / PDF olarak kaydet"
+              >
+                📄 Fatura
+              </a>
+              <a
+                href={`/admin/orders/${order.orderNo}/etiket`}
+                target="_blank"
+                rel="noopener"
+                class="px-3 py-2 rounded-lg text-xs font-medium bg-[var(--color-surface-2)] hover:bg-[var(--color-border)]/60 text-[var(--color-text)] inline-flex items-center gap-1.5"
+                title="Kargo etiketi yazdır"
+              >
+                🏷 Etiket
+              </a>
               <button
                 onClick={copyTrack}
                 class="px-3 py-2 rounded-lg text-xs font-medium border border-[var(--color-border)] hover:border-[var(--color-text-muted)]"
               >
-                {copied ? '✓ Kopyalandı' : 'Takip linki kopyala'}
+                {copied ? '✓ Kopyalandı' : '🔗 Takip linki'}
               </button>
               <a
                 href={trackUrl}
@@ -570,6 +591,38 @@ export default function OrderEditor({ initial }: { initial: Order }) {
           </dl>
         </div>
 
+        {/* Müşteri bildirim */}
+        <div class="rounded-2xl bg-[var(--color-surface)] border border-[var(--color-border)]/60 p-5">
+          <h3 class="font-display text-base font-semibold mb-3">📨 Müşteri Bildirim</h3>
+          <button
+            type="button"
+            onClick={() => setNotifyOpen(true)}
+            class="w-full px-3 py-2.5 rounded-lg text-sm font-semibold bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-300 border border-emerald-500/40"
+          >
+            📱 WhatsApp / E-posta Şablonu Seç
+          </button>
+          <p class="text-[10px] text-[var(--color-text-muted)] mt-2 leading-relaxed">
+            Hazır şablonlardan birini seçip kişiselleştirilmiş halini gönderin.
+          </p>
+        </div>
+
+        {/* Notlar (thread) */}
+        <NotesPanel
+          orderNo={order.orderNo}
+          notes={order.notes ?? []}
+          onUpdate={(notes) => setOrder({ ...order, notes })}
+        />
+
+        {notifyOpen && (
+          <NotifyModal
+            order={order}
+            onClose={() => setNotifyOpen(false)}
+            onSent={(template, channel) => {
+              setNotifyOpen(false)
+            }}
+          />
+        )}
+
         {/* Olay geçmişi */}
         <div class="rounded-2xl bg-[var(--color-surface)] border border-[var(--color-border)]/60 p-5">
           <h3 class="font-display text-base font-semibold mb-3">Olay Geçmişi</h3>
@@ -839,6 +892,335 @@ function InstallmentManager({
           ))}
         </div>
       )}
+    </div>
+  )
+}
+
+/* ---------------- Notes Panel ---------------- */
+
+interface OrderNote {
+  id: string
+  kind: 'internal' | 'customer-visible'
+  body: string
+  by: string
+  at: number
+}
+
+function NotesPanel({ orderNo, notes, onUpdate }: { orderNo: string; notes: OrderNote[]; onUpdate: (n: OrderNote[]) => void }) {
+  const [open, setOpen] = useState(true)
+  const [kind, setKind] = useState<'internal' | 'customer-visible'>('internal')
+  const [body, setBody] = useState('')
+  const [saving, setSaving] = useState(false)
+
+  async function addNote() {
+    const text = body.trim()
+    if (!text) return
+    setSaving(true)
+    const res = await fetch(`/api/orders/${orderNo}/notes`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ kind, body: text }),
+    })
+    setSaving(false)
+    if (res.ok) {
+      const note = await res.json()
+      onUpdate([...notes, note])
+      setBody('')
+    }
+  }
+
+  async function removeNote(id: string) {
+    if (!confirm('Bu notu silmek istediğinize emin misiniz?')) return
+    const res = await fetch(`/api/orders/${orderNo}/notes?id=${encodeURIComponent(id)}`, { method: 'DELETE' })
+    if (res.ok) onUpdate(notes.filter((n) => n.id !== id))
+  }
+
+  const sorted = [...notes].sort((a, b) => b.at - a.at)
+
+  return (
+    <div class="rounded-2xl bg-[var(--color-surface)] border border-[var(--color-border)]/60 p-5">
+      <button type="button" onClick={() => setOpen(!open)} class="w-full flex items-center justify-between gap-2 text-left">
+        <h3 class="font-display text-base font-semibold flex items-center gap-2">
+          💬 Notlar
+          {notes.length > 0 && (
+            <span class="text-[10px] px-1.5 py-0.5 rounded-full bg-[var(--color-primary-soft)] text-[var(--color-primary)] font-bold">
+              {notes.length}
+            </span>
+          )}
+        </h3>
+        <span class="text-xs text-[var(--color-text-muted)]">{open ? '▴' : '▾'}</span>
+      </button>
+
+      {open && (
+        <div class="mt-3 space-y-3">
+          <div class="rounded-lg bg-[var(--color-surface-2)]/40 p-3 space-y-2">
+            <div class="flex gap-2">
+              <button
+                type="button"
+                onClick={() => setKind('internal')}
+                class={[
+                  'px-2.5 py-1 rounded-md text-[10px] font-bold transition-colors',
+                  kind === 'internal'
+                    ? 'bg-amber-500/20 text-amber-300 ring-1 ring-amber-500/40'
+                    : 'bg-[var(--color-surface)] text-[var(--color-text-muted)]',
+                ].join(' ')}
+              >
+                🔒 İç Not
+              </button>
+              <button
+                type="button"
+                onClick={() => setKind('customer-visible')}
+                class={[
+                  'px-2.5 py-1 rounded-md text-[10px] font-bold transition-colors',
+                  kind === 'customer-visible'
+                    ? 'bg-emerald-500/20 text-emerald-300 ring-1 ring-emerald-500/40'
+                    : 'bg-[var(--color-surface)] text-[var(--color-text-muted)]',
+                ].join(' ')}
+              >
+                👁 Müşteri Görür
+              </button>
+            </div>
+            <textarea
+              value={body}
+              onInput={(e) => setBody((e.target as HTMLTextAreaElement).value)}
+              placeholder={kind === 'internal' ? 'İç not (sadece personel görür)…' : 'Müşteri görecek bir mesaj yaz…'}
+              rows={2}
+              class="w-full px-2.5 py-1.5 rounded-md bg-[var(--color-surface)] border border-[var(--color-border)] text-xs resize-none"
+            />
+            <button
+              type="button"
+              onClick={addNote}
+              disabled={saving || !body.trim()}
+              class="w-full px-3 py-1.5 rounded-md bg-[var(--color-primary)] text-black text-xs font-bold disabled:opacity-50"
+            >
+              {saving ? 'Kaydediliyor…' : '+ Not Ekle'}
+            </button>
+          </div>
+
+          {sorted.length === 0 ? (
+            <p class="text-xs text-[var(--color-text-muted)] text-center py-3">Henüz not yok.</p>
+          ) : (
+            <ul class="space-y-2">
+              {sorted.map((n) => (
+                <li
+                  class={[
+                    'rounded-lg p-2.5 text-xs',
+                    n.kind === 'customer-visible'
+                      ? 'bg-emerald-500/10 border border-emerald-500/30'
+                      : 'bg-amber-500/10 border border-amber-500/30',
+                  ].join(' ')}
+                >
+                  <div class="flex items-center justify-between gap-2 mb-1">
+                    <span class={[
+                      'text-[9px] font-bold uppercase tracking-wider',
+                      n.kind === 'customer-visible' ? 'text-emerald-300' : 'text-amber-300',
+                    ].join(' ')}>
+                      {n.kind === 'customer-visible' ? '👁 Müşteri Görür' : '🔒 İç Not'}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => removeNote(n.id)}
+                      class="text-[10px] text-[var(--color-text-muted)] hover:text-red-400"
+                      title="Sil"
+                    >
+                      ✕
+                    </button>
+                  </div>
+                  <p class="whitespace-pre-wrap break-words leading-relaxed">{n.body}</p>
+                  <div class="mt-1.5 text-[10px] text-[var(--color-text-muted)]">
+                    {n.by} · {formatDateTime(n.at)}
+                  </div>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      )}
+    </div>
+  )
+}
+
+/* ---------------- Notify Modal ---------------- */
+
+function NotifyModal({ order, onClose, onSent }: { order: Order; onClose: () => void; onSent: (template: TemplateKey, channel: 'whatsapp' | 'email') => void }) {
+  const [templates, setTemplates] = useState<MessageTemplate[]>([])
+  const [selectedKey, setSelectedKey] = useState<TemplateKey | ''>('')
+  const [channel, setChannel] = useState<'whatsapp' | 'email'>('whatsapp')
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    fetch('/api/admin/templates')
+      .then((r) => r.json())
+      .then((data: MessageTemplate[]) => {
+        setTemplates(data)
+        // Mevcut productionStatus'a göre önerilen şablonu otomatik seç
+        const statusToKey: Record<string, TemplateKey> = {
+          received: 'order_received',
+          in_production: 'production_started',
+          ready: order.deliveryMethod === 'pickup' ? 'ready_pickup' : 'ready_cargo',
+          delivered: 'delivered',
+        }
+        const suggested = statusToKey[order.productionStatus]
+        if (suggested) setSelectedKey(suggested)
+        else if (data[0]) setSelectedKey(data[0].key)
+        setLoading(false)
+      })
+      .catch(() => setLoading(false))
+  }, [])
+
+  const selected = templates.find((t) => t.key === selectedKey)
+
+  const vars: Record<string, string> = {
+    customerName: order.customer.fullName.split(' ')[0] ?? order.customer.fullName,
+    orderNo: order.orderNo,
+    trackingNo: order.cargoTrackingNo ?? '—',
+    total: formatTRY(order.total).replace(/\s/g, ' '),
+    shippingCity: order.shippingAddress.city,
+    brand: order.items[0]?.brandName ?? '',
+    model: order.items[0]?.modelName ?? '',
+  }
+
+  const previewText = selected
+    ? channel === 'whatsapp'
+      ? renderTemplate(selected.variants.whatsapp ?? '', vars)
+      : renderTemplate(selected.variants.email?.body ?? '', vars)
+    : ''
+
+  function sendNow() {
+    if (!selected) return
+    const phone = order.customer.phone.replace(/\D/g, '')
+    if (channel === 'whatsapp') {
+      const url = `https://wa.me/${phone.startsWith('0') ? '9' + phone : phone}?text=${encodeURIComponent(previewText)}`
+      window.open(url, '_blank')
+    } else {
+      const subject = renderTemplate(selected.variants.email?.subject ?? '', vars)
+      const body = previewText
+      window.location.href = `mailto:${order.customer.email ?? ''}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`
+    }
+
+    // Audit: order events'e bildirim eklemek opsiyonel (PATCH ile event push)
+    fetch(`/api/orders/${order.orderNo}/notes`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        kind: 'internal',
+        body: `📨 ${selected.label} bildirimi (${channel}) gönderildi → ${order.customer.fullName}`,
+      }),
+    }).catch(() => {})
+
+    onSent(selected.key, channel)
+  }
+
+  const recommendedKey = order.productionStatus === 'ready' && order.deliveryMethod === 'cargo' ? 'ready_cargo' :
+    order.productionStatus === 'ready' && order.deliveryMethod === 'pickup' ? 'ready_pickup' :
+    order.productionStatus === 'in_production' ? 'production_started' :
+    order.productionStatus === 'received' ? 'order_received' :
+    order.productionStatus === 'delivered' ? 'delivered' : null
+
+  return (
+    <div class="fixed inset-0 z-[80] bg-black/70 backdrop-blur-sm grid place-items-center p-4" onClick={onClose}>
+      <div class="bg-[var(--color-surface)] rounded-2xl border border-[var(--color-border)] max-w-2xl w-full max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+        <div class="p-5 border-b border-[var(--color-border)]/60 flex items-center justify-between gap-3">
+          <div>
+            <h2 class="font-display text-lg font-bold">📨 Müşteriye Bildirim</h2>
+            <p class="text-xs text-[var(--color-text-muted)] mt-0.5">
+              {order.customer.fullName} · {order.customer.phone}
+            </p>
+          </div>
+          <button onClick={onClose} class="size-9 grid place-items-center rounded-lg hover:bg-[var(--color-surface-2)]">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12" /></svg>
+          </button>
+        </div>
+
+        {loading ? (
+          <div class="p-8 text-center text-[var(--color-text-muted)]">Şablonlar yükleniyor…</div>
+        ) : (
+          <div class="p-5 space-y-4">
+            {/* Şablon seç */}
+            <div>
+              <div class="text-xs font-medium mb-2 text-[var(--color-text-soft)]">Şablon</div>
+              <div class="grid grid-cols-2 gap-2 max-h-48 overflow-y-auto pr-1">
+                {templates.map((t) => (
+                  <button
+                    key={t.key}
+                    type="button"
+                    onClick={() => setSelectedKey(t.key)}
+                    class={[
+                      'text-left p-2.5 rounded-lg border transition-colors text-xs',
+                      selectedKey === t.key
+                        ? 'border-[var(--color-primary)] bg-[var(--color-primary-soft)]/40'
+                        : 'border-[var(--color-border)] hover:border-[var(--color-text-muted)]',
+                    ].join(' ')}
+                  >
+                    <div class="font-semibold flex items-center gap-1">
+                      {t.label}
+                      {recommendedKey === t.key && <span class="text-[8px] px-1 rounded bg-emerald-500/30 text-emerald-300">ÖNERİLEN</span>}
+                    </div>
+                    <div class="text-[10px] text-[var(--color-text-muted)] mt-0.5">{t.description}</div>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Kanal seç */}
+            <div>
+              <div class="text-xs font-medium mb-2 text-[var(--color-text-soft)]">Kanal</div>
+              <div class="flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => setChannel('whatsapp')}
+                  class={[
+                    'flex-1 px-3 py-2.5 rounded-lg text-sm font-semibold transition-colors',
+                    channel === 'whatsapp'
+                      ? 'bg-emerald-500/20 text-emerald-300 ring-2 ring-emerald-500/40'
+                      : 'bg-[var(--color-surface-2)] text-[var(--color-text-muted)] hover:text-[var(--color-text)]',
+                  ].join(' ')}
+                >
+                  💬 WhatsApp
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setChannel('email')}
+                  disabled={!order.customer.email}
+                  class={[
+                    'flex-1 px-3 py-2.5 rounded-lg text-sm font-semibold transition-colors',
+                    channel === 'email'
+                      ? 'bg-blue-500/20 text-blue-300 ring-2 ring-blue-500/40'
+                      : 'bg-[var(--color-surface-2)] text-[var(--color-text-muted)] hover:text-[var(--color-text)]',
+                    !order.customer.email && 'opacity-40 cursor-not-allowed',
+                  ].join(' ')}
+                >
+                  ✉ E-posta {!order.customer.email && '(yok)'}
+                </button>
+              </div>
+            </div>
+
+            {/* Önizleme */}
+            {selected && (
+              <div>
+                <div class="text-xs font-medium mb-2 text-[var(--color-text-soft)]">Mesaj Önizleme</div>
+                <div class="rounded-lg bg-[var(--color-surface-2)] border border-[var(--color-border)] p-3 text-sm whitespace-pre-wrap leading-relaxed max-h-60 overflow-y-auto">
+                  {previewText}
+                </div>
+                <p class="text-[10px] text-[var(--color-text-muted)] mt-1">Yer tutucular doldurulmuş halidir. Şablonu düzenlemek için <a href="/admin/sablonlar" class="underline">sablon yönetimi</a>'na gidin.</p>
+              </div>
+            )}
+
+            {/* Gönder */}
+            <button
+              type="button"
+              onClick={sendNow}
+              disabled={!selected || (channel === 'email' && !order.customer.email)}
+              class="w-full px-5 py-3 rounded-lg bg-[var(--color-primary)] text-black font-bold text-sm disabled:opacity-50"
+            >
+              {channel === 'whatsapp' ? '💬 WhatsApp\'ta Aç ve Gönder' : '✉ E-posta İstemcisini Aç'}
+            </button>
+            <p class="text-[10px] text-[var(--color-text-muted)] text-center">
+              Hazır mesaj yeni sekmede açılır, son onay sizde. Bildirim "iç not" olarak siparişe işlenir.
+            </p>
+          </div>
+        )}
+      </div>
     </div>
   )
 }
