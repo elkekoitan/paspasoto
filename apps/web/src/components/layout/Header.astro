@@ -45,6 +45,8 @@ const path = Astro.url.pathname
               <div class="relative group/dropdown">
                 <a
                   href={item.href}
+                  aria-haspopup="true"
+                  aria-expanded="false"
                   class:list={[
                     'inline-flex items-center gap-1 px-3.5 py-2 rounded-lg text-sm font-medium transition-colors',
                     active
@@ -53,12 +55,12 @@ const path = Astro.url.pathname
                   ]}
                 >
                   {item.label}
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="opacity-70 transition-transform group-hover/dropdown:rotate-180" aria-hidden="true">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="opacity-70 transition-transform group-hover/dropdown:rotate-180 group-focus-within/dropdown:rotate-180" aria-hidden="true">
                     <polyline points="6 9 12 15 18 9" />
                   </svg>
                 </a>
                 <div
-                  class="invisible opacity-0 translate-y-1 group-hover/dropdown:visible group-hover/dropdown:opacity-100 group-hover/dropdown:translate-y-0 absolute left-0 top-full pt-2 transition-all duration-200 z-50"
+                  class="invisible opacity-0 translate-y-1 group-hover/dropdown:visible group-hover/dropdown:opacity-100 group-hover/dropdown:translate-y-0 group-focus-within/dropdown:visible group-focus-within/dropdown:opacity-100 group-focus-within/dropdown:translate-y-0 absolute left-0 top-full pt-2 transition-all duration-200 z-50"
                 >
                   <div class="min-w-[280px] rounded-2xl border border-[var(--color-border)]/60 bg-[var(--color-surface)] shadow-xl shadow-black/40 backdrop-blur-md p-2">
                     {item.children.map((child) => {

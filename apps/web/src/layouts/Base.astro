@@ -60,6 +60,39 @@ const ogImageUrl = new URL(ogImage, SITE_URL).toString()
     <meta name="twitter:description" content={description} />
     <meta name="twitter:image" content={ogImageUrl} />
 
+    {/* SEO — LocalBusiness JSON-LD (Konya'daki Carmat atölyesi için) */}
+    {Astro.url.pathname === '/' && (
+      <script type="application/ld+json" set:html={JSON.stringify({
+        "@context": "https://schema.org",
+        "@type": "AutoPartsStore",
+        "name": "Carmat",
+        "url": "https://carmat.com.tr",
+        "logo": "https://carmat.com.tr/logo.png",
+        "image": ogImageUrl,
+        "description": DEFAULT_DESCRIPTION,
+        "telephone": "+90 544 710 81 15",
+        "email": "destek@carmat.com.tr",
+        "address": {
+          "@type": "PostalAddress",
+          "streetAddress": "Fevzi Çakmak Mah. 10733. Sk. No: 1",
+          "addressLocality": "Karatay",
+          "addressRegion": "Konya",
+          "addressCountry": "TR"
+        },
+        "openingHoursSpecification": [{
+          "@type": "OpeningHoursSpecification",
+          "dayOfWeek": ["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"],
+          "opens": "09:00",
+          "closes": "19:00"
+        }],
+        "sameAs": [
+          "https://wa.me/905447108115",
+          "https://instagram.com/carmat.com.tr"
+        ],
+        "priceRange": "₺₺"
+      })} />
+    )}
+
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="apple-touch-icon" href="/icons/icon-192.png" />
     <link rel="manifest" href="/manifest.webmanifest" />
