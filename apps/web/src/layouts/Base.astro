@@ -62,7 +62,7 @@ const ogImageUrl = new URL(ogImage, SITE_URL).toString()
 
     {/* SEO — LocalBusiness JSON-LD (Konya'daki Carmat atölyesi için) */}
     {Astro.url.pathname === '/' && (
-      <script type="application/ld+json" set:html={JSON.stringify({
+      <script type="application/ld+json" is:inline set:html={JSON.stringify({
         "@context": "https://schema.org",
         "@type": "AutoPartsStore",
         "name": "Carmat",
@@ -90,7 +90,7 @@ const ogImageUrl = new URL(ogImage, SITE_URL).toString()
           "https://instagram.com/carmat.com.tr"
         ],
         "priceRange": "₺₺"
-      })} />
+      })}></script>
     )}
 
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
