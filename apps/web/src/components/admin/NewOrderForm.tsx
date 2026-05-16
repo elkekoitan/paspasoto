@@ -18,10 +18,13 @@ const CITIES = [
 ]
 
 export default function NewOrderForm() {
+  // URL'den pre-fill (örn: müşteri detayından "+ Yeni Sipariş Aç" linkiyle gelinince)
+  const urlParams = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : new URLSearchParams()
+
   // Müşteri
-  const [fullName, setFullName] = useState('')
-  const [phone, setPhone] = useState('')
-  const [email, setEmail] = useState('')
+  const [fullName, setFullName] = useState(urlParams.get('customerName') ?? '')
+  const [phone, setPhone] = useState(urlParams.get('customerPhone') ?? '')
+  const [email, setEmail] = useState(urlParams.get('customerEmail') ?? '')
   const [city, setCity] = useState('Konya')
   const [district, setDistrict] = useState('')
   const [addressLine, setAddressLine] = useState('')

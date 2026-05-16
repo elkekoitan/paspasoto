@@ -1,0 +1,143 @@
+---
+export const prerender = false
+import AdminLayout from '@layouts/AdminLayout.astro'
+import { getCurrentUser } from '../../../server/auth'
+import { getCustomerByPhoneKey } from '../../../server/customers'
+import CustomerNotesPanel from '@components/admin/CustomerNotesPanel.tsx'
+import { formatTRY, formatDateTime } from '@lib/format'
+
+const me = getCurrentUser(Astro.cookies)
+if (!me) return Astro.redirect('/admin/login')
+
+const phoneKey = decodeURIComponent(Astro.params.phoneKey!)
+const { summary, orders, notes } = getCustomerByPhoneKey(phoneKey)
+if (!summary) return new Response('Müşteri bulunamadı', { status: 404 })
+
+const SEGMENT_META: Record<string, { label: string; emoji: string; class: string }> = {
+  vip: { label: 'VIP', emoji: '👑', class: 'bg-amber-500/15 text-amber-300 border-amber-500/40' },
+  returning: { label: 'Tekrar Eden', emoji: '🔄', class: 'bg-emerald-500/15 text-emerald-300 border-emerald-500/40' },
+  new: { label: 'Yeni', emoji: '✨', class: 'bg-blue-500/15 text-blue-300 border-blue-500/40' },
+  'one-time': { label: 'Tek Sefer', emoji: '👤', class: 'bg-zinc-500/15 text-zinc-300 border-zinc-500/40' },
+  inactive: { label: 'İnaktif', emoji: '💤', class: 'bg-red-500/15 text-red-300 border-red-500/40' },
+}
+const seg = SEGMENT_META[summary.segment] ?? SEGMENT_META['one-time']
+
+const waPhone = summary.phone.replace(/\D/g, '')
+const waLink = `https://wa.me/${waPhone.startsWith('0') ? '9' + waPhone : waPhone}`
+const newOrderHref = `/admin/orders/new?customerName=${encodeURIComponent(summary.fullName)}&customerPhone=${encodeURIComponent(summary.phone)}${summary.email ? `&customerEmail=${encodeURIComponent(summary.email)}` : ''}`
+---
+
+<AdminLayout title={`Müşteri — ${summary.fullName}`} current="dashboard">
+  <div class="p-4 md:p-8 max-w-6xl mx-auto">
+    <nav class="text-xs text-[var(--color-text-muted)] mb-4">
+      <a href="/admin" class="hover:text-[var(--color-primary)]">Yönetim</a>
+      <span class="mx-2">/</span>
+      <a href="/admin/musteriler" class="hover:text-[var(--color-primary)]">Müşteriler</a>
+      <span class="mx-2">/</span>
+      <span>{summary.fullName}</span>
+    </nav>
+
+    <header class="mb-6 flex items-start gap-4 flex-wrap">
+      <div class="size-16 rounded-full grid place-items-center bg-[var(--color-primary-soft)] text-[var(--color-primary)] font-bold text-2xl shrink-0">
+        {summary.fullName.charAt(0).toUpperCase()}
+      </div>
+      <div class="flex-1 min-w-0">
+        <h1 class="font-display text-2xl md:text-3xl font-bold flex items-center gap-3 flex-wrap">
+          {summary.fullName}
+          <span class={`px-2.5 py-1 rounded-full text-[11px] font-bold border ${seg.class}`}>
+            {seg.emoji} {seg.label}
+          </span>
+        </h1>
+        <p class="mt-1 text-sm text-[var(--color-text-soft)]">
+          📞 {summary.phone}
+          {summary.email && <span> · ✉ {summary.email}</span>}
+        </p>
+      </div>
+    </header>
+
+    {/* Hızlı eylem */}
+    <div class="mb-6 flex flex-wrap gap-2">
+      <a href={waLink} target="_blank" rel="noopener" class="px-4 py-2 rounded-xl text-sm font-semibold bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-300 border border-emerald-500/40">
+        💬 WhatsApp
+      </a>
+      {summary.email && (
+        <a href={`mailto:${summary.email}`} class="px-4 py-2 rounded-xl text-sm font-semibold bg-blue-500/15 hover:bg-blue-500/25 text-blue-300 border border-blue-500/40">
+          ✉ E-posta
+        </a>
+      )}
+      <a href={newOrderHref} class="px-4 py-2 rounded-xl text-sm font-semibold bg-[var(--color-primary)] text-black hover:opacity-90">
+        + Yeni Sipariş Aç
+      </a>
+    </div>
+
+    {/* İstatistik kartları */}
+    <div class="mb-6 grid grid-cols-2 md:grid-cols-4 gap-3">
+      <div class="p-4 rounded-2xl bg-[var(--color-surface)] border border-[var(--color-border)]/60">
+        <div class="text-[10px] uppercase tracking-wider text-[var(--color-text-muted)] font-semibold">Toplam Sipariş</div>
+        <div class="mt-1 text-2xl font-bold tabular-nums">{summary.orderCount}</div>
+      </div>
+      <div class="p-4 rounded-2xl bg-[var(--color-surface)] border border-[var(--color-border)]/60">
+        <div class="text-[10px] uppercase tracking-wider text-[var(--color-text-muted)] font-semibold">Toplam Ciro</div>
+        <div class="mt-1 text-2xl font-bold tabular-nums">{formatTRY(summary.totalRevenue)}</div>
+        <div class="text-[10px] text-emerald-400 mt-0.5">Tahsil: {formatTRY(summary.paidRevenue)}</div>
+      </div>
+      <div class="p-4 rounded-2xl bg-[var(--color-surface)] border border-[var(--color-border)]/60">
+        <div class="text-[10px] uppercase tracking-wider text-[var(--color-text-muted)] font-semibold">Ort. Sepet</div>
+        <div class="mt-1 text-2xl font-bold tabular-nums">{formatTRY(summary.avgOrderValue)}</div>
+      </div>
+      <div class="p-4 rounded-2xl bg-[var(--color-surface)] border border-[var(--color-border)]/60">
+        <div class="text-[10px] uppercase tracking-wider text-[var(--color-text-muted)] font-semibold">İlk → Son</div>
+        <div class="mt-1 text-[11px] text-[var(--color-text-soft)] leading-tight">
+          {formatDateTime(summary.firstOrderAt)}<br/>
+          → {formatDateTime(summary.lastOrderAt)}
+        </div>
+      </div>
+    </div>
+
+    <div class="grid lg:grid-cols-[1fr_320px] gap-6">
+      <div>
+        <h2 class="font-display text-lg font-semibold mb-3">Sipariş Geçmişi ({orders.length})</h2>
+        <div class="rounded-2xl bg-[var(--color-surface)] border border-[var(--color-border)]/60 overflow-hidden">
+          {orders.length === 0 ? (
+            <div class="p-8 text-center text-[var(--color-text-muted)]">Sipariş yok.</div>
+          ) : (
+            <ul class="divide-y divide-[var(--color-border)]/30">
+              {orders.map((o) => (
+                <li>
+                  <a
+                    href={`/admin/orders/${o.orderNo}`}
+                    class="block p-3 md:p-4 hover:bg-[var(--color-surface-2)]/50 transition-colors"
+                  >
+                    <div class="flex items-center justify-between gap-3 flex-wrap">
+                      <div class="flex-1 min-w-0">
+                        <div class="flex items-center gap-2 flex-wrap">
+                          <span class="font-mono text-xs text-[var(--color-primary)] font-bold">{o.orderNo}</span>
+                          <span class="text-[10px] px-1.5 py-0.5 rounded-full bg-[var(--color-surface-2)] text-[var(--color-text-muted)]">{o.productionStatus}</span>
+                          {o.paymentStatus === 'tamamlandi' ? (
+                            <span class="text-[9px] px-1.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 font-bold">ÖDENDİ</span>
+                          ) : (
+                            <span class="text-[9px] px-1.5 py-0.5 rounded-full bg-amber-500/20 text-amber-300 font-bold">BEKLEYEN</span>
+                          )}
+                        </div>
+                        <div class="text-[11px] text-[var(--color-text-muted)] mt-0.5">
+                          {o.items[0]?.brandName} {o.items[0]?.modelName} · {o.shippingAddress.city} · {formatDateTime(o.createdAt)}
+                        </div>
+                      </div>
+                      <div class="text-right">
+                        <div class="font-bold tabular-nums">{formatTRY(o.total)}</div>
+                      </div>
+                    </div>
+                  </a>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      </div>
+
+      <aside>
+        <CustomerNotesPanel phoneKey={phoneKey} initialNotes={notes} client:load />
+      </aside>
+    </div>
+  </div>
+</AdminLayout>
