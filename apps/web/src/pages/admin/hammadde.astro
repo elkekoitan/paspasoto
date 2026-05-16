@@ -9,14 +9,31 @@ if (!getSession(Astro.cookies)) return Astro.redirect('/admin/login')
 
 const items = listMaterials()
 const lowCount = getLowStockMaterials().length
+
+// Toplam envanter değeri (qty × costPerUnit)
+const totalInventoryValue = items.reduce((s, m) => {
+  if (m.costPerUnit) return s + m.quantity * m.costPerUnit
+  return s
+}, 0)
+
+// Tedarikçi gruplama
+const suppliersMap = new Map<string, { name: string; itemCount: number; totalValue: number }>()
+for (const m of items) {
+  const key = m.supplier ?? '—'
+  const prev = suppliersMap.get(key) ?? { name: key, itemCount: 0, totalValue: 0 }
+  prev.itemCount += 1
+  if (m.costPerUnit) prev.totalValue += m.quantity * m.costPerUnit
+  suppliersMap.set(key, prev)
+}
+const suppliers = Array.from(suppliersMap.values()).sort((a, b) => b.totalValue - a.totalValue)
 ---
 
-<AdminLayout title="Hammadde Takip" current="hammadde">
+<AdminLayout title="Hammadde Stoğu" current="hammadde">
   <div class="p-4 md:p-8 max-w-7xl mx-auto">
     <header class="mb-6">
-      <p class="text-xs uppercase tracking-[0.2em] text-[var(--color-primary)] font-semibold">Admin</p>
+      <p class="text-xs uppercase tracking-[0.2em] text-[var(--color-primary)] font-semibold">Admin · Üretim Öncesi Ham Madde</p>
       <h1 class="mt-1 font-display text-2xl md:text-3xl font-bold flex items-center gap-3">
-        Hammadde Takip
+        Hammadde Stoğu
         {lowCount > 0 && (
           <span class="text-xs px-2 py-1 rounded-full bg-red-500/20 text-red-300 font-bold uppercase tracking-wider">
             {lowCount} düşük stok
@@ -24,11 +41,57 @@ const lowCount = getLowStockMaterials().length
         )}
       </h1>
       <p class="mt-2 text-sm text-[var(--color-text-soft)] max-w-2xl">
-        EVA foam ruloları, kenarlık şeritleri, topukluk malzemesi, iplik vb.
-        atölye stoğunu burada takip edin. Her hammadde için giriş (satın alma),
-        çıkış (üretimde kullanım) ve düzeltme hareketleri kaydedilir.
+        EVA foam ruloları, kenarlık şeritleri, iplik makaraları, yapıştırıcı vb.
+        <strong>üretim öncesi ham malzemeler</strong>. (Yarı-mamul/SKU stoğu için
+        <a href="/admin/stok" class="text-[var(--color-primary)] underline">Stok</a> sayfasına bakın.)
       </p>
     </header>
+
+    {/* Özet metrikleri */}
+    <div class="mb-6 grid grid-cols-2 md:grid-cols-4 gap-3">
+      <div class="p-3 rounded-xl bg-[var(--color-surface)] border border-[var(--color-border)]/60">
+        <div class="text-[10px] uppercase tracking-wider text-[var(--color-text-muted)] font-semibold">Toplam Kalem</div>
+        <div class="mt-1 text-xl font-bold tabular-nums">{items.length}</div>
+      </div>
+      <div class="p-3 rounded-xl bg-[var(--color-surface)] border border-[var(--color-border)]/60">
+        <div class="text-[10px] uppercase tracking-wider text-[var(--color-text-muted)] font-semibold">Envanter Değeri</div>
+        <div class="mt-1 text-xl font-bold tabular-nums">₺{totalInventoryValue.toFixed(0)}</div>
+      </div>
+      <div class="p-3 rounded-xl bg-[var(--color-surface)] border border-[var(--color-border)]/60">
+        <div class="text-[10px] uppercase tracking-wider text-[var(--color-text-muted)] font-semibold">Tedarikçi</div>
+        <div class="mt-1 text-xl font-bold tabular-nums">{suppliers.filter((s) => s.name !== '—').length}</div>
+      </div>
+      <div class="p-3 rounded-xl bg-red-500/5 border border-red-500/30">
+        <div class="text-[10px] uppercase tracking-wider text-red-300 font-semibold">⚠ Sipariş Gerekli</div>
+        <div class="mt-1 text-xl font-bold tabular-nums text-red-300">{lowCount}</div>
+      </div>
+    </div>
+
+    {/* Tedarikçi listesi */}
+    {suppliers.filter((s) => s.name !== '—').length > 0 && (
+      <details class="mb-6 rounded-2xl bg-[var(--color-surface)] border border-[var(--color-border)]/60 overflow-hidden">
+        <summary class="p-4 cursor-pointer hover:bg-[var(--color-surface-2)]/50">
+          <span class="font-semibold text-sm">🏭 Tedarikçi Bazında Görünüm ({suppliers.filter((s) => s.name !== '—').length})</span>
+        </summary>
+        <ul class="border-t border-[var(--color-border)]/40">
+          {suppliers.filter((s) => s.name !== '—').map((s) => (
+            <li class="p-3 flex items-center justify-between gap-3 border-b border-[var(--color-border)]/20 last:border-0">
+              <div>
+                <div class="font-semibold text-sm">{s.name}</div>
+                <div class="text-[11px] text-[var(--color-text-muted)] mt-0.5">{s.itemCount} kalem</div>
+              </div>
+              {s.totalValue > 0 && (
+                <div class="text-right">
+                  <div class="font-bold tabular-nums">₺{s.totalValue.toFixed(0)}</div>
+                  <div class="text-[10px] text-[var(--color-text-muted)]">envanter değeri</div>
+                </div>
+              )}
+            </li>
+          ))}
+        </ul>
+      </details>
+    )}
+
     <MaterialsManager initial={items} client:load />
   </div>
 </AdminLayout>
